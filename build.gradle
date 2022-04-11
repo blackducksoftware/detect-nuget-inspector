@@ -13,30 +13,31 @@ group 'com.synopsys.integration'
 version = '1.0.0-SNAPSHOT'
 
 apply plugin: 'com.synopsys.integration.solution'
+apply plugin: 'distribution'
 
 project.tasks.create(name: 'buildSolutions') {
     group 'dotnet build'
     description 'Build executable for all defined operating systems'
 }
 
-project.tasks.create(name: 'zipSolutions') {
-    group 'dotnet build'
-    description 'Build executable and create zip files for all defined operating systems'
-    dependsOn buildSolutions
-}
-
-HashMap<String, String> dotNetSolutions = ['mac': 'osx-x64', 'windows': 'win-x64', 'linux': 'linux-x64', 'dana': 'dana']
+/*
+The lines below will, for each configured solution
+    * Create the build task
+    * Create the distribution (zip) task
+    * Set up dependencies to the build and distribution tasks
+    * Add artifact to publishing
+*/
+HashMap<String, String> dotNetSolutions = ['mac': 'osx-x64', 'windows': 'win-x64', 'linux': 'linux-x64']
 
 dotNetSolutions.each { os, buildCmd ->
+    logger.lifecycle("Creating tasks for dotnet solution::" + os)
+
     String buildTaskName = "${os}BuildSolution"
-    String buildOutputDir = "build/tmp/${os}-build"
+    String buildOutputDir = "${buildDir}/tmp/${os}-build"
     project.tasks.create(name: buildTaskName, type: Exec) {
         group 'dotnet build'
         description "Create executable for ${os} in directory : ${buildOutputDir}"
-
         def buildCommand = [dotNetExec, 'publish', 'detect-nuget-inspector/detect-nuget-inspector.sln', '-r', "${buildCmd}", '-o', buildOutputDir, '--force']
-        commandLine buildCommand
-
         doFirst {
             logger.lifecycle("Running ${dotNetExec} for OS '${os}':: " + buildCommand.toString())
         }
@@ -44,24 +45,37 @@ dotNetSolutions.each { os, buildCmd ->
             logger.lifecycle("Output of ${dotNetExec} for OS '${os}' located at:: " + buildOutputDir)
         }
 
+        commandLine buildCommand
     }
     project.tasks.findByName('buildSolutions').dependsOn buildTaskName
 
-    String zipTaskName = "${os}Zip"
-    String outputZipFileName = "${project.name}-${os}-${version}.zip"
-    String outputZipDirectory = 'build/libs/'
-    project.tasks.create(name: zipTaskName, type: Zip) {
-        group 'dotnet build'
-        description "Create zip for ${os} : ${outputZipDirectory}/${outputZipFileName}"
-        from buildOutputDir
-        include '*'
-        archiveName outputZipFileName
-        destinationDir(file(outputZipDirectory))
-
-        doFirst {
-            logger.lifecycle("Zipping contents of ${buildOutputDir} for OS '${os}':: " + outputZipDirectory + outputZipFileName)
+    distributions {
+        "${os}" {
+            distributionBaseName = "${project.name}-${os}"
+            contents {
+                from { buildOutputDir }
+            }
         }
     }
-    project.tasks.findByName(zipTaskName).dependsOn buildTaskName
-    project.tasks.findByName('zipSolutions').dependsOn zipTaskName
+    String distributionTaskName = os + 'DistZip'
+    project.tasks.findByName(distributionTaskName).doFirst { logger.lifecycle("Creating distribution zip from ${buildOutputDir} for OS '${os}'") }
+    project.tasks.findByName(distributionTaskName) dependsOn buildTaskName
+    project.tasks.findByName('distZip').dependsOn distributionTaskName
+
+    publishing {
+        publications {
+            mavenZip(MavenPublication) {
+                artifact(project.tasks.findByName(distributionTaskName)) {
+                    classifier os
+                    extension 'zip'
+                }
+            }
+        }
+    }
+}
+
+artifactory {
+    publish {
+        defaults { publications('mavenZip') }
+    }
 }
