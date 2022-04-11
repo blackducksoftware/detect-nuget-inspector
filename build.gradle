@@ -53,6 +53,7 @@ dotNetSolutions.each { os, buildCmd ->
         "${os}" {
             distributionBaseName = "${project.name}-${os}"
             contents {
+                into("/")
                 from { buildOutputDir }
             }
         }
