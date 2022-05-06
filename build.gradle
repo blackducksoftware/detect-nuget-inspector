@@ -1,0 +1,82 @@
+buildscript {
+    apply from: 'https://raw.githubusercontent.com/blackducksoftware/integration-resources/master/gradle_common/buildscript-repositories.gradle', to: buildscript
+    apply from: 'https://raw.githubusercontent.com/blackducksoftware/integration-resources/master/gradle_common/buildscript-cgp-version.gradle'
+
+    dependencies {
+        classpath "com.synopsys.integration:common-gradle-plugin:${managedCgpVersion}"
+    }
+}
+
+ext.dotNetExec = project.hasProperty('dotNetExec') ? project.getProperty('dotNetExec') : 'dotnet6'
+
+group 'com.synopsys.integration'
+version = '1.0.0-SNAPSHOT'
+
+apply plugin: 'com.synopsys.integration.solution'
+apply plugin: 'distribution'
+
+project.tasks.create(name: 'buildSolutions') {
+    group 'dotnet build'
+    description 'Build executable for all defined operating systems'
+}
+
+/*
+The lines below will, for each configured solution
+    * Create the build task
+    * Create the distribution (zip) task
+    * Set up dependencies to the build and distribution tasks
+    * Add artifact to publishing
+*/
+HashMap<String, String> dotNetSolutions = ['mac': 'osx-x64', 'windows': 'win-x64', 'linux': 'linux-x64']
+
+dotNetSolutions.each { os, buildCmd ->
+    logger.lifecycle("Creating tasks for dotnet solution::" + os)
+
+    String buildTaskName = "${os}BuildSolution"
+    String buildOutputDir = "${buildDir}/tmp/${os}-build"
+    project.tasks.create(name: buildTaskName, type: Exec) {
+        group 'dotnet build'
+        description "Create executable for ${os} in directory : ${buildOutputDir}"
+        def buildCommand = [dotNetExec, 'publish', 'detect-nuget-inspector/detect-nuget-inspector.sln', '-r', "${buildCmd}", '-o', buildOutputDir, '--force']
+        doFirst {
+            logger.lifecycle("Running ${dotNetExec} for OS '${os}':: " + buildCommand.toString())
+        }
+        doLast {
+            logger.lifecycle("Output of ${dotNetExec} for OS '${os}' located at:: " + buildOutputDir)
+        }
+
+        commandLine buildCommand
+    }
+    project.tasks.findByName('buildSolutions').dependsOn buildTaskName
+
+    distributions {
+        "${os}" {
+            distributionBaseName = "${project.name}-${os}"
+            contents {
+                into("/")
+                from { buildOutputDir }
+            }
+        }
+    }
+    String distributionTaskName = os + 'DistZip'
+    project.tasks.findByName(distributionTaskName).doFirst { logger.lifecycle("Creating distribution zip from ${buildOutputDir} for OS '${os}'") }
+    project.tasks.findByName(distributionTaskName) dependsOn buildTaskName
+    project.tasks.findByName('distZip').dependsOn distributionTaskName
+
+    publishing {
+        publications {
+            mavenZip(MavenPublication) {
+                artifact(project.tasks.findByName(distributionTaskName)) {
+                    classifier os
+                    extension 'zip'
+                }
+            }
+        }
+    }
+}
+
+artifactory {
+    publish {
+        defaults { publications('mavenZip') }
+    }
+}

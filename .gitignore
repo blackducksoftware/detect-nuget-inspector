@@ -2,3 +2,12 @@ detect-nuget-inspector/.vs/
 detect-nuget-inspector/detect-nuget-inspector/bin/
 detect-nuget-inspector/detect-nuget-inspector/linux-build/
 detect-nuget-inspector/detect-nuget-inspector/obj/
+
+.idea
+*.iml
+
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore Gradle build output directory
+build
