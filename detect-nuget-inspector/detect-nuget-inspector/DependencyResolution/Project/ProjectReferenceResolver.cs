@@ -32,12 +32,15 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                 List<NugetDependency> deps = new List<NugetDependency>();
                 foreach (ProjectItem reference in proj.GetItemsIgnoringCondition("PackageReference"))
                 {
-                    var versionMetaData = reference.Metadata.Where(meta => meta.Name == "Version").FirstOrDefault().EvaluatedValue;
-                    NuGet.Versioning.VersionRange version;
-                    if (NuGet.Versioning.VersionRange.TryParse(versionMetaData, out version))
+                    var versionMetaData = reference.Metadata.Where(meta => meta.Name == "Version").FirstOrDefault();
+                    if (versionMetaData != null)
                     {
-                        var dep = new NugetDependency(reference.EvaluatedInclude, version);
-                        deps.Add(dep);
+                        NuGet.Versioning.VersionRange version;
+                        if (NuGet.Versioning.VersionRange.TryParse(versionMetaData.EvaluatedValue, out version))
+                        {
+                            var dep = new NugetDependency(reference.EvaluatedInclude, version);
+                            deps.Add(dep);
+                        }
                     }
                     else
                     {
