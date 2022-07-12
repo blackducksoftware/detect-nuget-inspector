@@ -160,15 +160,50 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget
 
         public ProjectFileDependency ParseProjectFileDependencyGroup(String projectFileDependency)
         {
+            Console.WriteLine("ProjectFileDependency: " + projectFileDependency);
             //Reverse engineered from: https://github.com/NuGet/NuGet.Client/blob/538727480d93b7d8474329f90ccb9ff3b3543714/src/NuGet.Core/NuGet.LibraryModel/LibraryRange.cs#L68
             //With some hints from https://github.com/dotnet/NuGet.BuildTasks/pull/23/files
+
+
             if (ParseProjectFileDependencyGroupTokens(projectFileDependency, " >= ", out String projectName, out String versionRaw))
             {
-                return new ProjectFileDependency(projectName, MinVersionOrFloat(versionRaw, true /* Include min version. */));
+                if (ParseProjectFileDependencyGroupTokens(versionRaw, " <= ", out String versionMin, out String versionMax))
+                {
+                    var minVersion = NuGet.Versioning.NuGetVersion.Parse(versionMin);
+                    var maxVersion = NuGet.Versioning.NuGetVersion.Parse(versionMax);
+
+                    return new ProjectFileDependency(projectName, new NuGet.Versioning.VersionRange(minVersion, true, maxVersion, true));
+                }
+                else if (ParseProjectFileDependencyGroupTokens(versionRaw, " < ", out String versionMin2, out String versionMax2))
+                {
+                    var minVersion = NuGet.Versioning.NuGetVersion.Parse(versionMin2);
+                    var maxVersion = NuGet.Versioning.NuGetVersion.Parse(versionMax2);
+                    return new ProjectFileDependency(projectName, new NuGet.Versioning.VersionRange(minVersion, true, maxVersion, true));
+                }
+                else
+                {
+                    return new ProjectFileDependency(projectName, MinVersionOrFloat(versionRaw, true /* Include min version. */));
+                }
             }
             else if (ParseProjectFileDependencyGroupTokens(projectFileDependency, " > ", out String projectName2, out String versionRaw2))
             {
-                return new ProjectFileDependency(projectName2, MinVersionOrFloat(versionRaw2, false /* Do not include min version. */));
+                if (ParseProjectFileDependencyGroupTokens(versionRaw2, " <= ", out String versionMin, out String versionMax))
+                {
+                    var minVersion = NuGet.Versioning.NuGetVersion.Parse(versionMin);
+                    var maxVersion = NuGet.Versioning.NuGetVersion.Parse(versionMax);
+
+                    return new ProjectFileDependency(projectName2, new NuGet.Versioning.VersionRange(minVersion, true, maxVersion, true));
+                }
+                else if (ParseProjectFileDependencyGroupTokens(versionRaw2, " < ", out String versionMin2, out String versionMax2))
+                {
+                    var minVersion = NuGet.Versioning.NuGetVersion.Parse(versionMin2);
+                    var maxVersion = NuGet.Versioning.NuGetVersion.Parse(versionMax2);
+                    return new ProjectFileDependency(projectName2, new NuGet.Versioning.VersionRange(minVersion, true, maxVersion, true));
+                }
+                else
+                {
+                    return new ProjectFileDependency(projectName2, MinVersionOrFloat(versionRaw2, false /* Do not include min version. */));
+                }
             }
             else if (ParseProjectFileDependencyGroupTokens(projectFileDependency, " <= ", out String projectName3, out String versionRaw3))
             {
@@ -183,18 +218,19 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget
             throw new Exception("Unable to parse project file dependency group, please contact support: " + projectFileDependency);
         }
 
-        private bool ParseProjectFileDependencyGroupTokens(string input, string tokens, out String projectName, out String projectVersion)
+        private bool ParseProjectFileDependencyGroupTokens(string input, string tokens, out String prefixString, out String projectVersion)
         {
             if (input.Contains(tokens))
             {
                 String[] pieces = input.Split(tokens);
-                projectName = pieces[0].Trim();
+                // this is often the project name but with some ranges it is the minimum version.
+                prefixString = pieces[0].Trim();
                 projectVersion = pieces[1].Trim();
                 return true;
             }
             else
             {
-                projectName = null;
+                prefixString = null;
                 projectVersion = null;
                 return false;
             }
@@ -208,7 +244,7 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget
                 return new NuGet.Versioning.VersionRange(minVersion, includeMin);
             }
             else
-            {
+            {  
                 return NuGet.Versioning.VersionRange.Parse(versionValueRaw, true);
             }
         }
