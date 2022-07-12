@@ -1,6 +1,4 @@
-﻿using System;
-using Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget;
-namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget.Test
+﻿namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget.Test
 {
     [TestClass]
     public class NugetLockFileResolverTest

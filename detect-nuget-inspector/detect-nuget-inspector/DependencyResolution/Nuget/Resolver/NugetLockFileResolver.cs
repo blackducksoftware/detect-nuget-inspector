@@ -218,18 +218,19 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget
             throw new Exception("Unable to parse project file dependency group, please contact support: " + projectFileDependency);
         }
 
-        private bool ParseProjectFileDependencyGroupTokens(string input, string tokens, out String projectName, out String projectVersion)
+        private bool ParseProjectFileDependencyGroupTokens(string input, string tokens, out String prefixString, out String projectVersion)
         {
             if (input.Contains(tokens))
             {
                 String[] pieces = input.Split(tokens);
-                projectName = pieces[0].Trim();
+                // this is often the project name but with some ranges it is the minimum version.
+                prefixString = pieces[0].Trim();
                 projectVersion = pieces[1].Trim();
                 return true;
             }
             else
             {
-                projectName = null;
+                prefixString = null;
                 projectVersion = null;
                 return false;
             }
