@@ -39,14 +39,21 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
         public JObject ExtractPackageSpecDependencies(string projectJsonPath, ProjectJsonResolver projectJsonResolver)
         {
             const string TargetKey = "dependencies";
+            JObject packageSpecDependencies = new JObject();
+            
             JObject jsonObject = JObject.Parse(File.ReadAllText(projectJsonPath));
 
             JObject dependenciesObject = projectJsonResolver.FindDependencies(jsonObject, TargetKey);
-
-            JObject packageSpecDependencies = new JObject();
-            packageSpecDependencies.Add(TargetKey, dependenciesObject);
-
-            return packageSpecDependencies;
+            
+            if (dependenciesObject is null)
+            {
+                throw new NullReferenceException($"In project.json file, '{TargetKey}' object is  not found.");
+            }
+            else
+            {
+                packageSpecDependencies.Add(TargetKey, dependenciesObject);
+                return packageSpecDependencies;
+            }
         }
 
         public PackageSpec CreatePackageSpecFromJson(string projectName, JObject packageSpecJsonObject)
