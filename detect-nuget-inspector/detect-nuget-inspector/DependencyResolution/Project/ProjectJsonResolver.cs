@@ -59,6 +59,7 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
         public PackageSpec CreatePackageSpecFromJson(string projectName, JObject packageSpecJsonObject)
         {
             string tempFilePath = Path.GetTempFileName();
+            
             File.WriteAllText(tempFilePath, packageSpecJsonObject.ToString());
 
             PackageSpec packageSpec = JsonPackageSpecReader.GetPackageSpec(projectName, tempFilePath);
@@ -86,7 +87,7 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                     }
                 }
             }
-
+            
             return null;
         }
     }
