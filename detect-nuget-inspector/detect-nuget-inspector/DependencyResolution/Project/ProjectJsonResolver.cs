@@ -87,7 +87,6 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                     }
                 }
             }
-            
             return null;
         }
     }
