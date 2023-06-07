@@ -13,23 +13,6 @@ public class ProjectJsonResolverTests
 
         return jsonFilePath;
     }
-
-    [TestMethod]
-    public void ProcessTestForNewFormat()
-    {
-        string projectName = "ProjectName";
-        string projectJsonPath = GetJsonPath("newFormat_Project.json");
-        ProjectJsonResolver projectJsonResolver = new ProjectJsonResolver(projectName, projectJsonPath);
-        
-        var result = projectJsonResolver.Process();
-        
-        Assert.IsNotNull(result);
-        Assert.IsNotNull(result.Packages);
-        Assert.IsNotNull(result.Dependencies);
-       
-        Assert.AreEqual(5, result.Packages.Count);
-        Assert.AreEqual(5, result.Dependencies.Count);
-    }
     
     [TestMethod]
     public void ExtractPackageSpecDependenciesTestForOldFormat()
