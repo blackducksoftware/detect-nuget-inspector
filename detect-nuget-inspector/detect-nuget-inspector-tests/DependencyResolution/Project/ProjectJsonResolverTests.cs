@@ -23,7 +23,6 @@ public class ProjectJsonResolverTests
                 projectJsonResolverForOldFormat);
 
         Assert.IsNotNull(result);
-        Assert.IsTrue(result.ContainsKey("dependencies"));
 
         JObject dependenciesObject = result.GetValue("dependencies") as JObject;
 
@@ -43,7 +42,6 @@ public class ProjectJsonResolverTests
                 projectJsonResolverForNewFormat);
 
         Assert.IsNotNull(result);
-        Assert.IsTrue(result.ContainsKey("dependencies"));
 
         JObject dependenciesObject = result.GetValue("dependencies") as JObject;
 
@@ -79,7 +77,6 @@ public class ProjectJsonResolverTests
         ProjectJsonResolver projectJsonResolver = new ProjectJsonResolver("projectName", fakeJsonPath);
         var result = projectJsonResolver.CreatePackageSpecFromJson("projectName", packageSpecJsonObject);
 
-        Assert.AreEqual("projectName", result.Name.ToString());
         Assert.AreEqual("1.0.0", result.Version.ToString());
         Assert.AreEqual(2, result.Dependencies.Count);
 

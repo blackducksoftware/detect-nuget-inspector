@@ -32,7 +32,6 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                 result.Packages.Add(set);
                 result.Dependencies.Add(set.PackageId);
             }
-
             return result;
         }
 
