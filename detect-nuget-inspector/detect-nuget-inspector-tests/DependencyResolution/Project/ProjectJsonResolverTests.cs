@@ -1,3 +1,4 @@
+using Microsoft.VisualStudio.TestPlatform.Common.Utilities;
 using Newtonsoft.Json.Linq;
 using Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project;
 
@@ -63,7 +64,30 @@ public class ProjectJsonResolverTests
 
         projectJsonResolver.ExtractPackageSpecDependencies(projectJsonPath, projectJsonResolver);
     }
-
+    [TestMethod]
+    public void CreatePackageSpecFromJsonTest()
+    {
+        JObject packageSpecJsonObject = JObject.Parse(@"{
+                ""dependencies"": {
+                    ""Dependency1"": ""1.2.3"",
+                    ""Dependency2"": ""4.5.6""
+                  }
+        }");
+        
+        string fakeJsonPath = GetJsonPath("fake.json");
+        File.WriteAllText(fakeJsonPath, "{}");
+        
+        ProjectJsonResolver projectJsonResolver = new ProjectJsonResolver("projectName", fakeJsonPath);
+        var result = projectJsonResolver.CreatePackageSpecFromJson("projectName", packageSpecJsonObject);
+        
+        Assert.AreEqual("projectName", result.Name.ToString());
+        Assert.AreEqual("1.0.0", result.Version.ToString());
+        Assert.AreEqual(2, result.Dependencies.Count);
+       
+        Assert.IsTrue(result.Dependencies.Any(dependency => dependency.Name == "Dependency2"));
+        
+        File.Delete(fakeJsonPath); 
+    }
     [TestMethod]
     public void ProcessTestForNewFormat()
     {
