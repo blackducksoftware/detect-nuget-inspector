@@ -4,7 +4,7 @@ using NuGet.ProjectModel;
 
 namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
 {
-    class ProjectJsonResolver : DependencyResolver
+    public class ProjectJsonResolver : DependencyResolver
     {
         private string ProjectName;
         private string ProjectJsonPath;
