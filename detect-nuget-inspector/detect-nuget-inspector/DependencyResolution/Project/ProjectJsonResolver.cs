@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using System.Text;
+using Newtonsoft.Json.Linq;
 using NuGet.LibraryModel;
 using NuGet.ProjectModel;
 
@@ -39,19 +40,31 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
         {
             const string TargetKey = "dependencies";
             JObject packageSpecDependencies = new JObject();
-            
-            JObject jsonObject = JObject.Parse(File.ReadAllText(projectJsonPath));
 
-            JObject dependenciesObject = projectJsonResolver.FindDependencies(jsonObject, TargetKey);
-            
-            if (dependenciesObject is null)
+            using (FileStream fileStream = File.OpenRead(projectJsonPath))
+            using (StreamReader streamReader = new StreamReader(fileStream))
             {
-                throw new NullReferenceException($"In project.json file, '{TargetKey}' object is  not found.");
-            }
-            else
-            {
-                packageSpecDependencies.Add(TargetKey, dependenciesObject);
-                return packageSpecDependencies;
+                StringBuilder fileContent = new StringBuilder();
+                char[] buffer = new char[4096]; 
+
+                int bytesRead;
+                while ((bytesRead = streamReader.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    fileContent.Append(buffer, 0, bytesRead);
+                }
+
+                JObject jsonObject = JObject.Parse(fileContent.ToString());
+                JObject dependenciesObject = projectJsonResolver.FindDependencies(jsonObject, TargetKey);
+
+                if (dependenciesObject is null)
+                {
+                    throw new NullReferenceException($"In project.json file, '{TargetKey}' object is not found.");
+                }
+                else
+                {
+                    packageSpecDependencies.Add(TargetKey, dependenciesObject);
+                    return packageSpecDependencies;
+                }
             }
         }
 
