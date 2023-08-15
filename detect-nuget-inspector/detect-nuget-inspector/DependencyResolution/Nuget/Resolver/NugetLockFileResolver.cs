@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-// testing
-
-namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget
+﻿namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget
 {
     public class NugetLockFileResolver
     {
         private NuGet.ProjectModel.LockFile LockFile;
+        
+        private static Dictionary<string, string> directDependenciesMap = new Dictionary<string, string>();
+
 
         public NugetLockFileResolver(NuGet.ProjectModel.LockFile lockFile)
         {
@@ -89,18 +85,18 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget
                     {
                         var id = dep.Id;
                         var vr = dep.VersionRange;
-                        //vr.Float.FloatBehavior = NuGet.Versioning.NuGetVersionFloatBehavior.
                         var lb = target.Libraries;
+                        
                         var bs = BestVersion(id, vr, lb);
-                        if (bs == null)
-                        {
-                            Console.WriteLine(dep.Id);
-                            bs = BestVersion(id, vr, lb);
-                        }
-                        else
+                       
+                        if (bs != null)
                         {
                             var depId = new Model.PackageId(id, bs.ToNormalizedString());
                             dependencies.Add(depId);
+                        }
+                        else
+                        {
+                            Console.WriteLine($"WARNING: Unable to resolve a version for the dependency {id}");
                         }
 
                     }
@@ -117,7 +113,19 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget
                 foreach (var dep in LockFile.PackageSpec.Dependencies)
                 {
                     var version = builder.GetBestVersion(dep.Name, dep.LibraryRange.VersionRange);
-                    result.Dependencies.Add(new Model.PackageId(dep.Name, version));
+                    if (version != null)
+                    {
+                        if (!directDependenciesMap.ContainsKey(dep.Name.ToLower()))
+                        {
+                            directDependenciesMap.Add(dep.Name.ToLower(),version);
+                        }
+                        
+                        result.Dependencies.Add(new Model.PackageId(dep.Name, version));
+                    }
+                    else
+                    {
+                        Console.WriteLine($"WARNING: Unable to resolve a version for the dependency {dep.Name}");
+                    }
                 }
             }
             else
@@ -127,7 +135,20 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget
                     foreach (var dep in framework.Dependencies)
                     {
                         var version = builder.GetBestVersion(dep.Name, dep.LibraryRange.VersionRange);
-                        result.Dependencies.Add(new Model.PackageId(dep.Name, version));
+                        
+                        if (version != null)
+                        {
+                            if (!directDependenciesMap.ContainsKey(dep.Name.ToLower()))
+                            {
+                                directDependenciesMap.Add(dep.Name.ToLower(),version);
+                            }
+                          
+                            result.Dependencies.Add(new Model.PackageId(dep.Name, version));
+                        }
+                        else
+                        {
+                            Console.WriteLine($"WARNING: Unable to resolve a version for the dependency {dep.Name}");
+                        }
                     }
                 }
             }
@@ -137,12 +158,19 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget
                 foreach (var projectFileDependency in projectFileDependencyGroup.Dependencies)
                 {
                     var projectDependencyParsed = ParseProjectFileDependencyGroup(projectFileDependency);
-                    var libraryVersion = BestLibraryVersion(projectDependencyParsed.GetName(), projectDependencyParsed.GetVersionRange(), LockFile.Libraries);
+                    var libraryVersion = BestLibraryVersion(projectDependencyParsed.GetName(),
+                        projectDependencyParsed.GetVersionRange(), LockFile.Libraries);
                     String version = null;
                     if (libraryVersion != null)
                     {
                         version = libraryVersion.ToNormalizedString();
                     }
+
+                    if (!directDependenciesMap.ContainsKey(projectDependencyParsed.GetName().ToLower()))
+                    {
+                        directDependenciesMap.Add(projectDependencyParsed.GetName().ToLower(),version);
+                    }
+                    
                     result.Dependencies.Add(new Model.PackageId(projectDependencyParsed.GetName(), version));
                 }
             }
@@ -154,6 +182,30 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget
             }
 
             result.Packages = builder.GetPackageList();
+
+            return  FilterUnresolvedDependencies(result);
+        }
+        
+        
+        public DependencyResult FilterUnresolvedDependencies(DependencyResult result)
+        {
+            result.Packages.RemoveAll(packageSet =>
+            {
+                return packageSet.PackageId != null
+                       && directDependenciesMap.ContainsKey(packageSet.PackageId.Name.ToLower())
+                       && !packageSet.PackageId.Version.Equals(directDependenciesMap[packageSet.PackageId.Name.ToLower()]);
+            });
+
+            result.Packages.ForEach(packageSet =>
+            {
+                packageSet.Dependencies.RemoveWhere(packageId =>
+                {
+                    return packageId != null
+                           && directDependenciesMap.ContainsKey(packageId.Name.ToLower())
+                           && !packageId.Version.Equals(directDependenciesMap[packageId.Name.ToLower()]);
+                });
+            });
+
             return result;
         }
 
