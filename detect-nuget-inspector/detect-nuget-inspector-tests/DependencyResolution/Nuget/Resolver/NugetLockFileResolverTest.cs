@@ -91,13 +91,6 @@
 
         }
 
-        [TestMethod]
-        public void TestDirectTransitiveVersionRule()
-        {
-            // get csproj with direct and transitive dependency version conflict from test resource file .. 
-            
-            // what we want to unit test is the dependencyMap?????
-        }
 
     }
 }

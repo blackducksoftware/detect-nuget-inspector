@@ -1,4 +1,6 @@
-﻿namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget
+﻿using Synopsys.Detect.Nuget.Inspector.Model;
+
+namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget
 {
     public class NugetLockFileResolver
     {
@@ -69,7 +71,7 @@
 
         public DependencyResult Process()
         {
-            var builder = new Model.PackageSetBuilder();
+            var packageSetBuilder = new Model.PackageSetBuilder();
             var result = new DependencyResult();
 
             foreach (var target in LockFile.Targets)
@@ -101,7 +103,7 @@
 
                     }
 
-                    builder.AddOrUpdatePackage(packageId, dependencies);
+                    packageSetBuilder.AddOrUpdatePackage(packageId, dependencies);
                 }
 
             }
@@ -112,20 +114,8 @@
             {
                 foreach (var dep in LockFile.PackageSpec.Dependencies)
                 {
-                    var version = builder.GetBestVersion(dep.Name, dep.LibraryRange.VersionRange);
-                    if (version != null)
-                    {
-                        if (!directDependenciesMap.ContainsKey(dep.Name.ToLower()))
-                        {
-                            directDependenciesMap.Add(dep.Name.ToLower(),version);
-                        }
-                        
-                        result.Dependencies.Add(new Model.PackageId(dep.Name, version));
-                    }
-                    else
-                    {
-                        Console.WriteLine($"WARNING: Unable to resolve a version for the dependency {dep.Name}");
-                    }
+                    var version = packageSetBuilder.GetBestVersion(dep.Name, dep.LibraryRange.VersionRange);
+                    saveDependency(dep.Name, version, result, packageSetBuilder);
                 }
             }
             else
@@ -134,21 +124,8 @@
                 {
                     foreach (var dep in framework.Dependencies)
                     {
-                        var version = builder.GetBestVersion(dep.Name, dep.LibraryRange.VersionRange);
-                        
-                        if (version != null)
-                        {
-                            if (!directDependenciesMap.ContainsKey(dep.Name.ToLower()))
-                            {
-                                directDependenciesMap.Add(dep.Name.ToLower(),version);
-                            }
-                          
-                            result.Dependencies.Add(new Model.PackageId(dep.Name, version));
-                        }
-                        else
-                        {
-                            Console.WriteLine($"WARNING: Unable to resolve a version for the dependency {dep.Name}");
-                        }
+                        var version = packageSetBuilder.GetBestVersion(dep.Name, dep.LibraryRange.VersionRange);
+                        saveDependency(dep.Name, version, result, packageSetBuilder);
                     }
                 }
             }
@@ -165,12 +142,7 @@
                     {
                         version = libraryVersion.ToNormalizedString();
                     }
-
-                    if (!directDependenciesMap.ContainsKey(projectDependencyParsed.GetName().ToLower()))
-                    {
-                        directDependenciesMap.Add(projectDependencyParsed.GetName().ToLower(),version);
-                    }
-                    
+                    accumulateDirectDependenciesAccrossSubProjects(projectDependencyParsed.GetName(), version);
                     result.Dependencies.Add(new Model.PackageId(projectDependencyParsed.GetName(), version));
                 }
             }
@@ -181,21 +153,22 @@
                 Console.WriteLine("Found no dependencies for lock file: " + LockFile.Path);
             }
 
-            result.Packages = builder.GetPackageList();
+            result.Packages = packageSetBuilder.GetPackageList();
 
-            return  FilterUnresolvedDependencies(result);
+            return  dismissTransitiveVersionConflictsOfDirectDependencies(result);
         }
-        
-        
-        public DependencyResult FilterUnresolvedDependencies(DependencyResult result)
+
+        private DependencyResult dismissTransitiveVersionConflictsOfDirectDependencies(DependencyResult result)
         {
+            // Remove conflicting transitive dependencies 
             result.Packages.RemoveAll(packageSet =>
             {
                 return packageSet.PackageId != null
                        && directDependenciesMap.ContainsKey(packageSet.PackageId.Name.ToLower())
                        && !packageSet.PackageId.Version.Equals(directDependenciesMap[packageSet.PackageId.Name.ToLower()]);
             });
-
+            
+            // Remove dependencies of transitive dependencies
             result.Packages.ForEach(packageSet =>
             {
                 packageSet.Dependencies.RemoveWhere(packageId =>
@@ -205,10 +178,7 @@
                            && !packageId.Version.Equals(directDependenciesMap[packageId.Name.ToLower()]);
                 });
             });
-
-            return result;
         }
-
 
 
         public ProjectFileDependency ParseProjectFileDependencyGroup(String projectFileDependency)
@@ -286,6 +256,28 @@
                 prefixString = null;
                 projectVersion = null;
                 return false;
+            }
+        }
+
+        private void saveDependency(String dependencyName, String dependencyVersion, DependencyResult result, PackageSetBuilder packageSetBuilder)
+        {             
+            if (dependencyVersion != null)
+            {
+                accumulateDirectDependenciesAccrossSubProjects(dependencyName, dependencyVersion);
+                result.Dependencies.Add(new Model.PackageId(dependencyName, dependencyVersion));
+            }
+            else
+            {
+                Console.WriteLine($"WARNING: Unable to resolve a version for the dependency {dependencyVersion}");
+            }
+        }
+
+        private void accumulateDirectDependenciesAccrossSubProjects(String name, String version)
+        {
+            name = name.ToLower();
+            if (!directDependenciesMap.ContainsKey(name))
+            {
+                directDependenciesMap.Add(name,version);
             }
         }
 
