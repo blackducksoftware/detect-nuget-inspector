@@ -21,7 +21,6 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
 
         public string Process()
         {
-            var tree = new NugetTreeResolver(NugetSearchService);
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
             XmlDocument doc = new XmlDocument();
