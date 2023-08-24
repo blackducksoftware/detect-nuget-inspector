@@ -73,6 +73,16 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
             solution.Type = "Solution";
             try
             {
+                HashSet<PackageId> packages = new HashSet<PackageId>();
+                string parentDirectory = Directory.GetParent(solution.SourcePath).FullName;
+                string solutionDirectoryBuildPropertyPath = CreateSolutionDirectoryBuildPropertyPath(parentDirectory);
+                bool solutionDirectoryBuildPropertyExists = !String.IsNullOrWhiteSpace(solutionDirectoryBuildPropertyPath) && File.Exists(solutionDirectoryBuildPropertyPath);
+                if (solutionDirectoryBuildPropertyExists)
+                {
+                    Console.WriteLine("Using solution directory build property file: " + solutionDirectoryBuildPropertyPath);
+                    var propertyLoader = new SolutionDirectoryBuildPropertyLoader(solutionDirectoryBuildPropertyPath, NugetService);
+                    packages = propertyLoader.Process();
+                }
 
                 List<ProjectFile> projectFiles = FindProjectFilesFromSolutionFile(Options.TargetPath, ExcludedProjectTypeGUIDs);
                 Console.WriteLine("Parsed Solution File");
@@ -131,6 +141,13 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                             InspectionResult projectResult = projectInspector.Inspect();
                             if (projectResult != null && projectResult.Containers != null)
                             {
+                                if (packages.Count > 0)
+                                {
+                                    foreach (Container container in projectResult.Containers)
+                                    {
+                                        container.Dependencies.AddRange(packages);
+                                    }
+                                }
                                 solution.Children.AddRange(projectResult.Containers);
                             }
                         }
@@ -206,6 +223,11 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
             }
 
             return projects;
+        }
+
+        private string CreateSolutionDirectoryBuildPropertyPath(string solutionDirectory)
+        {
+            return PathUtil.Combine(solutionDirectory, "Directory.Build.props");
         }
     }
 }

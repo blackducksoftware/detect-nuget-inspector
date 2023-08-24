@@ -344,7 +344,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
             if (projectNugetgPropertyExists)
             {
                 Console.WriteLine("Using project nuget property file: " + projectNugetgPropertyPath);
-                var xmlResolver = new ProjectNugetgPropertyResolver(projectNugetgPropertyPath, NugetService);
+                var xmlResolver = new ProjectNugetgPropertyLoader(projectNugetgPropertyPath, NugetService);
                 projectAssetsJsonPath = xmlResolver.Process();
             }
             return projectAssetsJsonPath;

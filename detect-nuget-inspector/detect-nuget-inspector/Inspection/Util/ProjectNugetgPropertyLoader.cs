@@ -5,15 +5,15 @@ using System.Text;
 using System.Xml;
 using Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget;
 
-namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
+namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
 {
-    class ProjectNugetgPropertyResolver : PropertyResolver
+    class ProjectNugetgPropertyLoader : PropertyLoader
     {
 
         private string PropertyPath;
         private NugetSearchService NugetSearchService;
 
-        public ProjectNugetgPropertyResolver(string propertyPath, NugetSearchService nugetSearchService)
+        public ProjectNugetgPropertyLoader(string propertyPath, NugetSearchService nugetSearchService)
         {
             PropertyPath = propertyPath;
             NugetSearchService = nugetSearchService;
