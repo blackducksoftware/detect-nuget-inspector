@@ -51,14 +51,15 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                 Options.ProjectJsonLockPath = CreateProjectJsonLockPath(Options.ProjectDirectory);
             }
 
-            if (String.IsNullOrWhiteSpace(Options.ProjectAssetsJsonPath))
-            {
-                Options.ProjectAssetsJsonPath = CreateProjectAssetsJsonPath(Options.ProjectDirectory);
-            }
-
             if (String.IsNullOrWhiteSpace(Options.ProjectName))
             {
                 Options.ProjectName = Path.GetFileNameWithoutExtension(Options.TargetPath);
+            }
+
+            Options.ProjectAssetsJsonPath = GetProjectAssetsJsonPathFromNugetProperty(Options.ProjectDirectory, Options.ProjectName, Options.ProjectAssetsJsonPath);
+            if (String.IsNullOrWhiteSpace(Options.ProjectAssetsJsonPath))
+            {
+                Options.ProjectAssetsJsonPath = CreateProjectAssetsJsonPath(Options.ProjectDirectory);
             }
 
             if (String.IsNullOrWhiteSpace(Options.ProjectUniqueId))
@@ -148,7 +149,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                 bool projectJsonExists = !String.IsNullOrWhiteSpace(Options.ProjectJsonPath) && File.Exists(Options.ProjectJsonPath);
                 bool projectJsonLockExists = !String.IsNullOrWhiteSpace(Options.ProjectJsonLockPath) && File.Exists(Options.ProjectJsonLockPath);
                 bool projectAssetsJsonExists = !String.IsNullOrWhiteSpace(Options.ProjectAssetsJsonPath) && File.Exists(Options.ProjectAssetsJsonPath);
-
+                
                 if (packagesConfigExists)
                 {
                     Console.WriteLine("Using packages config: " + Options.PackagesConfigPath);
@@ -331,5 +332,22 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
             return PathUtil.Combine(projectDirectory, "obj", "project.assets.json");
         }
 
+        private string CreateProjectNugetgPropertyPath(string projectDirectory, string projectName)
+        {
+            return PathUtil.Combine(projectDirectory, "obj", projectName + ".csproj.nuget.g.props");
+        }
+
+        private string GetProjectAssetsJsonPathFromNugetProperty(string projectDirectory, string projectName, string projectAssetsJsonPath)
+        {
+            string projectNugetgPropertyPath = CreateProjectNugetgPropertyPath(projectDirectory, projectName);
+            bool projectNugetgPropertyExists = !String.IsNullOrWhiteSpace(projectNugetgPropertyPath) && File.Exists(projectNugetgPropertyPath);
+            if (projectNugetgPropertyExists)
+            {
+                Console.WriteLine("Using project nuget property file: " + projectNugetgPropertyPath);
+                var xmlResolver = new ProjectNugetgPropertyLoader(projectNugetgPropertyPath, NugetService);
+                projectAssetsJsonPath = xmlResolver.Process();
+            }
+            return projectAssetsJsonPath;
+        }
     }
 }
