@@ -145,7 +145,10 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                                 {
                                     foreach (Container container in projectResult.Containers)
                                     {
-                                        container.Dependencies.AddRange(packages);
+                                        if (container != null && container.Dependencies != null)
+                                        {
+                                            container.Dependencies.AddRange(packages);
+                                        }
                                     }
                                 }
                                 solution.Children.AddRange(projectResult.Containers);
