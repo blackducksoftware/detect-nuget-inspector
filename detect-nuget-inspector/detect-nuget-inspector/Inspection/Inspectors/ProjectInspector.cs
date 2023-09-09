@@ -56,7 +56,6 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                 Options.ProjectName = Path.GetFileNameWithoutExtension(Options.TargetPath);
             }
 
-            Options.ProjectAssetsJsonPath = GetProjectAssetsJsonPathFromNugetProperty(Options.ProjectDirectory, Options.ProjectName, Options.ProjectAssetsJsonPath);
             if (String.IsNullOrWhiteSpace(Options.ProjectAssetsJsonPath))
             {
                 Options.ProjectAssetsJsonPath = CreateProjectAssetsJsonPath(Options.ProjectDirectory);
@@ -202,6 +201,16 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                         projectNode.Packages = xmlResult.Packages;
                         projectNode.Dependencies = xmlResult.Dependencies;
                     }
+                }
+
+                Options.ProjectAssetsJsonPath = GetProjectAssetsJsonPathFromNugetProperty(Options.ProjectDirectory, Options.ProjectName, Options.ProjectAssetsJsonPath);
+                if (!String.IsNullOrWhiteSpace(Options.ProjectAssetsJsonPath) && File.Exists(Options.ProjectAssetsJsonPath))
+                {
+                    Console.WriteLine("Using assets json file configured in property file: " + Options.ProjectAssetsJsonPath);
+                    var projectAssetsJsonResolver = new ProjectAssetsJsonResolver(Options.ProjectAssetsJsonPath);
+                    var projectAssetsJsonResult = projectAssetsJsonResolver.Process();
+                    projectNode.Packages.AddRange(projectAssetsJsonResult.Packages);
+                    projectNode.Dependencies.AddRange(projectAssetsJsonResult.Dependencies);
                 }
 
                 if (projectNode != null && projectNode.Dependencies != null && projectNode.Packages != null)
