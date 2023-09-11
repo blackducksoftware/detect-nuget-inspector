@@ -203,11 +203,13 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                     }
                 }
 
-                Options.ProjectAssetsJsonPath = GetProjectAssetsJsonPathFromNugetProperty(Options.ProjectDirectory, Options.ProjectName, Options.ProjectAssetsJsonPath);
-                if (!String.IsNullOrWhiteSpace(Options.ProjectAssetsJsonPath) && File.Exists(Options.ProjectAssetsJsonPath))
+                var projectAssetsJsonPathFromProperty = GetProjectAssetsJsonPathFromNugetProperty(Options.ProjectDirectory, Options.ProjectName);
+                if (!String.IsNullOrWhiteSpace(projectAssetsJsonPathFromProperty)
+                    && !String.Equals(projectAssetsJsonPathFromProperty, Options.ProjectAssetsJsonPath)
+                    && File.Exists(projectAssetsJsonPathFromProperty))
                 {
-                    Console.WriteLine("Using assets json file configured in property file: " + Options.ProjectAssetsJsonPath);
-                    var projectAssetsJsonResolver = new ProjectAssetsJsonResolver(Options.ProjectAssetsJsonPath);
+                    Console.WriteLine("Using assets json file configured in property file: " + projectAssetsJsonPathFromProperty);
+                    var projectAssetsJsonResolver = new ProjectAssetsJsonResolver(projectAssetsJsonPathFromProperty);
                     var projectAssetsJsonResult = projectAssetsJsonResolver.Process();
                     projectNode.Packages.AddRange(projectAssetsJsonResult.Packages);
                     projectNode.Dependencies.AddRange(projectAssetsJsonResult.Dependencies);
@@ -346,7 +348,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
             return PathUtil.Combine(projectDirectory, "obj", projectName + ".csproj.nuget.g.props");
         }
 
-        private string GetProjectAssetsJsonPathFromNugetProperty(string projectDirectory, string projectName, string projectAssetsJsonPath)
+        private string GetProjectAssetsJsonPathFromNugetProperty(string projectDirectory, string projectName)
         {
             string projectNugetgPropertyPath = CreateProjectNugetgPropertyPath(projectDirectory, projectName);
             bool projectNugetgPropertyExists = !String.IsNullOrWhiteSpace(projectNugetgPropertyPath) && File.Exists(projectNugetgPropertyPath);
@@ -354,9 +356,9 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
             {
                 Console.WriteLine("Using project nuget property file: " + projectNugetgPropertyPath);
                 var xmlResolver = new ProjectNugetgPropertyLoader(projectNugetgPropertyPath, NugetService);
-                projectAssetsJsonPath = xmlResolver.Process();
+                return xmlResolver.Process();
             }
-            return projectAssetsJsonPath;
+            return null;
         }
     }
 }
