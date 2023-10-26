@@ -191,6 +191,10 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                         Console.WriteLine("Reference resolver succeeded.");
                         projectNode.Packages = projectReferencesResult.Packages;
                         projectNode.Dependencies = projectReferencesResult.Dependencies;
+                        if (projectNode.Dependencies.Count == 0 && projectNode.Packages.Count == 0 && projectReferencesResult.BadParse)
+                        {
+                            throw new Exception("BadParseException: Will try redirecting to Project Inspector");
+                        }
                     }
                     else
                     {
@@ -200,10 +204,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                         projectNode.Version = xmlResult.ProjectVersion;
                         projectNode.Packages = xmlResult.Packages;
                         projectNode.Dependencies = xmlResult.Dependencies;
-                    }
-                    if (projectNode != null && projectNode.Dependencies != null && projectNode.Packages != null)
-                    {
-                        if (projectNode.Dependencies.Count == 0 && projectNode.Packages.Count == 0)
+                        if (projectNode.Dependencies.Count == 0 && projectNode.Packages.Count == 0 && xmlResult.BadParse)
                         {
                             throw new Exception("BadParseException: Will try redirecting to Project Inspector");
                         }

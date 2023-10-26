@@ -12,5 +12,6 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution
         public string ProjectVersion { get; set; } = null;
         public List<Model.PackageSet> Packages { get; set; } = new List<Model.PackageSet>();
         public List<Model.PackageId> Dependencies { get; set; } = new List<Model.PackageId>();
+        public bool BadParse { get; set; } = false;
     }
 }

@@ -24,7 +24,7 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
         {
             var result = new DependencyResult();
             var tree = new NugetTreeResolver(NugetSearchService);
-
+            
             // .NET core default version
             result.ProjectVersion = "1.0.0";
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
@@ -100,6 +100,11 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                 {
                     result.Dependencies.Add(package.PackageId);
                 }
+            }
+
+            if (packagesNodes.Count > 0 && result.Packages.Count == 0)
+            {
+                result.BadParse = true;
             }
 
             return result;
