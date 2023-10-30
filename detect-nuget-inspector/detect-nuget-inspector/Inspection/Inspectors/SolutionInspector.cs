@@ -139,7 +139,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                             }, NugetService);
 
                             InspectionResult projectResult = projectInspector.Inspect();
-                            if (projectResult != null && projectResult.Containers != null)
+                            if (projectResult != null && projectResult.Status == InspectionResult.ResultStatus.Success && projectResult.Containers != null)
                             {
                                 if (packages.Count > 0)
                                 {
@@ -152,6 +152,10 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                                     }
                                 }
                                 solution.Children.AddRange(projectResult.Containers);
+                            }
+                            else if (projectResult.Status == InspectionResult.ResultStatus.Error)
+                            {
+                                throw new Exception(projectResult.Exception.ToString());
                             }
                         }
                         catch (Exception ex)

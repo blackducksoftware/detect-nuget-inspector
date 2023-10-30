@@ -101,6 +101,11 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                     }
                 }
 
+                if (deps.Count > 0 && result.Packages.Count == 0)
+                {
+                    result.BadParse = true;
+                }
+
                 return result;
             }
             catch (InvalidProjectFileException e)
