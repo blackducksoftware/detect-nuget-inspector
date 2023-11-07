@@ -82,11 +82,6 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                     {
                         XmlAttribute include = attributes["Include"];
                         XmlAttribute version = attributes["Version"];
-                        if (include != null && version != null)
-                        {
-                            var dep = new NugetDependency(include.Value, NuGet.Versioning.VersionRange.Parse(version.Value));
-                            tree.Add(dep);
-                        }
                         String versionStr = null;
                         if (version == null)
                         {
