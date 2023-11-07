@@ -65,7 +65,17 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                             version = at.Value;
                         }
                     }
-
+                    if (String.IsNullOrWhiteSpace(version))
+                    {
+                        foreach (XmlNode node in packageNode.ChildNodes)
+                        {
+                            if (node.Name == "Version")
+                            {
+                                version = node.InnerXml;
+                                break;
+                            }
+                        }
+                    }
                     if (!String.IsNullOrWhiteSpace(name) && !String.IsNullOrWhiteSpace(version))
                     {
                         packageReferences.Add(new PackageId(name, version));
