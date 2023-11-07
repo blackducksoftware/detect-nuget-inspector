@@ -70,6 +70,23 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                     {
                         packageReferences.Add(new PackageId(name, version));
                     }
+
+                    if (String.IsNullOrWhiteSpace(version))
+                    {
+                        foreach (XmlNode node in packageNode.ChildNodes)
+                        {
+                            if (node.Name == "Version")
+                            {
+                                version = node.InnerXml;
+                                break;
+                            }
+                        }
+                        
+                        if (!String.IsNullOrWhiteSpace(name) && !String.IsNullOrWhiteSpace(version))
+                        {
+                            packageReferences.Add(new PackageId(name, version));
+                        }
+                    }
                 }
             }
             return packageReferences;
