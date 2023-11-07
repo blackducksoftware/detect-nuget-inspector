@@ -87,10 +87,9 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                             var dep = new NugetDependency(include.Value, NuGet.Versioning.VersionRange.Parse(version.Value));
                             tree.Add(dep);
                         }
+                        String versionStr = null;
                         if (version == null)
                         {
-                            String versionStr = null;
-
                             foreach (XmlNode node in package.ChildNodes)
                             {
                                 if (node.Name == "Version")
@@ -99,12 +98,15 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                                     break;
                                 }
                             }
-
-                            if (include != null && !String.IsNullOrWhiteSpace(versionStr))
-                            {
-                                var dep = new NugetDependency(include.Value, NuGet.Versioning.VersionRange.Parse(versionStr));
-                                tree.Add(dep);
-                            }
+                        }
+                        else
+                        {
+                            versionStr = version.Value;
+                        }
+                        if (include != null && !String.IsNullOrWhiteSpace(versionStr))
+                        {
+                            var dep = new NugetDependency(include.Value, NuGet.Versioning.VersionRange.Parse(versionStr));
+                            tree.Add(dep);
                         }
                     }
                 }

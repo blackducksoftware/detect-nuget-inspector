@@ -65,12 +65,6 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                             version = at.Value;
                         }
                     }
-
-                    if (!String.IsNullOrWhiteSpace(name) && !String.IsNullOrWhiteSpace(version))
-                    {
-                        packageReferences.Add(new PackageId(name, version));
-                    }
-
                     if (String.IsNullOrWhiteSpace(version))
                     {
                         foreach (XmlNode node in packageNode.ChildNodes)
@@ -81,11 +75,10 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                                 break;
                             }
                         }
-                        
-                        if (!String.IsNullOrWhiteSpace(name) && !String.IsNullOrWhiteSpace(version))
-                        {
-                            packageReferences.Add(new PackageId(name, version));
-                        }
+                    }
+                    if (!String.IsNullOrWhiteSpace(name) && !String.IsNullOrWhiteSpace(version))
+                    {
+                        packageReferences.Add(new PackageId(name, version));
                     }
                 }
             }
