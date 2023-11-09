@@ -6,81 +6,95 @@ using System.Xml;
 using Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget;
 using Synopsys.Detect.Nuget.Inspector.Model;
 
-namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors;
-
-public class SolutionDirectoryPackagesPropertyLoader : PackageReferenceLoader
+namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
 {
-
-    private String PropertyPath;
-    private NugetSearchService NugetSearchService;
-
-    public SolutionDirectoryPackagesPropertyLoader(String propertyPath, NugetSearchService nugetSearchService)
+    public class SolutionDirectoryPackagesPropertyLoader : PackageReferenceLoader
     {
-        PropertyPath = propertyPath;
-        NugetSearchService = nugetSearchService;
-    }
 
-    public HashSet<PackageId> Process()
-    {
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        private String PropertyPath;
+        private NugetSearchService NugetSearchService;
 
-        XmlDocument doc = new XmlDocument();
-        doc.Load(PropertyPath);
-
-        XmlNodeList manageCentralPackageVersion = doc.GetElementsByTagName("ManagePackageVersionsCentrally");
-        
-        HashSet<PackageId> packageReferences = new HashSet<PackageId>();
-        
-        if (CheckCentralPackageManagementEnabled(manageCentralPackageVersion))
+        public SolutionDirectoryPackagesPropertyLoader(String propertyPath, NugetSearchService nugetSearchService)
         {
-            XmlNodeList packageVersionNodes = doc.GetElementsByTagName("PackageVersion");
+            PropertyPath = propertyPath;
+            NugetSearchService = nugetSearchService;
+        }
 
-            if (packageVersionNodes != null && packageVersionNodes.Count > 0)
+        public HashSet<PackageId> Process()
+        {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            XmlDocument doc = new XmlDocument();
+            doc.Load(PropertyPath);
+
+            XmlNodeList manageCentralPackageVersion = doc.GetElementsByTagName("ManagePackageVersionsCentrally");
+
+            HashSet<PackageId> packageReferences = new HashSet<PackageId>();
+
+            if (CheckCentralPackageManagementEnabled(manageCentralPackageVersion))
             {
-                GetPackageVersions(packageVersionNodes, packageReferences);
+                XmlNodeList packageVersionNodes = doc.GetElementsByTagName("PackageVersion");
+
+                if (packageVersionNodes != null && packageVersionNodes.Count > 0)
+                {
+                    GetPackageVersions(packageVersionNodes, packageReferences);
+                }
+
+                XmlNodeList globalPackageReferenceNodes = doc.GetElementsByTagName("GlobalPackageReference");
+
+                if (globalPackageReferenceNodes != null && globalPackageReferenceNodes.Count > 0)
+                {
+                    GetPackageVersions(globalPackageReferenceNodes, packageReferences);
+                }
+            }
+            else
+            {
+                Console.WriteLine(
+                    "The user has disabled Central Package Management. Will skip parsing over this file ");
             }
 
-            XmlNodeList globalPackageReferenceNodes = doc.GetElementsByTagName("GlobalPackageReference");
-
-            if (globalPackageReferenceNodes != null && globalPackageReferenceNodes.Count > 0)
-            {
-                GetPackageVersions(globalPackageReferenceNodes,packageReferences);
-            } 
-        }
-        else
-        {
-            Console.WriteLine("The user has disabled Central Package Management. Will skip parsing over this file ");
+            return packageReferences;
         }
 
-        return packageReferences;
-    }
-
-    private bool CheckCentralPackageManagementEnabled(XmlNodeList manageCentralPackageVersion)
-    {
-        return manageCentralPackageVersion != null && manageCentralPackageVersion.Count > 0 &&
-               manageCentralPackageVersion.Item(0).InnerXml == "true";
-    }
-
-    private void GetPackageVersions(XmlNodeList packageVersionNodes, HashSet<PackageId> packageReferences)
-    {
-        foreach (XmlNode packageVersionNode in packageVersionNodes)
+        private bool CheckCentralPackageManagementEnabled(XmlNodeList manageCentralPackageVersion)
         {
-            if (packageVersionNode.NodeType != XmlNodeType.Comment)
-            {
-                XmlAttributeCollection attributes = packageVersionNode.Attributes;
-                String packageName = null;
-                String packageVersion = null;
+            return manageCentralPackageVersion != null && manageCentralPackageVersion.Count > 0 &&
+                   manageCentralPackageVersion.Item(0).InnerXml == "true";
+        }
 
-                foreach (XmlAttribute attribute in attributes)
+        private void GetPackageVersions(XmlNodeList packageNodes, HashSet<PackageId> packageReferences)
+        {
+            foreach (XmlNode packageNode in packageNodes)
+            {
+                if (packageNode.NodeType != XmlNodeType.Comment)
                 {
-                    if (attribute.LocalName.Contains("Include"))
+                    XmlAttributeCollection attributes = packageNode.Attributes;
+                    String packageName = null;
+                    String packageVersion = null;
+
+                    foreach (XmlAttribute attribute in attributes)
                     {
-                        packageName = attribute.Value;
+                        if (attribute.LocalName.Contains("Include"))
+                        {
+                            packageName = attribute.Value;
+                        }
+
+                        if (attribute.LocalName.Contains("Version"))
+                        {
+                            packageVersion = attribute.Value;
+                        }
                     }
 
-                    if (attribute.LocalName.Contains("Version"))
+                    if (String.IsNullOrWhiteSpace(packageVersion))
                     {
-                        packageVersion = attribute.Value;
+                        foreach (XmlNode node in packageNode.ChildNodes)
+                        {
+                            if (node.Name == "Version")
+                            {
+                                packageVersion = node.InnerXml;
+                                break;
+                            }
+                        }
                     }
 
                     if (!String.IsNullOrWhiteSpace(packageName) && !String.IsNullOrWhiteSpace(packageVersion))
@@ -89,6 +103,35 @@ public class SolutionDirectoryPackagesPropertyLoader : PackageReferenceLoader
                     }
                 }
             }
+        }
+
+
+        public bool GetCentralTransitivePinning()
+        {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            XmlDocument doc = new XmlDocument();
+            doc.Load(PropertyPath);
+            
+            XmlNodeList centralTransitivePinning = doc.GetElementsByTagName("CentralPackageTransitivePinningEnabled");
+
+            bool checkTransitivePinning = centralTransitivePinning != null && centralTransitivePinning.Count > 0 && centralTransitivePinning.Item(0).InnerXml == "true";
+
+            return checkTransitivePinning;
+        }
+        
+        public bool GetVersionOverrideEnabled()
+        {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            XmlDocument doc = new XmlDocument();
+            doc.Load(PropertyPath);
+            
+            XmlNodeList centralVersionOverride = doc.GetElementsByTagName("CentralPackageVersionOverrideEnabled");
+
+            bool checkVersionOverride = !(centralVersionOverride != null && centralVersionOverride.Count > 0 && centralVersionOverride.Item(0).InnerXml == "false");
+
+            return checkVersionOverride;
         }
     }
 }

@@ -13,12 +13,23 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
 
         private string ProjectPath;
         private NugetSearchService NugetSearchService;
+        private HashSet<PackageId> Packages;
+        private bool CheckVersionOverride;
 
         public ProjectXmlResolver(string projectPath, NugetSearchService nugetSearchService)
         {
             ProjectPath = projectPath;
             NugetSearchService = nugetSearchService;
         }
+        
+        public ProjectXmlResolver(string projectPath, NugetSearchService nugetSearchService, HashSet<PackageId> packages, bool checkVersionOverride)
+        {
+            ProjectPath = projectPath;
+            NugetSearchService = nugetSearchService;
+            Packages = packages;
+            CheckVersionOverride = checkVersionOverride;
+        }
+
 
         public DependencyResult Process()
         {
@@ -82,26 +93,67 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                     {
                         XmlAttribute include = attributes["Include"];
                         XmlAttribute version = attributes["Version"];
+                        XmlAttribute versionOverride = attributes["VersionOverride"];
                         String versionStr = null;
-                        if (version == null)
+                        String versionOverrideStr = null;
+                        
+                        if (versionOverride == null && version == null)
                         {
                             foreach (XmlNode node in package.ChildNodes)
                             {
+                                if (node.Name == "VersionOverride")
+                                {
+                                    versionOverrideStr = node.InnerXml;
+                                    break;
+                                }
                                 if (node.Name == "Version")
                                 {
                                     versionStr = node.InnerXml;
-                                    break;
                                 }
                             }
+                        }
+                        else if (versionOverride != null)
+                        {
+                            versionOverrideStr = versionOverride.Value;
                         }
                         else
                         {
                             versionStr = version.Value;
                         }
-                        if (include != null && !String.IsNullOrWhiteSpace(versionStr))
+
+                        if (include != null)
                         {
-                            var dep = new NugetDependency(include.Value, NuGet.Versioning.VersionRange.Parse(versionStr));
-                            tree.Add(dep);
+                            bool containsPkg = Packages.Any(pkg => pkg.Name.Equals(include.Value));
+                            if (!String.IsNullOrWhiteSpace(versionOverrideStr))
+                            {
+                                if (containsPkg && CheckVersionOverride)
+                                {
+                                    var dep = new NugetDependency(include.Value, NuGet.Versioning.VersionRange.Parse(versionOverrideStr));
+                                    tree.Add(dep);
+                                }
+                            }
+                            else if(!String.IsNullOrWhiteSpace(versionStr))
+                            {
+                                if (!containsPkg)
+                                {
+                                    var dep = new NugetDependency(include.Value, NuGet.Versioning.VersionRange.Parse(versionStr));
+                                    tree.Add(dep);
+                                }
+                            }
+                            else
+                            {
+                                if (!containsPkg)
+                                {
+                                    result.BadParse = true;
+                                }
+                                else
+                                {
+                                    PackageId pkg = Packages.First(pkg => pkg.Name.Equals(include.Value));
+                                    
+                                    var dep = new NugetDependency(include.Value, NuGet.Versioning.VersionRange.Parse(pkg.Version));
+                                    tree.Add(dep);
+                                }
+                            }
                         }
                     }
                 }
@@ -116,11 +168,6 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                 {
                     result.Dependencies.Add(package.PackageId);
                 }
-            }
-
-            if (packagesNodes.Count > 0 && result.Packages.Count == 0)
-            {
-                result.BadParse = true;
             }
 
             return result;

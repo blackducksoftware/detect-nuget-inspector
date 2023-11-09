@@ -21,6 +21,8 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
     {
         public ProjectInspectionOptions Options;
         public NugetSearchService NugetService;
+        private HashSet<PackageId> Packages;
+        private bool CheckVersionOverride;
 
         public ProjectInspector(ProjectInspectionOptions options, NugetSearchService nugetService)
         {
@@ -70,6 +72,59 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
             {
                 Options.VersionName = InspectorUtil.GetProjectAssemblyVersion(Options.ProjectDirectory);
             }
+        }
+        
+        public ProjectInspector(ProjectInspectionOptions options, NugetSearchService nugetService, HashSet<PackageId> packages, bool checkVersionOverride)
+        {
+            Options = options;
+            NugetService = nugetService;
+            if (Options == null)
+            {
+                throw new Exception("Must provide a valid options object.");
+            }
+
+            if (String.IsNullOrWhiteSpace(Options.ProjectDirectory))
+            {
+                Options.ProjectDirectory = Directory.GetParent(Options.TargetPath).FullName;
+            }
+
+            if (String.IsNullOrWhiteSpace(Options.PackagesConfigPath))
+            {
+                Options.PackagesConfigPath = CreateProjectPackageConfigPath(Options.ProjectDirectory);
+            }
+
+            if (String.IsNullOrWhiteSpace(Options.ProjectJsonPath))
+            {
+                Options.ProjectJsonPath = CreateProjectJsonPath(Options.ProjectDirectory);
+            }
+
+            if (String.IsNullOrWhiteSpace(Options.ProjectJsonLockPath))
+            {
+                Options.ProjectJsonLockPath = CreateProjectJsonLockPath(Options.ProjectDirectory);
+            }
+
+            if (String.IsNullOrWhiteSpace(Options.ProjectName))
+            {
+                Options.ProjectName = Path.GetFileNameWithoutExtension(Options.TargetPath);
+            }
+
+            if (String.IsNullOrWhiteSpace(Options.ProjectAssetsJsonPath))
+            {
+                Options.ProjectAssetsJsonPath = CreateProjectAssetsJsonPath(Options.ProjectDirectory);
+            }
+
+            if (String.IsNullOrWhiteSpace(Options.ProjectUniqueId))
+            {
+                Options.ProjectUniqueId = Path.GetFileNameWithoutExtension(Options.TargetPath);
+            }
+
+            if (String.IsNullOrWhiteSpace(Options.VersionName))
+            {
+                Options.VersionName = InspectorUtil.GetProjectAssemblyVersion(Options.ProjectDirectory);
+            }
+
+            Packages = packages;
+            CheckVersionOverride = checkVersionOverride;
         }
 
         public InspectionResult Inspect()
@@ -184,22 +239,34 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                 else
                 {
                     Console.WriteLine("Attempting reference resolver: " + Options.TargetPath);
-                    var referenceResolver = new ProjectReferenceResolver(Options.TargetPath, NugetService);
+                    ProjectReferenceResolver referenceResolver;
+                    if (Packages != null && Packages.Count > 0)
+                    {
+                        referenceResolver = new ProjectReferenceResolver(Options.TargetPath, NugetService, Packages, CheckVersionOverride);
+                    }
+                    else
+                    {
+                        referenceResolver = new ProjectReferenceResolver(Options.TargetPath, NugetService);
+                    }
                     var projectReferencesResult = referenceResolver.Process();
                     if (projectReferencesResult.Success)
                     {
                         Console.WriteLine("Reference resolver succeeded.");
                         projectNode.Packages = projectReferencesResult.Packages;
                         projectNode.Dependencies = projectReferencesResult.Dependencies;
-                        if (projectReferencesResult.BadParse)
-                        {
-                            throw new Exception("BadParseException: Will try redirecting to Project Inspector");
-                        }
                     }
                     else
                     {
                         Console.WriteLine("Using backup XML resolver.");
-                        var xmlResolver = new ProjectXmlResolver(Options.TargetPath, NugetService);
+                        ProjectXmlResolver xmlResolver;
+                        if (Packages != null && Packages.Count > 0)
+                        {
+                            xmlResolver = new ProjectXmlResolver(Options.TargetPath, NugetService, Packages, CheckVersionOverride);
+                        }
+                        else
+                        {
+                            xmlResolver = new ProjectXmlResolver(Options.TargetPath, NugetService);
+                        }
                         var xmlResult = xmlResolver.Process();
                         projectNode.Version = xmlResult.ProjectVersion;
                         projectNode.Packages = xmlResult.Packages;

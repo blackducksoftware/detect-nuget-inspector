@@ -73,25 +73,30 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
             solution.Type = "Solution";
             try
             {
-                HashSet<PackageId> packages = new HashSet<PackageId>();
+                HashSet<PackageId> packagesProperty = new HashSet<PackageId>();
                 string parentDirectory = Directory.GetParent(solution.SourcePath).FullName;
+                
+                string solutionDirectoryPackagesPropertyPath = CreateSolutionDirectoryPackagesPropertyPath(parentDirectory);
+                bool solutionDirectoryPackagesPropertyExists = !String.IsNullOrWhiteSpace(solutionDirectoryPackagesPropertyPath) && File.Exists(solutionDirectoryPackagesPropertyPath);
+                bool checkVersionOverride = true;
+                if (solutionDirectoryPackagesPropertyExists)
+                {
+                    Console.WriteLine("Using solution directory packages property file: " + solutionDirectoryPackagesPropertyPath);
+                    var packagePropertyLoader = new SolutionDirectoryPackagesPropertyLoader(solutionDirectoryPackagesPropertyPath, NugetService);
+                    packagesProperty = packagePropertyLoader.Process();
+                    checkVersionOverride = packagePropertyLoader.GetVersionOverrideEnabled();
+                }
+
+                HashSet<PackageId> buildPropertyPackages = new HashSet<PackageId>();
+                
                 string solutionDirectoryBuildPropertyPath = CreateSolutionDirectoryBuildPropertyPath(parentDirectory);
                 bool solutionDirectoryBuildPropertyExists = !String.IsNullOrWhiteSpace(solutionDirectoryBuildPropertyPath) && File.Exists(solutionDirectoryBuildPropertyPath);
                 if (solutionDirectoryBuildPropertyExists)
                 {
                     Console.WriteLine("Using solution directory build property file: " + solutionDirectoryBuildPropertyPath);
                     var propertyLoader = new SolutionDirectoryBuildPropertyLoader(solutionDirectoryBuildPropertyPath, NugetService);
-                    packages = propertyLoader.Process();
-                }
-
-                string solutionDirectoryPackagesPropertyPath = CreateSolutionDirectoryPackagesPropertyPath(parentDirectory);
-                bool solutionDirectoryPackagesPropertyExists = !String.IsNullOrWhiteSpace(solutionDirectoryPackagesPropertyPath) && File.Exists(solutionDirectoryPackagesPropertyPath);
-
-                if (solutionDirectoryPackagesPropertyExists)
-                {
-                    Console.WriteLine("Using solution directory packages property file: " + solutionDirectoryPackagesPropertyPath);
-                    var packagePropertyLoader = new SolutionDirectoryPackagesPropertyLoader(solutionDirectoryPackagesPropertyPath, NugetService);
-                    packages = packagePropertyLoader.Process();
+                    buildPropertyPackages = propertyLoader.Process();
+                    checkVersionOverride = propertyLoader.GetVersionOverrideEnabled();
                 }
                 
                 List<ProjectFile> projectFiles = FindProjectFilesFromSolutionFile(Options.TargetPath, ExcludedProjectTypeGUIDs);
@@ -146,18 +151,18 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                                 ProjectName = projectName,
                                 ProjectUniqueId = projectId,
                                 TargetPath = projectPath
-                            }, NugetService);
+                            }, NugetService, packagesProperty, checkVersionOverride);
 
                             InspectionResult projectResult = projectInspector.Inspect();
                             if (projectResult != null && projectResult.Status == InspectionResult.ResultStatus.Success && projectResult.Containers != null)
                             {
-                                if (packages.Count > 0)
+                                if (buildPropertyPackages.Count > 0)
                                 {
                                     foreach (Container container in projectResult.Containers)
                                     {
                                         if (container != null && container.Dependencies != null)
                                         {
-                                            container.Dependencies.AddRange(packages);
+                                            container.Dependencies.AddRange(buildPropertyPackages);
                                         }
                                     }
                                 }

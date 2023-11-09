@@ -15,12 +15,23 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
 
         private string ProjectPath;
         private NugetSearchService NugetSearchService;
+        private HashSet<PackageId> Packages;
+        private bool CheckVersionOverride;
+        
         public ProjectReferenceResolver(string projectPath, NugetSearchService nugetSearchService)
         {
             ProjectPath = projectPath;
             NugetSearchService = nugetSearchService;
         }
-
+        
+        public ProjectReferenceResolver(string projectPath, NugetSearchService nugetSearchService, HashSet<PackageId> packages, bool checkVersionOverride)
+        {
+            ProjectPath = projectPath;
+            NugetSearchService = nugetSearchService;
+            Packages = packages;
+            CheckVersionOverride = checkVersionOverride;
+        }
+        
         public DependencyResult Process()
         {
             try
@@ -32,11 +43,33 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                 List<NugetDependency> deps = new List<NugetDependency>();
                 foreach (ProjectItem reference in proj.GetItemsIgnoringCondition("PackageReference"))
                 {
+                    bool containsPkg = Packages.Any(pkg => pkg.Name.Equals(reference.EvaluatedInclude));
                     var versionMetaData = reference.Metadata.Where(meta => meta.Name == "Version").FirstOrDefault();
-                    if (versionMetaData != null)
+                    var versionOverrideMetaData = reference.Metadata.Where(meta => meta.Name == "VersionOverride").FirstOrDefault();
+                    if (containsPkg && versionOverrideMetaData != null && CheckVersionOverride)
+                    {
+                        NuGet.Versioning.VersionRange version;
+                        if (NuGet.Versioning.VersionRange.TryParse(versionOverrideMetaData.EvaluatedValue, out version))
+                        {
+                            var dep = new NugetDependency(reference.EvaluatedInclude, version);
+                            deps.Add(dep);
+                        }
+                    }
+                    else if (versionMetaData != null && !containsPkg)
                     {
                         NuGet.Versioning.VersionRange version;
                         if (NuGet.Versioning.VersionRange.TryParse(versionMetaData.EvaluatedValue, out version))
+                        {
+                            var dep = new NugetDependency(reference.EvaluatedInclude, version);
+                            deps.Add(dep);
+                        }
+                    }
+                    else if (containsPkg)
+                    {
+                        PackageId pkg = Packages.First(pkg => pkg.Name.Equals(reference.EvaluatedInclude));
+                        
+                        NuGet.Versioning.VersionRange version;
+                        if (NuGet.Versioning.VersionRange.TryParse(pkg.Version, out version))
                         {
                             var dep = new NugetDependency(reference.EvaluatedInclude, version);
                             deps.Add(dep);
@@ -99,11 +132,6 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                     {
                         result.Dependencies.Add(package.PackageId);
                     }
-                }
-
-                if (deps.Count > 0 && result.Packages.Count == 0)
-                {
-                    result.BadParse = true;
                 }
 
                 return result;
