@@ -123,7 +123,7 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
 
                         if (include != null)
                         {
-                            bool containsPkg = Packages.Any(pkg => pkg.Name.Equals(include.Value));
+                            bool containsPkg = Packages != null && Packages.Any(pkg => pkg.Name.Equals(include.Value));
                             if (!String.IsNullOrWhiteSpace(versionOverrideStr))
                             {
                                 if (containsPkg && CheckVersionOverride)

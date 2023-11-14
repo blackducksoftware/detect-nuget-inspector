@@ -122,7 +122,7 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                 {
                     Success = true,
                     Packages = tree.GetPackageList(),
-                    Dependencies = new List<PackageId>(),
+                    Dependencies = new List<PackageId>()
                 };
 
                 foreach (var package in result.Packages)
