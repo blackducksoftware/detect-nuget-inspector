@@ -13,11 +13,13 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
 
         private string PropertyPath;
         private NugetSearchService NugetSearchService;
+        private bool CheckVersionOverride;
 
-        public SolutionDirectoryBuildPropertyLoader(string propertyPath, NugetSearchService nugetSearchService)
+        public SolutionDirectoryBuildPropertyLoader(string propertyPath, NugetSearchService nugetSearchService, bool checkVersionOverride)
         {
             PropertyPath = propertyPath;
             NugetSearchService = nugetSearchService;
+            CheckVersionOverride = checkVersionOverride;
         }
 
         public HashSet<PackageId> Process()
@@ -86,7 +88,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                         }
                     }
 
-                    string versionStr = !String.IsNullOrWhiteSpace(versionOverride) ? versionOverride : version;
+                    string versionStr = CheckVersionOverride && GetVersionOverrideEnabled() && !String.IsNullOrWhiteSpace(versionOverride) ? versionOverride : version;
                     if (!String.IsNullOrWhiteSpace(name) && !String.IsNullOrWhiteSpace(versionStr))
                     {
                         packageReferences.Add(new PackageId(name, versionStr));
@@ -94,20 +96,6 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                 }
             }
             return packageReferences;
-        }
-        
-        public bool GetCentralTransitivePinning()
-        {
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            XmlDocument doc = new XmlDocument();
-            doc.Load(PropertyPath);
-            
-            XmlNodeList centralTransitivePinning = doc.GetElementsByTagName("CentralPackageTransitivePinningEnabled");
-
-            bool checkTransitivePinning = !(centralTransitivePinning != null && centralTransitivePinning.Count > 0 && centralTransitivePinning.Item(0).InnerXml == "false");
-
-            return checkTransitivePinning;
         }
         
         public bool GetVersionOverrideEnabled()
@@ -119,7 +107,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
             
             XmlNodeList centralVersionOverride = doc.GetElementsByTagName("CentralPackageVersionOverrideEnabled");
 
-            bool checkVersionOverride = centralVersionOverride != null && centralVersionOverride.Count > 0 && centralVersionOverride.Item(0).InnerXml == "true";
+            bool checkVersionOverride = !(centralVersionOverride != null && centralVersionOverride.Count > 0 && centralVersionOverride.Item(0).InnerXml == "false");
 
             return checkVersionOverride;
         }

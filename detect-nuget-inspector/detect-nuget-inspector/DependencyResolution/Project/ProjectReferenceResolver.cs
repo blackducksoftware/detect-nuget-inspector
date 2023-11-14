@@ -43,7 +43,7 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                 List<NugetDependency> deps = new List<NugetDependency>();
                 foreach (ProjectItem reference in proj.GetItemsIgnoringCondition("PackageReference"))
                 {
-                    bool containsPkg = Packages.Any(pkg => pkg.Name.Equals(reference.EvaluatedInclude));
+                    bool containsPkg = Packages != null && Packages.Any(pkg => pkg.Name.Equals(reference.EvaluatedInclude));
                     var versionMetaData = reference.Metadata.Where(meta => meta.Name == "Version").FirstOrDefault();
                     var versionOverrideMetaData = reference.Metadata.Where(meta => meta.Name == "VersionOverride").FirstOrDefault();
                     if (containsPkg && versionOverrideMetaData != null && CheckVersionOverride)
@@ -122,7 +122,7 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                 {
                     Success = true,
                     Packages = tree.GetPackageList(),
-                    Dependencies = new List<PackageId>()
+                    Dependencies = new List<PackageId>(),
                 };
 
                 foreach (var package in result.Packages)

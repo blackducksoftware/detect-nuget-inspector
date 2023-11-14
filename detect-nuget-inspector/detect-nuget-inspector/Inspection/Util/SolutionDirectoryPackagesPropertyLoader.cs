@@ -30,21 +30,23 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
             XmlNodeList manageCentralPackageVersion = doc.GetElementsByTagName("ManagePackageVersionsCentrally");
 
             HashSet<PackageId> packageReferences = new HashSet<PackageId>();
-
+            
             if (CheckCentralPackageManagementEnabled(manageCentralPackageVersion))
             {
+                XmlNodeList importNodes = doc.GetElementsByTagName("Import");
+
+                var propsFilePath = GetPropsFilePath(importNodes);
+
+                if (!String.IsNullOrWhiteSpace(propsFilePath) && !propsFilePath.Equals("..\\Directory.Packages.props"))
+                {
+                    Console.WriteLine("Import of Directory.Packages.props file from a non-standard location.");
+                }
+                
                 XmlNodeList packageVersionNodes = doc.GetElementsByTagName("PackageVersion");
 
                 if (packageVersionNodes != null && packageVersionNodes.Count > 0)
                 {
-                    GetPackageVersions(packageVersionNodes, packageReferences);
-                }
-
-                XmlNodeList globalPackageReferenceNodes = doc.GetElementsByTagName("GlobalPackageReference");
-
-                if (globalPackageReferenceNodes != null && globalPackageReferenceNodes.Count > 0)
-                {
-                    GetPackageVersions(globalPackageReferenceNodes, packageReferences);
+                    packageReferences.UnionWith(GetPackageVersions(packageVersionNodes));
                 }
             }
             else
@@ -58,12 +60,16 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
 
         private bool CheckCentralPackageManagementEnabled(XmlNodeList manageCentralPackageVersion)
         {
-            return manageCentralPackageVersion != null && manageCentralPackageVersion.Count > 0 &&
-                   manageCentralPackageVersion.Item(0).InnerXml == "true";
+            if (manageCentralPackageVersion != null && manageCentralPackageVersion.Count > 0)
+            {
+                return manageCentralPackageVersion.Item(0).InnerXml == "true";
+            }
+            return true;
         }
 
-        private void GetPackageVersions(XmlNodeList packageNodes, HashSet<PackageId> packageReferences)
+        private HashSet<PackageId> GetPackageVersions(XmlNodeList packageNodes)
         {
+            HashSet<PackageId> packages = new HashSet<PackageId>();
             foreach (XmlNode packageNode in packageNodes)
             {
                 if (packageNode.NodeType != XmlNodeType.Comment)
@@ -99,25 +105,12 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
 
                     if (!String.IsNullOrWhiteSpace(packageName) && !String.IsNullOrWhiteSpace(packageVersion))
                     {
-                        packageReferences.Add(new PackageId(packageName, packageVersion));
+                        packages.Add(new PackageId(packageName, packageVersion));
                     }
                 }
             }
-        }
 
-
-        public bool GetCentralTransitivePinning()
-        {
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            XmlDocument doc = new XmlDocument();
-            doc.Load(PropertyPath);
-            
-            XmlNodeList centralTransitivePinning = doc.GetElementsByTagName("CentralPackageTransitivePinningEnabled");
-
-            bool checkTransitivePinning = centralTransitivePinning != null && centralTransitivePinning.Count > 0 && centralTransitivePinning.Item(0).InnerXml == "true";
-
-            return checkTransitivePinning;
+            return packages;
         }
         
         public bool GetVersionOverrideEnabled()
@@ -132,6 +125,47 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
             bool checkVersionOverride = !(centralVersionOverride != null && centralVersionOverride.Count > 0 && centralVersionOverride.Item(0).InnerXml == "false");
 
             return checkVersionOverride;
+        }
+
+        public HashSet<PackageId> GetGlobalPackageReferences()
+        {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            XmlDocument doc = new XmlDocument();
+            doc.Load(PropertyPath);
+            
+            XmlNodeList manageCentralPackageVersion = doc.GetElementsByTagName("ManagePackageVersionsCentrally");
+
+            HashSet<PackageId> globalPackageReferences = new HashSet<PackageId>();
+            
+            XmlNodeList globalPackageReferenceNodes = doc.GetElementsByTagName("GlobalPackageReference");
+
+            if (CheckCentralPackageManagementEnabled(manageCentralPackageVersion) && globalPackageReferenceNodes != null && globalPackageReferenceNodes.Count > 0)
+            {
+               globalPackageReferences = GetPackageVersions(globalPackageReferenceNodes);
+            }
+
+            return globalPackageReferences;
+        }
+
+        public string GetPropsFilePath(XmlNodeList importNodes)
+        {
+            if (importNodes != null && importNodes.Count > 0)
+            {
+                foreach (XmlNode node in importNodes)
+                {
+                    XmlAttributeCollection attributes = node.Attributes;
+
+                    foreach (XmlAttribute attr in attributes)
+                    {
+                        if (attr.LocalName.Contains("Project"))
+                        {
+                            return attr.Value;
+                        }
+                    }
+                }
+            }
+            return null;
         }
     }
 }

@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Build.Graph;
+using NuGet.Packaging;
 using Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget;
 using Synopsys.Detect.Nuget.Inspector.Inspection.Util;
 using Synopsys.Detect.Nuget.Inspector.Model;
@@ -12,10 +14,6 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
 {
     class SolutionInspector : IInspector
     {
-        private List<string> ExcludedProjectTypeGUIDs = new List<string>() {
-            "{2150E333-8FDC-42A3-9474-1A3956D46DE8}"    //Ignore 'Solution Folders'
-        };
-
         public SolutionInspectionOptions Options;
         public NugetSearchService NugetService;
 
@@ -74,6 +72,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
             try
             {
                 HashSet<PackageId> packagesProperty = new HashSet<PackageId>();
+                HashSet<PackageId> globalPackageReferences = new HashSet<PackageId>();
                 string parentDirectory = Directory.GetParent(solution.SourcePath).FullName;
                 
                 string solutionDirectoryPackagesPropertyPath = CreateSolutionDirectoryPackagesPropertyPath(parentDirectory);
@@ -84,6 +83,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                     Console.WriteLine("Using solution directory packages property file: " + solutionDirectoryPackagesPropertyPath);
                     var packagePropertyLoader = new SolutionDirectoryPackagesPropertyLoader(solutionDirectoryPackagesPropertyPath, NugetService);
                     packagesProperty = packagePropertyLoader.Process();
+                    globalPackageReferences = packagePropertyLoader.GetGlobalPackageReferences();
                     checkVersionOverride = packagePropertyLoader.GetVersionOverrideEnabled();
                 }
 
@@ -94,12 +94,12 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                 if (solutionDirectoryBuildPropertyExists)
                 {
                     Console.WriteLine("Using solution directory build property file: " + solutionDirectoryBuildPropertyPath);
-                    var propertyLoader = new SolutionDirectoryBuildPropertyLoader(solutionDirectoryBuildPropertyPath, NugetService);
+                    var propertyLoader = new SolutionDirectoryBuildPropertyLoader(solutionDirectoryBuildPropertyPath, NugetService, checkVersionOverride);
                     buildPropertyPackages = propertyLoader.Process();
                     checkVersionOverride = propertyLoader.GetVersionOverrideEnabled();
                 }
                 
-                List<ProjectFile> projectFiles = FindProjectFilesFromSolutionFile(Options.TargetPath, ExcludedProjectTypeGUIDs);
+                List<ProjectFile> projectFiles = FindProjectFilesFromSolutionFile(Options.TargetPath);
                 Console.WriteLine("Parsed Solution File");
                 if (projectFiles.Count > 0)
                 {
@@ -129,10 +129,18 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                                 Console.WriteLine($"Duplicate project name '{projectId}' found. Using GUID instead.");
                                 projectId = project.GUID;
                             }
+
+                            Boolean directoryPackagesExists = false;
                             Boolean projectFileExists = false;
                             try
                             {
                                 projectFileExists = File.Exists(projectPath);
+                                if (!projectFileExists)
+                                {
+                                    projectPath = PathUtil.Combine(projectPath, "Directory.Packages.props");
+                                    directoryPackagesExists = File.Exists(projectPath);
+                                }
+                                
                             }
                             catch (Exception e)
                             {
@@ -140,7 +148,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                                 continue;
                             }
 
-                            if (!projectFileExists)
+                            if (!projectFileExists && !directoryPackagesExists)
                             {
                                 Console.WriteLine("Skipping non-existent project path: " + projectPath);
                                 continue;
@@ -156,14 +164,21 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                             InspectionResult projectResult = projectInspector.Inspect();
                             if (projectResult != null && projectResult.Status == InspectionResult.ResultStatus.Success && projectResult.Containers != null)
                             {
-                                if (buildPropertyPackages.Count > 0)
+                                foreach (Container container in projectResult.Containers)
                                 {
-                                    foreach (Container container in projectResult.Containers)
+                                    if (container != null && container.Dependencies != null && buildPropertyPackages.Count > 0)
                                     {
-                                        if (container != null && container.Dependencies != null)
-                                        {
-                                            container.Dependencies.AddRange(buildPropertyPackages);
-                                        }
+                                        container.Dependencies.AddRange(buildPropertyPackages);
+                                    }
+                                    
+                                    if (container != null && container.Dependencies != null && globalPackageReferences.Count > 0)
+                                    {
+                                        container.Dependencies.AddRange(globalPackageReferences);
+                                    }
+
+                                    if (container != null && container.PackagePropertyPackages != null && container.PackagePropertyPackages.Count > 0)
+                                    {
+                                        packagesProperty.AddRange(container.PackagePropertyPackages);
                                     }
                                 }
                                 solution.Children.AddRange(projectResult.Containers);
@@ -217,7 +232,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
             return solution;
         }
 
-        private List<ProjectFile> FindProjectFilesFromSolutionFile(string solutionPath, List<string> excludedTypeGUIDs)
+        private List<ProjectFile> FindProjectFilesFromSolutionFile(string solutionPath)
         {
             var projects = new List<ProjectFile>();
             // Visual Studio right now is not resolving the Microsoft.Build.Construction.SolutionFile type
@@ -230,11 +245,8 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                 {
                     ProjectFile file = ProjectFile.Parse(projectText);
                     if (file != null)
-                    {
-                        if (!excludedTypeGUIDs.Contains(file.TypeGUID))
-                        {
-                            projects.Add(file);
-                        }
+                    { 
+                        projects.Add(file);
                     }
                 }
                 Console.WriteLine("Nuget Inspector found {0} project elements, processed {1} project elements for data", projectLines.Count(), projects.Count());
