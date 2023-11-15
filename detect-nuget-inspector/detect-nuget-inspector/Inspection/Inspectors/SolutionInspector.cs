@@ -121,7 +121,31 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                         try
                         {
                             string projectRelativePath = project.Path;
-                            string projectPath = PathUtil.Combine(solutionDirectory, projectRelativePath);
+                            string projectPath = null;
+                            Boolean directoryPackagesExists = false;
+                            if (projectRelativePath.Contains("Directory.Packages.props"))
+                            {
+                                string parentPath = solutionDirectory;
+                                bool fileNotFound = true;
+                                while (fileNotFound)
+                                {
+                                    parentPath =
+                                        parentPath.Substring(0, parentPath.LastIndexOf("/"));
+                                    string checkFile = Path.Combine(parentPath, projectRelativePath);
+                                    if (parentPath.Equals("/"))
+                                    {
+                                        Console.WriteLine("The Path provided in the sln file is wrong, will skip parsing over this file");
+                                        break;
+                                    }
+                                    directoryPackagesExists = File.Exists(checkFile);
+                                    fileNotFound = !directoryPackagesExists;
+                                    projectPath = checkFile;
+                                }
+                            }
+                            else
+                            {
+                                projectPath = PathUtil.Combine(solutionDirectory, projectRelativePath);
+                            }
                             string projectName = project.Name;
                             string projectId = projectName;
                             if (duplicateNames.Contains(projectId))
@@ -129,13 +153,11 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                                 Console.WriteLine($"Duplicate project name '{projectId}' found. Using GUID instead.");
                                 projectId = project.GUID;
                             }
-
-                            Boolean directoryPackagesExists = false;
                             Boolean projectFileExists = false;
                             try
                             {
                                 projectFileExists = File.Exists(projectPath);
-                                if (!projectFileExists)
+                                if (!projectFileExists && !directoryPackagesExists)
                                 {
                                     projectPath = PathUtil.Combine(projectPath, "Directory.Packages.props");
                                     directoryPackagesExists = File.Exists(projectPath);
@@ -241,6 +263,15 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
             {
                 List<string> contents = new List<string>(File.ReadAllLines(solutionPath));
                 var projectLines = contents.FindAll(text => text.StartsWith("Project("));
+                var projectDirectoryPackagesLines = contents.FindAll(text => text.Contains("Directory.Packages.props"));
+                foreach (string projectText in projectDirectoryPackagesLines)
+                {
+                    if (!projectText.Equals("\t\tDirectory.Packages.props = Directory.Packages.props"))
+                    {
+                        ProjectFile file = ProjectFile.Parse(projectText);
+                        projects.Add(file);
+                    }
+                }
                 foreach (string projectText in projectLines)
                 {
                     ProjectFile file = ProjectFile.Parse(projectText);
