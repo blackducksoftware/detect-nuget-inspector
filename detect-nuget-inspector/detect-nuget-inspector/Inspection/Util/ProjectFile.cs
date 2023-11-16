@@ -28,7 +28,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
             {
                 file.TypeGUID = MiddleOfString(leftSide, "Project(\"".Length, "\")".Length);
             }
-            else
+            else if(rightSide.Contains("Directory.Packages.props"))
             {
                 rightSide = rightSide.Split("..\\")[1];
                 file.Path = rightSide.Replace("\\", "/");

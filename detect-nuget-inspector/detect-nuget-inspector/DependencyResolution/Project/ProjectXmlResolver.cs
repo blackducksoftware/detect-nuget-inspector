@@ -142,11 +142,7 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                             }
                             else
                             {
-                                if (!containsPkg)
-                                {
-                                    result.BadParse = true;
-                                }
-                                else
+                                if(containsPkg)
                                 {
                                     PackageId pkg = Packages.First(pkg => pkg.Name.Equals(include.Value));
                                     

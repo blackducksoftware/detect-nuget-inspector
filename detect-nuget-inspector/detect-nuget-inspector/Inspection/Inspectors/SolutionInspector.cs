@@ -269,7 +269,10 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                     if (!projectText.Equals("\t\tDirectory.Packages.props = Directory.Packages.props"))
                     {
                         ProjectFile file = ProjectFile.Parse(projectText);
-                        projects.Add(file);
+                        if (file != null)
+                        { 
+                            projects.Add(file);
+                        }
                     }
                 }
                 foreach (string projectText in projectLines)

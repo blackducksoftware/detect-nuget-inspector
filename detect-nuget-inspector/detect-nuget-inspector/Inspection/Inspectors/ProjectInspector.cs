@@ -291,10 +291,6 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                         projectNode.Version = xmlResult.ProjectVersion;
                         projectNode.Packages = xmlResult.Packages;
                         projectNode.Dependencies = xmlResult.Dependencies;
-                        if (xmlResult.BadParse)
-                        {
-                            throw new Exception("BadParseException: Will try redirecting to Project Inspector");
-                        }
                     }
                 }
 
