@@ -12,12 +12,10 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
     {
 
         private String PropertyPath;
-        private NugetSearchService NugetSearchService;
 
-        public SolutionDirectoryPackagesPropertyLoader(String propertyPath, NugetSearchService nugetSearchService)
+        public SolutionDirectoryPackagesPropertyLoader(String propertyPath)
         {
             PropertyPath = propertyPath;
-            NugetSearchService = nugetSearchService;
         }
 
         public HashSet<PackageId> Process()
@@ -51,8 +49,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
             }
             else
             {
-                Console.WriteLine(
-                    "The user has disabled Central Package Management. Will skip parsing over this file ");
+                Console.WriteLine("The user has disabled Central Package Management. Will skip parsing over this file");
             }
 
             return packageReferences;

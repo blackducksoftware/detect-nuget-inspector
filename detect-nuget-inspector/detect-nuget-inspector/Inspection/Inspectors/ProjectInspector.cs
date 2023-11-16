@@ -220,7 +220,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                 {
                     Console.WriteLine("Using Central Package Management: " + Options.DirectoryPackagesPropsPath);
                     var packagesPropertyLoader =
-                        new SolutionDirectoryPackagesPropertyLoader(Options.DirectoryPackagesPropsPath, NugetService);
+                        new SolutionDirectoryPackagesPropertyLoader(Options.DirectoryPackagesPropsPath);
                     projectNode.PackagePropertyPackages = packagesPropertyLoader.Process();
                     projectNode.Dependencies = packagesPropertyLoader.GetGlobalPackageReferences().ToList();
                 }

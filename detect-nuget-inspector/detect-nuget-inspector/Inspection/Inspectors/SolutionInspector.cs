@@ -81,7 +81,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                 if (solutionDirectoryPackagesPropertyExists)
                 {
                     Console.WriteLine("Using solution directory packages property file: " + solutionDirectoryPackagesPropertyPath);
-                    var packagePropertyLoader = new SolutionDirectoryPackagesPropertyLoader(solutionDirectoryPackagesPropertyPath, NugetService);
+                    var packagePropertyLoader = new SolutionDirectoryPackagesPropertyLoader(solutionDirectoryPackagesPropertyPath);
                     packagesProperty = packagePropertyLoader.Process();
                     globalPackageReferences = packagePropertyLoader.GetGlobalPackageReferences();
                     checkVersionOverride = packagePropertyLoader.GetVersionOverrideEnabled();
