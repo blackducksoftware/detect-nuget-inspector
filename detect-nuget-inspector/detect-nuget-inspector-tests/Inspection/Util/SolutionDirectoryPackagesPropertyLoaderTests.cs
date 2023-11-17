@@ -27,10 +27,11 @@ namespace detect_nuget_inspector_tests.Inspection.Util
             bool versionOverrideEnabled = solutionDirectoryPackagesPropertyLoader.GetVersionOverrideEnabled();
 
             Assert.IsNotNull(packageVersions);
-            Assert.AreEqual(20, packageVersions.Count);
+            Assert.AreEqual(22, packageVersions.Count);
             Assert.AreEqual(true,versionOverrideEnabled);
             Assert.AreEqual("2.88.6",packageVersions.First(pkg => pkg.Name.Equals("SkiaSharp.Views.Uno.WinUI")).Version);
-            Assert.AreEqual("5.0.19",packageVersions.First(pkg => pkg.Name.Equals("Uno.WinUI.WebAssembly")).Version);
+            Assert.AreEqual("4.6.0",packageVersions.First(pkg => pkg.Name.Equals("Microsoft.CodeAnalysis.CSharp")).Version);
+            Assert.AreEqual("1.1.2-beta1.23357.1",packageVersions.First(pkg => pkg.Name.Equals("Microsoft.CodeAnalysis.CSharp.CodeFix.Testing.XUnit")).Version);
         }
 
         [TestMethod]

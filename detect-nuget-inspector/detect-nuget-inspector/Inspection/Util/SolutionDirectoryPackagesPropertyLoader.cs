@@ -25,11 +25,17 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
             XmlDocument doc = new XmlDocument();
             doc.Load(PropertyPath);
 
-            XmlNodeList manageCentralPackageVersion = doc.GetElementsByTagName("ManagePackageVersionsCentrally");
+            XmlNodeList propertyGroupTags = doc.GetElementsByTagName("PropertyGroup");
+
+            Dictionary<string, string> propertyGroups = GetPropertyGroups(propertyGroupTags);
 
             HashSet<PackageId> packageReferences = new HashSet<PackageId>();
+
+            bool managePackageVersionsCentrally = propertyGroups.ContainsKey("ManagePackageVersionsCentrally")
+                ? Boolean.Parse(propertyGroups["ManagePackageVersionsCentrally"])
+                : true;
             
-            if (CheckCentralPackageManagementEnabled(manageCentralPackageVersion))
+            if (managePackageVersionsCentrally)
             {
                 XmlNodeList importNodes = doc.GetElementsByTagName("Import");
 
@@ -44,7 +50,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
 
                 if (packageVersionNodes != null && packageVersionNodes.Count > 0)
                 {
-                    packageReferences.UnionWith(GetPackageVersions(packageVersionNodes));
+                    packageReferences.UnionWith(GetPackageVersions(packageVersionNodes, propertyGroups));
                 }
             }
             else
@@ -55,16 +61,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
             return packageReferences;
         }
 
-        private bool CheckCentralPackageManagementEnabled(XmlNodeList manageCentralPackageVersion)
-        {
-            if (manageCentralPackageVersion != null && manageCentralPackageVersion.Count > 0)
-            {
-                return manageCentralPackageVersion.Item(0).InnerXml == "true";
-            }
-            return true;
-        }
-
-        private HashSet<PackageId> GetPackageVersions(XmlNodeList packageNodes)
+        private HashSet<PackageId> GetPackageVersions(XmlNodeList packageNodes, Dictionary<string,string> propertyGroups)
         {
             HashSet<PackageId> packages = new HashSet<PackageId>();
             foreach (XmlNode packageNode in packageNodes)
@@ -100,6 +97,15 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                         }
                     }
 
+                    if (packageVersion.Contains("$("))
+                    {
+                        string propertyName = packageVersion.Substring(packageVersion.IndexOf("(") + 1, packageVersion.IndexOf(")") - 2);
+                        if (propertyGroups.ContainsKey(propertyName))
+                        {
+                            packageVersion = propertyGroups[propertyName];
+                        }
+                    }
+
                     if (!String.IsNullOrWhiteSpace(packageName) && !String.IsNullOrWhiteSpace(packageVersion))
                     {
                         packages.Add(new PackageId(packageName, packageVersion));
@@ -130,16 +136,22 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
 
             XmlDocument doc = new XmlDocument();
             doc.Load(PropertyPath);
-            
-            XmlNodeList manageCentralPackageVersion = doc.GetElementsByTagName("ManagePackageVersionsCentrally");
 
             HashSet<PackageId> globalPackageReferences = new HashSet<PackageId>();
             
+            XmlNodeList propertyGroupTags = doc.GetElementsByTagName("PropertyGroup");
+            
+            Dictionary<string, string> propertyGroups = GetPropertyGroups(propertyGroupTags);
+
+            bool managePackageVersionsCentrally = propertyGroups.ContainsKey("ManagePackageVersionsCentrally")
+                ? Boolean.Parse(propertyGroups["ManagePackageVersionsCentrally"])
+                : true;
+            
             XmlNodeList globalPackageReferenceNodes = doc.GetElementsByTagName("GlobalPackageReference");
 
-            if (CheckCentralPackageManagementEnabled(manageCentralPackageVersion) && globalPackageReferenceNodes != null && globalPackageReferenceNodes.Count > 0)
+            if (managePackageVersionsCentrally && globalPackageReferenceNodes != null && globalPackageReferenceNodes.Count > 0)
             {
-               globalPackageReferences = GetPackageVersions(globalPackageReferenceNodes);
+               globalPackageReferences = GetPackageVersions(globalPackageReferenceNodes,propertyGroups);
             }
 
             return globalPackageReferences;
@@ -163,6 +175,24 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                 }
             }
             return null;
+        }
+
+        public Dictionary<string, string> GetPropertyGroups(XmlNodeList propertyGroups)
+        {
+            Dictionary<string, string> groups = new Dictionary<string, string>();
+
+            if (propertyGroups != null && propertyGroups.Count > 0 && propertyGroups.Item(0).HasChildNodes)
+            {
+                foreach (XmlNode node in propertyGroups.Item(0).ChildNodes)
+                {
+                    if (!groups.ContainsKey(node.Name))
+                    {
+                        groups.Add(node.Name, node.InnerXml);
+                    }
+                }
+            }
+
+            return groups;
         }
     }
 }

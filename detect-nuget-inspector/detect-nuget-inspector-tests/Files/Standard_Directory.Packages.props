@@ -1,6 +1,8 @@
 <Project ToolsVersion="15.0">
     <PropertyGroup>
         <CentralPackageVersionOverrideEnabled>true</CentralPackageVersionOverrideEnabled>
+        <CodeAnalysisVersion>4.6.0</CodeAnalysisVersion>
+        <CodefixTestingVersion>1.1.2-beta1.23357.1</CodefixTestingVersion>
     </PropertyGroup>
     <ItemGroup>
         <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
@@ -13,6 +15,8 @@
         <PackageVersion Include="Uno.Extensions.Logging.OSLog" Version="1.7.0" />
         <PackageVersion Include="Uno.Extensions.Logging.WebAssembly.Console" Version="1.7.0" />
         <PackageVersion Include="Uno.Resizetizer" Version="1.2.0" />
+        <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.CodeFix.Testing.XUnit" Version="$(CodefixTestingVersion)" />
+        <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="$(CodeAnalysisVersion)" />
         <PackageVersion Include="Uno.UI.Adapter.Microsoft.Extensions.Logging" Version="5.0.19" />
         <PackageVersion Include="Uno.UniversalImageLoader" Version="1.9.36" />
         <PackageVersion Include="Uno.Wasm.Bootstrap" Version="7.0.24" />
