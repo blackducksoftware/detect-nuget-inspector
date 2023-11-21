@@ -97,7 +97,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                         }
                     }
 
-                    if (packageVersion.Contains("$("))
+                    if (packageVersion != null && packageVersion.Contains("$("))
                     {
                         string propertyName = packageVersion.Substring(packageVersion.IndexOf("(") + 1, packageVersion.IndexOf(")") - 2);
                         if (propertyGroups.ContainsKey(propertyName))
