@@ -10,7 +10,7 @@ buildscript {
 ext.dotNetExec = project.hasProperty('dotNetExec') ? project.getProperty('dotNetExec') : 'dotnet6'
 
 group 'com.synopsys.integration'
-version = '1.2.0-SIGQA5'
+version = '1.2.0-SIGQA6-SNAPSHOT'
 
 apply plugin: 'com.synopsys.integration.solution'
 apply plugin: 'distribution'
