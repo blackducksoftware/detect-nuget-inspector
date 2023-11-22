@@ -132,7 +132,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                                     parentPath =
                                         parentPath.Substring(0, OperatingSystem.IsWindows() ? parentPath.LastIndexOf("\\") : parentPath.LastIndexOf("/"));
                                     string checkFile = Path.Combine(parentPath, projectRelativePath);
-                                    if (parentPath.Equals("/") || parentPath.Equals("\\"))
+                                    if (parentPath.Equals(Path.GetPathRoot(solutionDirectory)))
                                     {
                                         Console.WriteLine("The Path provided in the sln file is wrong, will skip parsing over this file");
                                         break;
