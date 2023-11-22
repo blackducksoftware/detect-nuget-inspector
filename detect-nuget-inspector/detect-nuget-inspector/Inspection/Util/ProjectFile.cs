@@ -31,7 +31,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
             else if(rightSide.Contains("Directory.Packages.props"))
             {
                 rightSide = rightSide.Split("..\\")[1];
-                file.Path = rightSide.Replace("\\", "/");
+                file.Path = OperatingSystem.IsWindows() ? rightSide : rightSide.Replace("\\", "/");
                 return file;
             }
             var opts = rightSide.Split(',').Select(s => s.Trim()).ToList();

@@ -13,7 +13,7 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
 
         private string ProjectPath;
         private NugetSearchService NugetSearchService;
-        private HashSet<PackageId> Packages;
+        private HashSet<PackageId> CentrallyManagedPackages;
         private bool CheckVersionOverride;
 
         public ProjectXmlResolver(string projectPath, NugetSearchService nugetSearchService)
@@ -22,11 +22,9 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
             NugetSearchService = nugetSearchService;
         }
         
-        public ProjectXmlResolver(string projectPath, NugetSearchService nugetSearchService, HashSet<PackageId> packages, bool checkVersionOverride)
+        public ProjectXmlResolver(string projectPath, NugetSearchService nugetSearchService, HashSet<PackageId> packages, bool checkVersionOverride): this(projectPath, nugetSearchService)
         {
-            ProjectPath = projectPath;
-            NugetSearchService = nugetSearchService;
-            Packages = packages;
+            CentrallyManagedPackages = packages;
             CheckVersionOverride = checkVersionOverride;
         }
 
@@ -92,62 +90,36 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                     if (attributes != null)
                     {
                         XmlAttribute include = attributes["Include"];
-                        XmlAttribute version = attributes["Version"];
-                        XmlAttribute versionOverride = attributes["VersionOverride"];
-                        String versionStr = null;
-                        String versionOverrideStr = null;
                         
-                        if (versionOverride == null && version == null)
-                        {
-                            foreach (XmlNode node in package.ChildNodes)
-                            {
-                                if (node.Name == "VersionOverride")
-                                {
-                                    versionOverrideStr = node.InnerXml;
-                                    break;
-                                }
-                                if (node.Name == "Version")
-                                {
-                                    versionStr = node.InnerXml;
-                                }
-                            }
-                        }
-                        else if (versionOverride != null)
-                        {
-                            versionOverrideStr = versionOverride.Value;
-                        }
-                        else
-                        {
-                            versionStr = version.Value;
-                        }
+                        string versionOverrideStr = GetVersionInformation(attributes, "VersionOverride", package);
+                        string versionStr = GetVersionInformation(attributes, "Version", package);
 
                         if (include != null)
                         {
-                            bool containsPkg = Packages != null && Packages.Any(pkg => pkg.Name.Equals(include.Value));
-                            if (!String.IsNullOrWhiteSpace(versionOverrideStr))
+                            bool containsPkg = CentrallyManagedPackages != null && CentrallyManagedPackages.Any(pkg => pkg.Name.Equals(include.Value));
+                            
+                            if (containsPkg)
                             {
-                                if (containsPkg && CheckVersionOverride)
-                                {
-                                    var dep = new NugetDependency(include.Value, NuGet.Versioning.VersionRange.Parse(versionOverrideStr));
-                                    tree.Add(dep);
+                                PackageId pkg = CentrallyManagedPackages.First(pkg => pkg.Name.Equals(include.Value));
+                                
+                                if (!String.IsNullOrWhiteSpace(versionOverrideStr) && CheckVersionOverride)
+                                { 
+                                    addNugetDependency(tree, include.Value, versionStr);
                                 }
-                            }
-                            else if(!String.IsNullOrWhiteSpace(versionStr))
-                            {
-                                if (!containsPkg)
+                                else if (!String.IsNullOrWhiteSpace(versionOverrideStr) && !CheckVersionOverride)
                                 {
-                                    var dep = new NugetDependency(include.Value, NuGet.Versioning.VersionRange.Parse(versionStr));
-                                    tree.Add(dep);
+                                    Console.WriteLine("The Central Package Version Overriding is disabled, please enable version override or remove VersionOverride tags from project");
+                                }
+                                else
+                                {
+                                    addNugetDependency(tree, include.Value, pkg.Version);
                                 }
                             }
                             else
                             {
-                                if(containsPkg)
+                                if (!String.IsNullOrWhiteSpace(versionStr))
                                 {
-                                    PackageId pkg = Packages.First(pkg => pkg.Name.Equals(include.Value));
-                                    
-                                    var dep = new NugetDependency(include.Value, NuGet.Versioning.VersionRange.Parse(pkg.Version));
-                                    tree.Add(dep);
+                                    addNugetDependency(tree, include.Value, versionStr);
                                 }
                             }
                         }
@@ -167,6 +139,37 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
             }
 
             return result;
+        }
+        
+        private string GetVersionInformation(XmlAttributeCollection attributes, string checkString, XmlNode package)
+        {
+            string versionStr = null;
+            
+            XmlAttribute version = attributes[checkString];
+
+            if (version == null)
+            {
+                foreach (XmlNode node in package.ChildNodes)
+                {
+                    if (node.Name == checkString)
+                    {
+                        versionStr = node.InnerXml;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                versionStr = version.Value;
+            }
+            
+            return versionStr;
+        }
+
+        private void addNugetDependency(NugetTreeResolver tree, string include, string version)
+        {
+            var dep = new NugetDependency(include, NuGet.Versioning.VersionRange.Parse(version));
+            tree.Add(dep);
         }
     }
 }

@@ -15,7 +15,7 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
 
         private string ProjectPath;
         private NugetSearchService NugetSearchService;
-        private HashSet<PackageId> Packages;
+        private HashSet<PackageId> CentrallyManagedPackages;
         private bool CheckVersionOverride;
         
         public ProjectReferenceResolver(string projectPath, NugetSearchService nugetSearchService)
@@ -24,11 +24,9 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
             NugetSearchService = nugetSearchService;
         }
         
-        public ProjectReferenceResolver(string projectPath, NugetSearchService nugetSearchService, HashSet<PackageId> packages, bool checkVersionOverride)
+        public ProjectReferenceResolver(string projectPath, NugetSearchService nugetSearchService, HashSet<PackageId> packages, bool checkVersionOverride): this(projectPath, nugetSearchService)
         {
-            ProjectPath = projectPath;
-            NugetSearchService = nugetSearchService;
-            Packages = packages;
+            CentrallyManagedPackages = packages;
             CheckVersionOverride = checkVersionOverride;
         }
         
@@ -43,37 +41,31 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                 List<NugetDependency> deps = new List<NugetDependency>();
                 foreach (ProjectItem reference in proj.GetItemsIgnoringCondition("PackageReference"))
                 {
-                    bool containsPkg = Packages != null && Packages.Any(pkg => pkg.Name.Equals(reference.EvaluatedInclude));
+                    bool containsPkg = CentrallyManagedPackages != null && CentrallyManagedPackages.Any(pkg => pkg.Name.Equals(reference.EvaluatedInclude));
+                    
                     var versionMetaData = reference.Metadata.Where(meta => meta.Name == "Version").FirstOrDefault();
                     var versionOverrideMetaData = reference.Metadata.Where(meta => meta.Name == "VersionOverride").FirstOrDefault();
-                    if (containsPkg && versionOverrideMetaData != null && CheckVersionOverride)
+                    
+                    if (containsPkg)
                     {
-                        NuGet.Versioning.VersionRange version;
-                        if (NuGet.Versioning.VersionRange.TryParse(versionOverrideMetaData.EvaluatedValue, out version))
+                        PackageId pkg = CentrallyManagedPackages.First(pkg => pkg.Name.Equals(reference.EvaluatedInclude));
+
+                        if (CheckVersionOverride && versionOverrideMetaData != null)
                         {
-                            var dep = new NugetDependency(reference.EvaluatedInclude, version);
-                            deps.Add(dep);
+                            addNugetDependency(reference.EvaluatedInclude,versionOverrideMetaData.EvaluatedValue,deps);
+                        }
+                        else if (!CheckVersionOverride && versionOverrideMetaData != null)
+                        {
+                            Console.WriteLine("The Central Package Version Overriding is disabled, please enable version override or remove VersionOverride tags from project");
+                        }
+                        else
+                        {
+                            addNugetDependency(reference.EvaluatedInclude,pkg.Version,deps);
                         }
                     }
-                    else if (versionMetaData != null && !containsPkg)
+                    else if (versionMetaData != null)
                     {
-                        NuGet.Versioning.VersionRange version;
-                        if (NuGet.Versioning.VersionRange.TryParse(versionMetaData.EvaluatedValue, out version))
-                        {
-                            var dep = new NugetDependency(reference.EvaluatedInclude, version);
-                            deps.Add(dep);
-                        }
-                    }
-                    else if (containsPkg)
-                    {
-                        PackageId pkg = Packages.First(pkg => pkg.Name.Equals(reference.EvaluatedInclude));
-                        
-                        NuGet.Versioning.VersionRange version;
-                        if (NuGet.Versioning.VersionRange.TryParse(pkg.Version, out version))
-                        {
-                            var dep = new NugetDependency(reference.EvaluatedInclude, version);
-                            deps.Add(dep);
-                        }
+                        addNugetDependency(reference.EvaluatedInclude,versionMetaData.EvaluatedValue,deps);
                     }
                     else
                     {
@@ -142,6 +134,16 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                 {
                     Success = false
                 };
+            }
+        }
+        
+        private void addNugetDependency(string include, string versionMetadata, List<NugetDependency> deps)
+        {
+            NuGet.Versioning.VersionRange version;
+            if (NuGet.Versioning.VersionRange.TryParse(versionMetadata, out version))
+            {
+                var dep = new NugetDependency(include, version);
+                deps.Add(dep);
             }
         }
     }

@@ -181,13 +181,16 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
         {
             Dictionary<string, string> groups = new Dictionary<string, string>();
 
-            if (propertyGroups != null && propertyGroups.Count > 0 && propertyGroups.Item(0).HasChildNodes)
+            if (propertyGroups != null && propertyGroups.Count > 0)
             {
-                foreach (XmlNode node in propertyGroups.Item(0).ChildNodes)
+                foreach (XmlNode propertyGroup in propertyGroups)
                 {
-                    if (!groups.ContainsKey(node.Name))
+                    foreach (XmlNode node in propertyGroup.ChildNodes)
                     {
-                        groups.Add(node.Name, node.InnerXml);
+                        if (!groups.ContainsKey(node.Name))
+                        {
+                            groups.Add(node.Name, node.InnerXml);
+                        }
                     }
                 }
             }
