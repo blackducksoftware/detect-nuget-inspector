@@ -21,6 +21,8 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
     {
         public ProjectInspectionOptions Options;
         public NugetSearchService NugetService;
+        private HashSet<PackageId> CentrallyManagedPackages;
+        private bool CheckVersionOverride;
 
         public ProjectInspector(ProjectInspectionOptions options, NugetSearchService nugetService)
         {
@@ -70,6 +72,17 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
             {
                 Options.VersionName = InspectorUtil.GetProjectAssemblyVersion(Options.ProjectDirectory);
             }
+            
+            if (String.IsNullOrWhiteSpace(Options.DirectoryPackagesPropsPath))
+            {
+                Options.DirectoryPackagesPropsPath = CreateDirectoryPackagesPropsPath(Options.ProjectDirectory);
+            }
+        }
+        
+        public ProjectInspector(ProjectInspectionOptions options, NugetSearchService nugetService, HashSet<PackageId> packages, bool checkVersionOverride): this(options, nugetService)
+        {
+            CentrallyManagedPackages = packages;
+            CheckVersionOverride = checkVersionOverride;
         }
 
         public InspectionResult Inspect()
@@ -148,8 +161,18 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                 bool projectJsonExists = !String.IsNullOrWhiteSpace(Options.ProjectJsonPath) && File.Exists(Options.ProjectJsonPath);
                 bool projectJsonLockExists = !String.IsNullOrWhiteSpace(Options.ProjectJsonLockPath) && File.Exists(Options.ProjectJsonLockPath);
                 bool projectAssetsJsonExists = !String.IsNullOrWhiteSpace(Options.ProjectAssetsJsonPath) && File.Exists(Options.ProjectAssetsJsonPath);
-                
-                if (packagesConfigExists)
+                bool directoryPackagesPropsExists = !String.IsNullOrWhiteSpace(Options.DirectoryPackagesPropsPath) &&
+                                                    File.Exists(Options.DirectoryPackagesPropsPath);
+
+                if (directoryPackagesPropsExists)
+                {
+                    Console.WriteLine("Using Central Package Management: " + Options.DirectoryPackagesPropsPath);
+                    var packagesPropertyLoader =
+                        new SolutionDirectoryPackagesPropertyLoader(Options.DirectoryPackagesPropsPath);
+                    projectNode.PackagePropertyPackages = packagesPropertyLoader.Process();
+                    projectNode.Dependencies = packagesPropertyLoader.GetGlobalPackageReferences().ToList();
+                }
+                else if (packagesConfigExists)
                 {
                     Console.WriteLine("Using packages config: " + Options.PackagesConfigPath);
                     var packagesConfigResolver = new PackagesConfigResolver(Options.PackagesConfigPath, NugetService);
@@ -184,30 +207,38 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                 else
                 {
                     Console.WriteLine("Attempting reference resolver: " + Options.TargetPath);
-                    var referenceResolver = new ProjectReferenceResolver(Options.TargetPath, NugetService);
+                    ProjectReferenceResolver referenceResolver;
+                    if (CentrallyManagedPackages != null && CentrallyManagedPackages.Count > 0)
+                    {
+                        referenceResolver = new ProjectReferenceResolver(Options.TargetPath, NugetService, CentrallyManagedPackages, CheckVersionOverride);
+                    }
+                    else
+                    {
+                        referenceResolver = new ProjectReferenceResolver(Options.TargetPath, NugetService);
+                    }
                     var projectReferencesResult = referenceResolver.Process();
                     if (projectReferencesResult.Success)
                     {
                         Console.WriteLine("Reference resolver succeeded.");
                         projectNode.Packages = projectReferencesResult.Packages;
                         projectNode.Dependencies = projectReferencesResult.Dependencies;
-                        if (projectReferencesResult.BadParse)
-                        {
-                            throw new Exception("BadParseException: Will try redirecting to Project Inspector");
-                        }
                     }
                     else
                     {
                         Console.WriteLine("Using backup XML resolver.");
-                        var xmlResolver = new ProjectXmlResolver(Options.TargetPath, NugetService);
+                        ProjectXmlResolver xmlResolver;
+                        if (CentrallyManagedPackages != null && CentrallyManagedPackages.Count > 0)
+                        {
+                            xmlResolver = new ProjectXmlResolver(Options.TargetPath, NugetService, CentrallyManagedPackages, CheckVersionOverride);
+                        }
+                        else
+                        {
+                            xmlResolver = new ProjectXmlResolver(Options.TargetPath, NugetService);
+                        }
                         var xmlResult = xmlResolver.Process();
                         projectNode.Version = xmlResult.ProjectVersion;
                         projectNode.Packages = xmlResult.Packages;
                         projectNode.Dependencies = xmlResult.Dependencies;
-                        if (xmlResult.BadParse)
-                        {
-                            throw new Exception("BadParseException: Will try redirecting to Project Inspector");
-                        }
                     }
                 }
 
@@ -349,6 +380,11 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
         private string CreateProjectAssetsJsonPath(string projectDirectory)
         {
             return PathUtil.Combine(projectDirectory, "obj", "project.assets.json");
+        }
+        
+        private string CreateDirectoryPackagesPropsPath(string projectDirectory)
+        {
+            return PathUtil.Combine(projectDirectory, "Directory.Packages.props");
         }
 
         private string CreateProjectNugetgPropertyPath(string projectDirectory, string projectName)

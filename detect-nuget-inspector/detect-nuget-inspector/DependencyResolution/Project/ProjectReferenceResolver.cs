@@ -15,12 +15,21 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
 
         private string ProjectPath;
         private NugetSearchService NugetSearchService;
+        private HashSet<PackageId> CentrallyManagedPackages;
+        private bool CheckVersionOverride;
+        
         public ProjectReferenceResolver(string projectPath, NugetSearchService nugetSearchService)
         {
             ProjectPath = projectPath;
             NugetSearchService = nugetSearchService;
         }
-
+        
+        public ProjectReferenceResolver(string projectPath, NugetSearchService nugetSearchService, HashSet<PackageId> packages, bool checkVersionOverride): this(projectPath, nugetSearchService)
+        {
+            CentrallyManagedPackages = packages;
+            CheckVersionOverride = checkVersionOverride;
+        }
+        
         public DependencyResult Process()
         {
             try
@@ -32,15 +41,31 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                 List<NugetDependency> deps = new List<NugetDependency>();
                 foreach (ProjectItem reference in proj.GetItemsIgnoringCondition("PackageReference"))
                 {
+                    bool containsPkg = CentrallyManagedPackages != null && CentrallyManagedPackages.Any(pkg => pkg.Name.Equals(reference.EvaluatedInclude));
+                    
                     var versionMetaData = reference.Metadata.Where(meta => meta.Name == "Version").FirstOrDefault();
-                    if (versionMetaData != null)
+                    var versionOverrideMetaData = reference.Metadata.Where(meta => meta.Name == "VersionOverride").FirstOrDefault();
+                    
+                    if (containsPkg)
                     {
-                        NuGet.Versioning.VersionRange version;
-                        if (NuGet.Versioning.VersionRange.TryParse(versionMetaData.EvaluatedValue, out version))
+                        PackageId pkg = CentrallyManagedPackages.First(pkg => pkg.Name.Equals(reference.EvaluatedInclude));
+
+                        if (CheckVersionOverride && versionOverrideMetaData != null)
                         {
-                            var dep = new NugetDependency(reference.EvaluatedInclude, version);
-                            deps.Add(dep);
+                            addNugetDependency(reference.EvaluatedInclude,versionOverrideMetaData.EvaluatedValue,deps);
                         }
+                        else if (!CheckVersionOverride && versionOverrideMetaData != null)
+                        {
+                            Console.WriteLine("The Central Package Version Overriding is disabled, please enable version override or remove VersionOverride tags from project");
+                        }
+                        else
+                        {
+                            addNugetDependency(reference.EvaluatedInclude,pkg.Version,deps);
+                        }
+                    }
+                    else if (versionMetaData != null)
+                    {
+                        addNugetDependency(reference.EvaluatedInclude,versionMetaData.EvaluatedValue,deps);
                     }
                     else
                     {
@@ -101,11 +126,6 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                     }
                 }
 
-                if (deps.Count > 0 && result.Packages.Count == 0)
-                {
-                    result.BadParse = true;
-                }
-
                 return result;
             }
             catch (InvalidProjectFileException e)
@@ -114,6 +134,16 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                 {
                     Success = false
                 };
+            }
+        }
+        
+        private void addNugetDependency(string include, string versionMetadata, List<NugetDependency> deps)
+        {
+            NuGet.Versioning.VersionRange version;
+            if (NuGet.Versioning.VersionRange.TryParse(versionMetadata, out version))
+            {
+                var dep = new NugetDependency(include, version);
+                deps.Add(dep);
             }
         }
     }

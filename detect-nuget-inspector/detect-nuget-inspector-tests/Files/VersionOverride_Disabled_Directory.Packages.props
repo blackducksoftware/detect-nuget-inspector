@@ -1,0 +1,11 @@
+<Project>
+    <PropertyGroup>
+        <CentralPackageVersionOverrideEnabled>false</CentralPackageVersionOverrideEnabled>
+    </PropertyGroup>
+    <ItemGroup>
+        <ItemGroup>
+            <PackageVersion Include="PackageA" Version="1.0.0" />
+            <PackageVersion Include="PackageB" Version="2.0.0" />
+        </ItemGroup>
+    </ItemGroup>
+</Project>

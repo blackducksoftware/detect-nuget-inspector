@@ -28,6 +28,12 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
             {
                 file.TypeGUID = MiddleOfString(leftSide, "Project(\"".Length, "\")".Length);
             }
+            else if(rightSide.Contains("Directory.Packages.props"))
+            {
+                rightSide = rightSide.Split("..\\")[1];
+                file.Path = OperatingSystem.IsWindows() ? rightSide : rightSide.Replace("\\", "/");
+                return file;
+            }
             var opts = rightSide.Split(',').Select(s => s.Trim()).ToList();
             if (opts.Count() >= 1) file.Name = MiddleOfString(opts[0], 1, 1); //strip quotes
             if (opts.Count() >= 2) file.Path = MiddleOfString(opts[1], 1, 1); //strip quotes

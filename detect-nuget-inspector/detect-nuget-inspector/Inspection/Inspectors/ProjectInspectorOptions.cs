@@ -29,5 +29,6 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
         public string ProjectJsonPath { get; set; }
         public string ProjectJsonLockPath { get; set; }
         public string ProjectAssetsJsonPath { get; set; }
+        public string DirectoryPackagesPropsPath { get; set; }
     }
 }

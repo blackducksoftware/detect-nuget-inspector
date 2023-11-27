@@ -13,11 +13,13 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
 
         private string PropertyPath;
         private NugetSearchService NugetSearchService;
+        private bool CheckVersionOverride;
 
-        public SolutionDirectoryBuildPropertyLoader(string propertyPath, NugetSearchService nugetSearchService)
+        public SolutionDirectoryBuildPropertyLoader(string propertyPath, NugetSearchService nugetSearchService, bool checkVersionOverride)
         {
             PropertyPath = propertyPath;
             NugetSearchService = nugetSearchService;
+            CheckVersionOverride = checkVersionOverride;
         }
 
         public HashSet<PackageId> Process()
@@ -54,6 +56,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                     XmlAttributeCollection attributes = packageNode.Attributes;
                     string name = null;
                     string version = null;
+                    string versionOverride = null;
                     foreach (XmlAttribute at in attributes)
                     {
                         if (at.LocalName.Contains("Include"))
@@ -64,25 +67,49 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                         {
                             version = at.Value;
                         }
+                        else if (at.LocalName.Contains("VersionOverride"))
+                        {
+                            versionOverride = at.Value;
+                        }
                     }
-                    if (String.IsNullOrWhiteSpace(version))
+                    if (String.IsNullOrWhiteSpace(version) && String.IsNullOrWhiteSpace(versionOverride))
                     {
                         foreach (XmlNode node in packageNode.ChildNodes)
                         {
                             if (node.Name == "Version")
                             {
                                 version = node.InnerXml;
+                            }
+                            else if(node.Name == "VersionOverride")
+                            {
+                                versionOverride = node.InnerXml;
                                 break;
                             }
                         }
                     }
-                    if (!String.IsNullOrWhiteSpace(name) && !String.IsNullOrWhiteSpace(version))
+
+                    string versionStr = CheckVersionOverride && GetVersionOverrideEnabled() && !String.IsNullOrWhiteSpace(versionOverride) ? versionOverride : version;
+                    if (!String.IsNullOrWhiteSpace(name) && !String.IsNullOrWhiteSpace(versionStr))
                     {
-                        packageReferences.Add(new PackageId(name, version));
+                        packageReferences.Add(new PackageId(name, versionStr));
                     }
                 }
             }
             return packageReferences;
+        }
+        
+        public bool GetVersionOverrideEnabled()
+        {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            XmlDocument doc = new XmlDocument();
+            doc.Load(PropertyPath);
+            
+            XmlNodeList centralVersionOverride = doc.GetElementsByTagName("CentralPackageVersionOverrideEnabled");
+
+            bool checkVersionOverride = !(centralVersionOverride != null && centralVersionOverride.Count > 0 && centralVersionOverride.Item(0).InnerXml == "false");
+
+            return checkVersionOverride;
         }
     }
 }
