@@ -20,6 +20,21 @@ project.tasks.create(name: 'buildSolutions') {
     description 'Build executable for all defined operating systems'
 }
 
+project.tasks.create(name: 'testUnit', type: Exec){
+    group 'dotnet test'
+    description 'Run all Unit Tests defined inside detect-nuget-inspector-tests and generate test result'
+
+    def buildCommand = [dotNetExec, 'test', 'detect-nuget-inspector/detect-nuget-inspector.sln','--logger:junit']
+    doFirst {
+        logger.lifecycle("Running Unit Tests")
+    }
+    doLast {
+        logger.lifecycle("Output of unit tests located at ${buildDir}/detect-nuget-inspector/detect-nuget-inspector-tests/TestResults/TestResults.xml")
+    }
+
+    commandLine buildCommand
+}
+
 /*
 The lines below will, for each configured solution
     * Create the build task
