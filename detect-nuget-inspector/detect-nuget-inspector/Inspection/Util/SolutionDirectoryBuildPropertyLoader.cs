@@ -14,11 +14,13 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
         private string PropertyPath;
         private NugetSearchService NugetSearchService;
         private bool CheckVersionOverride;
+        private HashSet<PackageId> CentrallyManagedPackages;
 
-        public SolutionDirectoryBuildPropertyLoader(string propertyPath, NugetSearchService nugetSearchService, bool checkVersionOverride)
+        public SolutionDirectoryBuildPropertyLoader(string propertyPath, NugetSearchService nugetSearchService, HashSet<PackageId> packages, bool checkVersionOverride)
         {
             PropertyPath = propertyPath;
             NugetSearchService = nugetSearchService;
+            CentrallyManagedPackages = packages;
             CheckVersionOverride = checkVersionOverride;
         }
 
@@ -72,6 +74,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                             versionOverride = at.Value;
                         }
                     }
+                    
                     if (String.IsNullOrWhiteSpace(version) && String.IsNullOrWhiteSpace(versionOverride))
                     {
                         foreach (XmlNode node in packageNode.ChildNodes)
@@ -88,10 +91,34 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                         }
                     }
 
-                    string versionStr = CheckVersionOverride && GetVersionOverrideEnabled() && !String.IsNullOrWhiteSpace(versionOverride) ? versionOverride : version;
-                    if (!String.IsNullOrWhiteSpace(name) && !String.IsNullOrWhiteSpace(versionStr))
+                    if (!String.IsNullOrWhiteSpace(name) && CentrallyManagedPackages.Count > 0)
                     {
-                        packageReferences.Add(new PackageId(name, versionStr));
+                       bool containsPkg =  CentrallyManagedPackages.Any(pkg => pkg.Name.Equals(name));
+                       
+                       if (containsPkg)
+                       {
+                           var pkg = CentrallyManagedPackages.First(pkg => pkg.Name.Equals(name));
+                           
+                           if (!String.IsNullOrWhiteSpace(versionOverride) && (CheckVersionOverride || GetVersionOverrideEnabled()))
+                           {
+                               packageReferences.Add(new PackageId(name, versionOverride));
+                           }
+                           else if (!String.IsNullOrWhiteSpace(versionOverride) && !CheckVersionOverride)
+                           {
+                               Console.WriteLine("The Central Package Version Overriding is disabled, please enable version override or remove VersionOverride tags from project");
+                           }
+                           else
+                           {
+                               packageReferences.Add(pkg);
+                           }
+                       }
+                       else
+                       {
+                           if (!String.IsNullOrWhiteSpace(version))
+                           {
+                               packageReferences.Add(new PackageId(name, version));
+                           }
+                       }
                     }
                 }
             }
