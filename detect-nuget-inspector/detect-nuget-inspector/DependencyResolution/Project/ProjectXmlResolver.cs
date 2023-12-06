@@ -104,7 +104,7 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                                 
                                 if (!String.IsNullOrWhiteSpace(versionOverrideStr) && CheckVersionOverride)
                                 { 
-                                    addNugetDependency(tree, include.Value, versionStr);
+                                    addNugetDependency(tree, include.Value, versionOverrideStr);
                                 }
                                 else if (!String.IsNullOrWhiteSpace(versionOverrideStr) && !CheckVersionOverride)
                                 {
