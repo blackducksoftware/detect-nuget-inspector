@@ -19,9 +19,9 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
             PropertyPath = propertyPath;
         }
         
-        public SolutionDirectoryPackagesPropertyLoader(String propertyPath, HashSet<PackageId> packageIds): this(propertyPath)
+        public SolutionDirectoryPackagesPropertyLoader(String propertyPath, HashSet<PackageId> rootCentrallyManagedPackages): this(propertyPath)
         {
-            RootCentrallyManagedPackages = packageIds;
+            RootCentrallyManagedPackages = rootCentrallyManagedPackages;
         }
 
         public HashSet<PackageId> Process()

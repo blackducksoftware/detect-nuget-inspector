@@ -22,9 +22,9 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
             NugetSearchService = nugetSearchService;
         }
         
-        public ProjectXmlResolver(string projectPath, NugetSearchService nugetSearchService, HashSet<PackageId> packages, bool checkVersionOverride): this(projectPath, nugetSearchService)
+        public ProjectXmlResolver(string projectPath, NugetSearchService nugetSearchService, HashSet<PackageId> centrallyManagedPackages, bool checkVersionOverride): this(projectPath, nugetSearchService)
         {
-            CentrallyManagedPackages = packages;
+            CentrallyManagedPackages = centrallyManagedPackages;
             CheckVersionOverride = checkVersionOverride;
         }
 

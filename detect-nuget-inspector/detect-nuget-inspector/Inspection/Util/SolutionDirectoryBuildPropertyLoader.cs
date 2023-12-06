@@ -16,11 +16,11 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
         private bool CheckVersionOverride;
         private HashSet<PackageId> CentrallyManagedPackages;
 
-        public SolutionDirectoryBuildPropertyLoader(string propertyPath, NugetSearchService nugetSearchService, HashSet<PackageId> packages, bool checkVersionOverride)
+        public SolutionDirectoryBuildPropertyLoader(string propertyPath, NugetSearchService nugetSearchService, HashSet<PackageId> centrallyManagedPackages, bool checkVersionOverride)
         {
             PropertyPath = propertyPath;
             NugetSearchService = nugetSearchService;
-            CentrallyManagedPackages = packages;
+            CentrallyManagedPackages = centrallyManagedPackages;
             CheckVersionOverride = checkVersionOverride;
         }
 
