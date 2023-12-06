@@ -91,7 +91,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                         }
                     }
 
-                    if (!String.IsNullOrWhiteSpace(name) && CentrallyManagedPackages.Count > 0)
+                    if (!String.IsNullOrWhiteSpace(name) && CentrallyManagedPackages != null && CentrallyManagedPackages.Count > 0)
                     {
                        bool containsPkg =  CentrallyManagedPackages.Any(pkg => pkg.Name.Equals(name));
                        
