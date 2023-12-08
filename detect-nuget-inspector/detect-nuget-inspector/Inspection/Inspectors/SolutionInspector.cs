@@ -94,7 +94,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                 if (solutionDirectoryBuildPropertyExists)
                 {
                     Console.WriteLine("Using solution directory build property file: " + solutionDirectoryBuildPropertyPath);
-                    var propertyLoader = new SolutionDirectoryBuildPropertyLoader(solutionDirectoryBuildPropertyPath, NugetService, checkVersionOverride);
+                    var propertyLoader = new SolutionDirectoryBuildPropertyLoader(solutionDirectoryBuildPropertyPath, NugetService,packagesProperty, checkVersionOverride);
                     buildPropertyPackages = propertyLoader.Process();
                     checkVersionOverride = propertyLoader.GetVersionOverrideEnabled();
                 }

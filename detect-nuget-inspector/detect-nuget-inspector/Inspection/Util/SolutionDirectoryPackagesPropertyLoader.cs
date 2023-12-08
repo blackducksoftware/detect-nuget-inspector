@@ -12,10 +12,16 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
     {
 
         private String PropertyPath;
+        private HashSet<PackageId> RootCentrallyManagedPackages;
 
         public SolutionDirectoryPackagesPropertyLoader(String propertyPath)
         {
             PropertyPath = propertyPath;
+        }
+        
+        public SolutionDirectoryPackagesPropertyLoader(String propertyPath, HashSet<PackageId> rootCentrallyManagedPackages): this(propertyPath)
+        {
+            RootCentrallyManagedPackages = rootCentrallyManagedPackages;
         }
 
         public HashSet<PackageId> Process()
@@ -103,6 +109,17 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                         if (propertyGroups.ContainsKey(propertyName))
                         {
                             packageVersion = propertyGroups[propertyName];
+                        }
+                    }
+
+                    if (RootCentrallyManagedPackages != null && RootCentrallyManagedPackages.Count > 0)
+                    {
+                        bool containsPkg = RootCentrallyManagedPackages.Any(pkg => pkg.Name.Equals(packageName));
+
+                        if (containsPkg)
+                        {
+                            var pkg = RootCentrallyManagedPackages.First(pkg => pkg.Name.Equals(packageName));
+                            RootCentrallyManagedPackages.Remove(pkg);
                         }
                     }
 
