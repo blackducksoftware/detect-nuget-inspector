@@ -168,7 +168,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                 {
                     Console.WriteLine("Using Central Package Management: " + Options.DirectoryPackagesPropsPath);
                     var packagesPropertyLoader =
-                        new SolutionDirectoryPackagesPropertyLoader(Options.DirectoryPackagesPropsPath);
+                        new SolutionDirectoryPackagesPropertyLoader(Options.DirectoryPackagesPropsPath, CentrallyManagedPackages);
                     projectNode.PackagePropertyPackages = packagesPropertyLoader.Process();
                     projectNode.Dependencies = packagesPropertyLoader.GetGlobalPackageReferences().ToList();
                 }
