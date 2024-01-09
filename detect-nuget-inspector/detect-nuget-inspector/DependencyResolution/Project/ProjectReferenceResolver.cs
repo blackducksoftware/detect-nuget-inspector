@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Build.Evaluation;
 using Microsoft.Build.Exceptions;
 using Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget;
+using Synopsys.Detect.Nuget.Inspector.Inspection.Util;
 using Synopsys.Detect.Nuget.Inspector.Model;
 
 namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
@@ -17,14 +18,16 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
         private NugetSearchService NugetSearchService;
         private HashSet<PackageId> CentrallyManagedPackages;
         private bool CheckVersionOverride;
+        private string ExcludedDependencyTypes;
         
-        public ProjectReferenceResolver(string projectPath, NugetSearchService nugetSearchService)
+        public ProjectReferenceResolver(string projectPath, NugetSearchService nugetSearchService, String excludedDependencyTypes)
         {
             ProjectPath = projectPath;
             NugetSearchService = nugetSearchService;
+            ExcludedDependencyTypes = excludedDependencyTypes;
         }
         
-        public ProjectReferenceResolver(string projectPath, NugetSearchService nugetSearchService, HashSet<PackageId> centrallyManagedPackages, bool checkVersionOverride): this(projectPath, nugetSearchService)
+        public ProjectReferenceResolver(string projectPath, NugetSearchService nugetSearchService, String excludedDependencyTypes, HashSet<PackageId> centrallyManagedPackages, bool checkVersionOverride): this(projectPath, nugetSearchService, excludedDependencyTypes)
         {
             CentrallyManagedPackages = centrallyManagedPackages;
             CheckVersionOverride = checkVersionOverride;
@@ -45,8 +48,13 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                     
                     var versionMetaData = reference.Metadata.Where(meta => meta.Name == "Version").FirstOrDefault();
                     var versionOverrideMetaData = reference.Metadata.Where(meta => meta.Name == "VersionOverride").FirstOrDefault();
+                    var privateAssetsMetaData = reference.Metadata.Where(meta => meta.Name == "PrivateAssets").FirstOrDefault();
+
+                    bool isDevDependency =
+                        ExcludedDependencyTypeUtil.isDependencyTypeExcluded(ExcludedDependencyTypes) &&
+                        privateAssetsMetaData != null;
                     
-                    if (containsPkg)
+                    if (containsPkg && !isDevDependency)
                     {
                         PackageId pkg = CentrallyManagedPackages.First(pkg => pkg.Name.Equals(reference.EvaluatedInclude));
 

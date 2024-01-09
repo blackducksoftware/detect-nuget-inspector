@@ -65,6 +65,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Configuration
             Console.WriteLine("Property {0} = {1}", CommandLineArgKeys.IgnoreFailures, options.IgnoreFailures);
             Console.WriteLine("Property {0} = {1}", CommandLineArgKeys.PackagesRepoUrl, options.PackagesRepoUrl);
             Console.WriteLine("Property {0} = {1}", CommandLineArgKeys.NugetConfigPath, options.NugetConfigPath);
+            Console.WriteLine("Property {0} = {1}", CommandLineArgKeys.ExcludedDependencyTypes, options.ExcludedDependencyTypes);
         }
 
         public RunOptions LoadAppSettings(string path)

@@ -15,5 +15,6 @@ namespace Synopsys.Detect.Nuget.Inspector.Configuration
         public const string ExcludedModules = "excluded_modules";
         public const string IncludedModules = "included_modules";
         public const string IgnoreFailures = "ignore_failure";
+        public const string ExcludedDependencyTypes = "excluded_dependency_types";
     }
 }

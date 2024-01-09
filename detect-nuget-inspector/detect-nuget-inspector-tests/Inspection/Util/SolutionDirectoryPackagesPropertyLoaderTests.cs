@@ -21,7 +21,7 @@ namespace detect_nuget_inspector_tests.Inspection.Util
             string propertyPath = GetFilePath("Standard_Directory.Packages.props"); 
             
             var solutionDirectoryPackagesPropertyLoader =
-                new SolutionDirectoryPackagesPropertyLoader(GetFilePath(propertyPath));
+                new SolutionDirectoryPackagesPropertyLoader(GetFilePath(propertyPath), "NONE");
 
             HashSet<PackageId> packageVersions = solutionDirectoryPackagesPropertyLoader.Process();
             bool versionOverrideEnabled = solutionDirectoryPackagesPropertyLoader.GetVersionOverrideEnabled();
@@ -40,7 +40,7 @@ namespace detect_nuget_inspector_tests.Inspection.Util
             string propertyPath = GetFilePath("CPM_Disabled_Directory.Packages.props");
             
             var solutionDirectoryPackagesPropertyLoader =
-                new SolutionDirectoryPackagesPropertyLoader(GetFilePath(propertyPath));
+                new SolutionDirectoryPackagesPropertyLoader(GetFilePath(propertyPath),"NONE");
             
             StringWriter stringWriter = new StringWriter();
             Console.SetOut(stringWriter);
@@ -57,7 +57,7 @@ namespace detect_nuget_inspector_tests.Inspection.Util
             string propertyPath = GetFilePath("VersionOverride_Disabled_Directory.Packages.props");
             
             var solutionDirectoryPackagesPropertyLoader =
-                new SolutionDirectoryPackagesPropertyLoader(GetFilePath(propertyPath));
+                new SolutionDirectoryPackagesPropertyLoader(GetFilePath(propertyPath), "NONE");
             
             bool versionOverrideEnabled = solutionDirectoryPackagesPropertyLoader.GetVersionOverrideEnabled();
             
@@ -70,7 +70,7 @@ namespace detect_nuget_inspector_tests.Inspection.Util
             string propertyPath = GetFilePath("GlobalPackageReference_Directory.Packages.props");
             
             var solutionDirectoryPackagesPropertyLoader =
-                new SolutionDirectoryPackagesPropertyLoader(GetFilePath(propertyPath));
+                new SolutionDirectoryPackagesPropertyLoader(GetFilePath(propertyPath), "NONE");
 
             HashSet<PackageId> packageVersions = solutionDirectoryPackagesPropertyLoader.Process();
 

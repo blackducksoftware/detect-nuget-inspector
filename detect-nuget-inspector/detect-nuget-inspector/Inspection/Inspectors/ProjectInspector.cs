@@ -168,7 +168,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                 {
                     Console.WriteLine("Using Central Package Management: " + Options.DirectoryPackagesPropsPath);
                     var packagesPropertyLoader =
-                        new SolutionDirectoryPackagesPropertyLoader(Options.DirectoryPackagesPropsPath, CentrallyManagedPackages);
+                        new SolutionDirectoryPackagesPropertyLoader(Options.DirectoryPackagesPropsPath, Options.ExcludedDependencyTypes, CentrallyManagedPackages);
                     projectNode.PackagePropertyPackages = packagesPropertyLoader.Process();
                     projectNode.Dependencies = packagesPropertyLoader.GetGlobalPackageReferences().ToList();
                 }
@@ -210,11 +210,11 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                     ProjectReferenceResolver referenceResolver;
                     if (CentrallyManagedPackages != null && CentrallyManagedPackages.Count > 0)
                     {
-                        referenceResolver = new ProjectReferenceResolver(Options.TargetPath, NugetService, CentrallyManagedPackages, CheckVersionOverride);
+                        referenceResolver = new ProjectReferenceResolver(Options.TargetPath, NugetService, Options.ExcludedDependencyTypes, CentrallyManagedPackages, CheckVersionOverride);
                     }
                     else
                     {
-                        referenceResolver = new ProjectReferenceResolver(Options.TargetPath, NugetService);
+                        referenceResolver = new ProjectReferenceResolver(Options.TargetPath, NugetService, Options.ExcludedDependencyTypes);
                     }
                     var projectReferencesResult = referenceResolver.Process();
                     if (projectReferencesResult.Success)
@@ -229,11 +229,11 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                         ProjectXmlResolver xmlResolver;
                         if (CentrallyManagedPackages != null && CentrallyManagedPackages.Count > 0)
                         {
-                            xmlResolver = new ProjectXmlResolver(Options.TargetPath, NugetService, CentrallyManagedPackages, CheckVersionOverride);
+                            xmlResolver = new ProjectXmlResolver(Options.TargetPath, NugetService, Options.ExcludedDependencyTypes, CentrallyManagedPackages, CheckVersionOverride);
                         }
                         else
                         {
-                            xmlResolver = new ProjectXmlResolver(Options.TargetPath, NugetService);
+                            xmlResolver = new ProjectXmlResolver(Options.TargetPath, NugetService, Options.ExcludedDependencyTypes);
                         }
                         var xmlResult = xmlResolver.Process();
                         projectNode.Version = xmlResult.ProjectVersion;
