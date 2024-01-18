@@ -65,27 +65,27 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Util
         
         public static string GetAttributeInformation(XmlAttributeCollection attributes, string checkString, XmlNode package)
         {
-            string versionStr = null;
+            string attributeStr = null;
             
-            XmlAttribute version = attributes[checkString];
+            XmlAttribute attribute = attributes[checkString];
 
-            if (version == null)
+            if (attribute == null)
             {
                 foreach (XmlNode node in package.ChildNodes)
                 {
                     if (node.Name == checkString)
                     {
-                        versionStr = node.InnerXml;
+                        attributeStr = node.InnerXml;
                         break;
                     }
                 }
             }
             else
             {
-                versionStr = version.Value;
+                attributeStr = attribute.Value;
             }
             
-            return versionStr;
+            return attributeStr;
         }
     }
 }
