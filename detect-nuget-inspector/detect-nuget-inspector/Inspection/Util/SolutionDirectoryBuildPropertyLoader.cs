@@ -65,10 +65,11 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                     string versionStr = InspectorUtil.GetAttributeInformation(attributes, "Version", packageNode);
                     string privateAssets = InspectorUtil.GetAttributeInformation(attributes, "PrivateAssets", packageNode);
 
-                    bool isDependency =
-                        ExcludedDependencyTypeUtil.isDependencyTypeExcluded(ExcludedDependencyTypes) && !String.IsNullOrWhiteSpace(privateAssets);
+                    bool isDevDependency = ExcludedDependencyTypeUtil.isDependencyTypeExcluded(ExcludedDependencyTypes,"DEV");
+                                           
+                    bool excludeDevDependency = isDevDependency && !String.IsNullOrWhiteSpace(privateAssets);
 
-                    if (!String.IsNullOrWhiteSpace(name) && !isDependency)
+                    if (!String.IsNullOrWhiteSpace(name) && !excludeDevDependency)
                     {
                        bool containsPkg =  CentrallyManagedPackages != null && CentrallyManagedPackages.Any(pkg => pkg.Name.Equals(name));
                        

@@ -83,8 +83,9 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                     string packageVersion = InspectorUtil.GetAttributeInformation(attributes,"Version", packageNode);
                     string privateAssets = InspectorUtil.GetAttributeInformation(attributes,"PrivateAssets", packageNode);
 
-                    bool isDependency = !String.IsNullOrWhiteSpace(privateAssets) &&
-                                        ExcludedDependencyTypeUtil.isDependencyTypeExcluded(ExcludedDependencyTypes);
+                    bool isDevDependency = ExcludedDependencyTypeUtil.isDependencyTypeExcluded(ExcludedDependencyTypes,"DEV");
+                                           
+                    bool excludeDevDependency = isDevDependency && !String.IsNullOrWhiteSpace(privateAssets);
 
                     if (!String.IsNullOrWhiteSpace(packageVersion) && packageVersion.Contains("$("))
                     {
@@ -106,7 +107,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                         }
                     }
 
-                    if (!String.IsNullOrWhiteSpace(packageName) && !String.IsNullOrWhiteSpace(packageVersion) && !isDependency)
+                    if (!String.IsNullOrWhiteSpace(packageName) && !String.IsNullOrWhiteSpace(packageVersion) && !excludeDevDependency)
                     {
                         packages.Add(new PackageId(packageName, packageVersion));
                     }
