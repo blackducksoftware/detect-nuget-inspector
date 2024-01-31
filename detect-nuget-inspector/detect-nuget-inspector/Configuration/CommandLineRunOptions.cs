@@ -38,6 +38,10 @@ namespace Synopsys.Detect.Nuget.Inspector.Configuration
         [AppConfigArg(AppConfigKeys.NugetConfigPath)]
         [CommandLineArg(CommandLineArgKeys.NugetConfigPath, "The path of a NuGet config file to load package sources from.")]
         public string NugetConfigPath = "";
+        
+        [AppConfigArg(AppConfigKeys.ExcludedDependencyTypes)]
+        [CommandLineArg(CommandLineArgKeys.ExcludedDependencyTypes, "The names of the dependency types to exclude from dependency node generation")]
+        public string ExcludedDependencyTypes = "";
 
         public bool ShowHelp;
         public bool Verbose;
@@ -52,6 +56,9 @@ namespace Synopsys.Detect.Nuget.Inspector.Configuration
             IgnoreFailures = String.IsNullOrEmpty(overide.IgnoreFailures) ? this.IgnoreFailures : overide.IgnoreFailures;
             PackagesRepoUrl = String.IsNullOrEmpty(overide.PackagesRepoUrl) ? this.PackagesRepoUrl : overide.PackagesRepoUrl;
             NugetConfigPath = String.IsNullOrEmpty(overide.NugetConfigPath) ? this.NugetConfigPath : overide.NugetConfigPath;
+            ExcludedDependencyTypes = String.IsNullOrEmpty(overide.ExcludedDependencyTypes)
+                ? this.ExcludedDependencyTypes
+                : overide.ExcludedDependencyTypes;
         }
     }
 }

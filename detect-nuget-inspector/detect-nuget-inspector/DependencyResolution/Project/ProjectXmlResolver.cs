@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Xml;
 using Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget;
+using Synopsys.Detect.Nuget.Inspector.Inspection.Util;
 using Synopsys.Detect.Nuget.Inspector.Model;
 
 namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
@@ -15,14 +16,16 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
         private NugetSearchService NugetSearchService;
         private HashSet<PackageId> CentrallyManagedPackages;
         private bool CheckVersionOverride;
+        private string ExcludedDependencyTypes;
 
-        public ProjectXmlResolver(string projectPath, NugetSearchService nugetSearchService)
+        public ProjectXmlResolver(string projectPath, NugetSearchService nugetSearchService, string excludedDependencyTypes)
         {
             ProjectPath = projectPath;
             NugetSearchService = nugetSearchService;
+            ExcludedDependencyTypes = excludedDependencyTypes;
         }
         
-        public ProjectXmlResolver(string projectPath, NugetSearchService nugetSearchService, HashSet<PackageId> centrallyManagedPackages, bool checkVersionOverride): this(projectPath, nugetSearchService)
+        public ProjectXmlResolver(string projectPath, NugetSearchService nugetSearchService, string excludedDependencyTypes, HashSet<PackageId> centrallyManagedPackages, bool checkVersionOverride): this(projectPath, nugetSearchService, excludedDependencyTypes)
         {
             CentrallyManagedPackages = centrallyManagedPackages;
             CheckVersionOverride = checkVersionOverride;
@@ -89,22 +92,26 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                     XmlAttributeCollection attributes = package.Attributes;
                     if (attributes != null)
                     {
-                        XmlAttribute include = attributes["Include"];
-                        
-                        string versionOverrideStr = GetVersionInformation(attributes, "VersionOverride", package);
-                        string versionStr = GetVersionInformation(attributes, "Version", package);
+                        string include = InspectorUtil.GetAttributeInformation(attributes, "Include", package);
+                        string versionOverrideStr = InspectorUtil.GetAttributeInformation(attributes, "VersionOverride", package);
+                        string versionStr = InspectorUtil.GetAttributeInformation(attributes, "Version", package);
+                        string privateAssets = InspectorUtil.GetAttributeInformation(attributes, "PrivateAssets", package);
 
-                        if (include != null)
+                        bool isDevDependency = ExcludedDependencyTypeUtil.isDependencyTypeExcluded(ExcludedDependencyTypes,"DEV");
+                                           
+                        bool excludeDevDependency = isDevDependency && !String.IsNullOrWhiteSpace(privateAssets);
+                        
+                        if (!String.IsNullOrWhiteSpace(include) && !excludeDevDependency)
                         {
-                            bool containsPkg = CentrallyManagedPackages != null && CentrallyManagedPackages.Any(pkg => pkg.Name.Equals(include.Value));
+                            bool containsPkg = CentrallyManagedPackages != null && CentrallyManagedPackages.Any(pkg => pkg.Name.Equals(include));
                             
                             if (containsPkg)
                             {
-                                PackageId pkg = CentrallyManagedPackages.First(pkg => pkg.Name.Equals(include.Value));
+                                PackageId pkg = CentrallyManagedPackages.First(pkg => pkg.Name.Equals(include));
                                 
                                 if (!String.IsNullOrWhiteSpace(versionOverrideStr) && CheckVersionOverride)
                                 { 
-                                    addNugetDependency(tree, include.Value, versionOverrideStr);
+                                    addNugetDependency(tree, include, versionOverrideStr);
                                 }
                                 else if (!String.IsNullOrWhiteSpace(versionOverrideStr) && !CheckVersionOverride)
                                 {
@@ -112,14 +119,14 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                                 }
                                 else
                                 {
-                                    addNugetDependency(tree, include.Value, pkg.Version);
+                                    addNugetDependency(tree, include, pkg.Version);
                                 }
                             }
                             else
                             {
                                 if (!String.IsNullOrWhiteSpace(versionStr))
                                 {
-                                    addNugetDependency(tree, include.Value, versionStr);
+                                    addNugetDependency(tree, include, versionStr);
                                 }
                             }
                         }
@@ -139,31 +146,6 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
             }
 
             return result;
-        }
-        
-        private string GetVersionInformation(XmlAttributeCollection attributes, string checkString, XmlNode package)
-        {
-            string versionStr = null;
-            
-            XmlAttribute version = attributes[checkString];
-
-            if (version == null)
-            {
-                foreach (XmlNode node in package.ChildNodes)
-                {
-                    if (node.Name == checkString)
-                    {
-                        versionStr = node.InnerXml;
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                versionStr = version.Value;
-            }
-            
-            return versionStr;
         }
 
         private void addNugetDependency(NugetTreeResolver tree, string include, string version)

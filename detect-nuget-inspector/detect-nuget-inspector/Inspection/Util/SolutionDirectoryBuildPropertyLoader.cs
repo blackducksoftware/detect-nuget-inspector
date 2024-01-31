@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Xml;
 using Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget;
+using Synopsys.Detect.Nuget.Inspector.Inspection.Util;
 using Synopsys.Detect.Nuget.Inspector.Model;
 
 namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
@@ -15,13 +16,15 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
         private NugetSearchService NugetSearchService;
         private bool CheckVersionOverride;
         private HashSet<PackageId> CentrallyManagedPackages;
+        private string ExcludedDependencyTypes;
 
-        public SolutionDirectoryBuildPropertyLoader(string propertyPath, NugetSearchService nugetSearchService, HashSet<PackageId> centrallyManagedPackages, bool checkVersionOverride)
+        public SolutionDirectoryBuildPropertyLoader(string propertyPath, NugetSearchService nugetSearchService, HashSet<PackageId> centrallyManagedPackages, bool checkVersionOverride, string excludedDependencyTypes)
         {
             PropertyPath = propertyPath;
             NugetSearchService = nugetSearchService;
             CentrallyManagedPackages = centrallyManagedPackages;
             CheckVersionOverride = checkVersionOverride;
+            ExcludedDependencyTypes = excludedDependencyTypes;
         }
 
         public HashSet<PackageId> Process()
@@ -56,42 +59,17 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                 if (packageNode.NodeType != XmlNodeType.Comment)
                 {
                     XmlAttributeCollection attributes = packageNode.Attributes;
-                    string name = null;
-                    string version = null;
-                    string versionOverride = null;
-                    foreach (XmlAttribute at in attributes)
-                    {
-                        if (at.LocalName.Contains("Include"))
-                        {
-                            name = at.Value;
-                        } 
-                        else if (at.LocalName.Contains("Version"))
-                        {
-                            version = at.Value;
-                        }
-                        else if (at.LocalName.Contains("VersionOverride"))
-                        {
-                            versionOverride = at.Value;
-                        }
-                    }
-                    
-                    if (String.IsNullOrWhiteSpace(version) && String.IsNullOrWhiteSpace(versionOverride))
-                    {
-                        foreach (XmlNode node in packageNode.ChildNodes)
-                        {
-                            if (node.Name == "Version")
-                            {
-                                version = node.InnerXml;
-                            }
-                            else if(node.Name == "VersionOverride")
-                            {
-                                versionOverride = node.InnerXml;
-                                break;
-                            }
-                        }
-                    }
 
-                    if (!String.IsNullOrWhiteSpace(name))
+                    string name = InspectorUtil.GetAttributeInformation(attributes, "Include", packageNode);
+                    string versionOverrideStr = InspectorUtil.GetAttributeInformation(attributes, "VersionOverride", packageNode);
+                    string versionStr = InspectorUtil.GetAttributeInformation(attributes, "Version", packageNode);
+                    string privateAssets = InspectorUtil.GetAttributeInformation(attributes, "PrivateAssets", packageNode);
+
+                    bool isDevDependency = ExcludedDependencyTypeUtil.isDependencyTypeExcluded(ExcludedDependencyTypes,"DEV");
+                                           
+                    bool excludeDevDependency = isDevDependency && !String.IsNullOrWhiteSpace(privateAssets);
+
+                    if (!String.IsNullOrWhiteSpace(name) && !excludeDevDependency)
                     {
                        bool containsPkg =  CentrallyManagedPackages != null && CentrallyManagedPackages.Any(pkg => pkg.Name.Equals(name));
                        
@@ -99,11 +77,11 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                        {
                            var pkg = CentrallyManagedPackages.First(pkg => pkg.Name.Equals(name));
                            
-                           if (!String.IsNullOrWhiteSpace(versionOverride) && (CheckVersionOverride || GetVersionOverrideEnabled()))
+                           if (!String.IsNullOrWhiteSpace(versionOverrideStr) && (CheckVersionOverride || GetVersionOverrideEnabled()))
                            {
-                               packageReferences.Add(new PackageId(name, versionOverride));
+                               packageReferences.Add(new PackageId(name, versionOverrideStr));
                            }
-                           else if (!String.IsNullOrWhiteSpace(versionOverride) && !CheckVersionOverride)
+                           else if (!String.IsNullOrWhiteSpace(versionOverrideStr) && !CheckVersionOverride)
                            {
                                Console.WriteLine("The Central Package Version Overriding is disabled, please enable version override or remove VersionOverride tags from project");
                            }
@@ -114,9 +92,9 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                        }
                        else
                        {
-                           if (!String.IsNullOrWhiteSpace(version))
+                           if (!String.IsNullOrWhiteSpace(versionStr))
                            {
-                               packageReferences.Add(new PackageId(name, version));
+                               packageReferences.Add(new PackageId(name, versionStr));
                            }
                        }
                     }

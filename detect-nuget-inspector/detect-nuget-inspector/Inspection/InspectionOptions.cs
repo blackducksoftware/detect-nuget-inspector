@@ -16,5 +16,6 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection
         public string ExcludedModules { get; set; } = "";
         public string IncludedModules { get; set; } = "";
         public bool IgnoreFailure { get; set; } = false;
+        public string ExcludedDependencyTypes { get; set; } = "NONE";
     }
 }

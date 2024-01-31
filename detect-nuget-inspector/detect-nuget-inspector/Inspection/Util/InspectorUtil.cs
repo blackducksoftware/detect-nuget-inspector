@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using static Synopsys.Detect.Nuget.Inspector.Inspection.Util.AssemblyInfoVersionParser;
+using System.Xml;
 
 namespace Synopsys.Detect.Nuget.Inspector.Inspection.Util
 {
@@ -60,6 +61,31 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Util
             }
 
             return null;
+        }
+        
+        public static string GetAttributeInformation(XmlAttributeCollection attributes, string checkString, XmlNode package)
+        {
+            string attributeStr = null;
+            
+            XmlAttribute attribute = attributes[checkString];
+
+            if (attribute == null)
+            {
+                foreach (XmlNode node in package.ChildNodes)
+                {
+                    if (node.Name == checkString)
+                    {
+                        attributeStr = node.InnerXml;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                attributeStr = attribute.Value;
+            }
+            
+            return attributeStr;
         }
     }
 }

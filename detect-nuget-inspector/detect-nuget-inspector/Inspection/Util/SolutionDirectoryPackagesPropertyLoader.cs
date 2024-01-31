@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Xml;
 using Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget;
+using Synopsys.Detect.Nuget.Inspector.Inspection.Util;
 using Synopsys.Detect.Nuget.Inspector.Model;
 
 namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
@@ -13,13 +14,15 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
 
         private String PropertyPath;
         private HashSet<PackageId> RootCentrallyManagedPackages;
+        private String ExcludedDependencyTypes;
 
-        public SolutionDirectoryPackagesPropertyLoader(String propertyPath)
+        public SolutionDirectoryPackagesPropertyLoader(String propertyPath, String excludedDependencyTypes)
         {
             PropertyPath = propertyPath;
+            ExcludedDependencyTypes = excludedDependencyTypes;
         }
         
-        public SolutionDirectoryPackagesPropertyLoader(String propertyPath, HashSet<PackageId> rootCentrallyManagedPackages): this(propertyPath)
+        public SolutionDirectoryPackagesPropertyLoader(String propertyPath, String excludedDependencyTypes, HashSet<PackageId> rootCentrallyManagedPackages): this(propertyPath, excludedDependencyTypes)
         {
             RootCentrallyManagedPackages = rootCentrallyManagedPackages;
         }
@@ -75,35 +78,16 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                 if (packageNode.NodeType != XmlNodeType.Comment)
                 {
                     XmlAttributeCollection attributes = packageNode.Attributes;
-                    String packageName = null;
-                    String packageVersion = null;
+                    
+                    string packageName = InspectorUtil.GetAttributeInformation(attributes, "Include", packageNode);
+                    string packageVersion = InspectorUtil.GetAttributeInformation(attributes,"Version", packageNode);
+                    string privateAssets = InspectorUtil.GetAttributeInformation(attributes,"PrivateAssets", packageNode);
 
-                    foreach (XmlAttribute attribute in attributes)
-                    {
-                        if (attribute.LocalName.Contains("Include"))
-                        {
-                            packageName = attribute.Value;
-                        }
+                    bool isDevDependency = ExcludedDependencyTypeUtil.isDependencyTypeExcluded(ExcludedDependencyTypes,"DEV");
+                                           
+                    bool excludeDevDependency = isDevDependency && !String.IsNullOrWhiteSpace(privateAssets);
 
-                        if (attribute.LocalName.Contains("Version"))
-                        {
-                            packageVersion = attribute.Value;
-                        }
-                    }
-
-                    if (String.IsNullOrWhiteSpace(packageVersion))
-                    {
-                        foreach (XmlNode node in packageNode.ChildNodes)
-                        {
-                            if (node.Name == "Version")
-                            {
-                                packageVersion = node.InnerXml;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (packageVersion != null && packageVersion.Contains("$("))
+                    if (!String.IsNullOrWhiteSpace(packageVersion) && packageVersion.Contains("$("))
                     {
                         string propertyName = packageVersion.Substring(packageVersion.IndexOf("(") + 1, packageVersion.IndexOf(")") - 2);
                         if (propertyGroups.ContainsKey(propertyName))
@@ -123,7 +107,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                         }
                     }
 
-                    if (!String.IsNullOrWhiteSpace(packageName) && !String.IsNullOrWhiteSpace(packageVersion))
+                    if (!String.IsNullOrWhiteSpace(packageName) && !String.IsNullOrWhiteSpace(packageVersion) && !excludeDevDependency)
                     {
                         packages.Add(new PackageId(packageName, packageVersion));
                     }

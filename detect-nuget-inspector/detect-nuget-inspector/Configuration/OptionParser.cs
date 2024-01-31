@@ -42,7 +42,8 @@ namespace Synopsys.Detect.Nuget.Inspector.Configuration
                     PackagesRepoUrl = parsedOptions.PackagesRepoUrl,
                     NugetConfigPath = parsedOptions.NugetConfigPath,
                     TargetPath = parsedOptions.TargetPath,
-                    Verbose = parsedOptions.Verbose
+                    Verbose = parsedOptions.Verbose,
+                    ExcludedDependencyTypes = parsedOptions.ExcludedDependencyTypes
                 };
 
                 return ParsedOptions.Succeeded(options);

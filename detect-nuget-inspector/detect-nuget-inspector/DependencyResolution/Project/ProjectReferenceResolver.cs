@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Build.Evaluation;
 using Microsoft.Build.Exceptions;
 using Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget;
+using Synopsys.Detect.Nuget.Inspector.Inspection.Util;
 using Synopsys.Detect.Nuget.Inspector.Model;
 
 namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
@@ -17,14 +18,16 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
         private NugetSearchService NugetSearchService;
         private HashSet<PackageId> CentrallyManagedPackages;
         private bool CheckVersionOverride;
+        private string ExcludedDependencyTypes;
         
-        public ProjectReferenceResolver(string projectPath, NugetSearchService nugetSearchService)
+        public ProjectReferenceResolver(string projectPath, NugetSearchService nugetSearchService, String excludedDependencyTypes)
         {
             ProjectPath = projectPath;
             NugetSearchService = nugetSearchService;
+            ExcludedDependencyTypes = excludedDependencyTypes;
         }
         
-        public ProjectReferenceResolver(string projectPath, NugetSearchService nugetSearchService, HashSet<PackageId> centrallyManagedPackages, bool checkVersionOverride): this(projectPath, nugetSearchService)
+        public ProjectReferenceResolver(string projectPath, NugetSearchService nugetSearchService, String excludedDependencyTypes, HashSet<PackageId> centrallyManagedPackages, bool checkVersionOverride): this(projectPath, nugetSearchService, excludedDependencyTypes)
         {
             CentrallyManagedPackages = centrallyManagedPackages;
             CheckVersionOverride = checkVersionOverride;
@@ -45,31 +48,43 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                     
                     var versionMetaData = reference.Metadata.Where(meta => meta.Name == "Version").FirstOrDefault();
                     var versionOverrideMetaData = reference.Metadata.Where(meta => meta.Name == "VersionOverride").FirstOrDefault();
-                    
-                    if (containsPkg)
-                    {
-                        PackageId pkg = CentrallyManagedPackages.First(pkg => pkg.Name.Equals(reference.EvaluatedInclude));
+                    var privateAssetsMetaData = reference.Metadata.Where(meta => meta.Name == "PrivateAssets").FirstOrDefault();
 
-                        if (CheckVersionOverride && versionOverrideMetaData != null)
+                    bool isDevDependency = ExcludedDependencyTypeUtil.isDependencyTypeExcluded(ExcludedDependencyTypes,"DEV");
+
+                    bool excludeDevDependency = isDevDependency && privateAssetsMetaData != null;
+
+                    if (!excludeDevDependency)
+                    {
+                        if (containsPkg)
                         {
-                            addNugetDependency(reference.EvaluatedInclude,versionOverrideMetaData.EvaluatedValue,deps);
+                            PackageId pkg =
+                                CentrallyManagedPackages.First(pkg => pkg.Name.Equals(reference.EvaluatedInclude));
+
+                            if (CheckVersionOverride && versionOverrideMetaData != null)
+                            {
+                                addNugetDependency(reference.EvaluatedInclude, versionOverrideMetaData.EvaluatedValue,
+                                    deps);
+                            }
+                            else if (!CheckVersionOverride && versionOverrideMetaData != null)
+                            {
+                                Console.WriteLine(
+                                    "The Central Package Version Overriding is disabled, please enable version override or remove VersionOverride tags from project");
+                            }
+                            else
+                            {
+                                addNugetDependency(reference.EvaluatedInclude, pkg.Version, deps);
+                            }
                         }
-                        else if (!CheckVersionOverride && versionOverrideMetaData != null)
+                        else if (versionMetaData != null)
                         {
-                            Console.WriteLine("The Central Package Version Overriding is disabled, please enable version override or remove VersionOverride tags from project");
+                            addNugetDependency(reference.EvaluatedInclude, versionMetaData.EvaluatedValue, deps);
                         }
                         else
                         {
-                            addNugetDependency(reference.EvaluatedInclude,pkg.Version,deps);
+                            Console.WriteLine("Framework dependency had no version, will not be included: " +
+                                              reference.EvaluatedInclude);
                         }
-                    }
-                    else if (versionMetaData != null)
-                    {
-                        addNugetDependency(reference.EvaluatedInclude,versionMetaData.EvaluatedValue,deps);
-                    }
-                    else
-                    {
-                        Console.WriteLine("Framework dependency had no version, will not be included: " + reference.EvaluatedInclude);
                     }
                 }
 
