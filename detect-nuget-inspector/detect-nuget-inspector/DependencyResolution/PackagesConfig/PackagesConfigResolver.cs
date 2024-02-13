@@ -61,8 +61,7 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.PackagesConfig
                 var framework = NuGet.Frameworks.NuGetFramework.Parse(packageRef.TargetFramework.Framework);
 
                 bool excludeDevDependency = isDevDependency && packageRef.IsDevelopmentDependency;
-
-                //TODO: Check that this works.
+                
                 if (!excludeDevDependency)
                 {
                     var dep = new NugetDependency(componentName, versionRange, framework);
