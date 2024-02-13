@@ -175,7 +175,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                 else if (packagesConfigExists)
                 {
                     Console.WriteLine("Using packages config: " + Options.PackagesConfigPath);
-                    var packagesConfigResolver = new PackagesConfigResolver(Options.PackagesConfigPath, NugetService);
+                    var packagesConfigResolver = new PackagesConfigResolver(Options.PackagesConfigPath, NugetService, Options.ExcludedDependencyTypes);
                     var packagesConfigResult = packagesConfigResolver.Process();
                     projectNode.Packages = packagesConfigResult.Packages;
                     projectNode.Dependencies = packagesConfigResult.Dependencies;

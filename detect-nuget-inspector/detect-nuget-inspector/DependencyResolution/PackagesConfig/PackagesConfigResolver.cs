@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using NuGet.Packaging;
 using Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget;
+using Synopsys.Detect.Nuget.Inspector.Inspection.Util;
 
 namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.PackagesConfig
 {
@@ -12,11 +13,13 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.PackagesConfig
     {
         private string PackagesConfigPath;
         private NugetSearchService NugetSearchService;
+        private String ExcludedDependencyTypes;
 
-        public PackagesConfigResolver(string packagesConfigPath, NugetSearchService nugetSearchService)
+        public PackagesConfigResolver(string packagesConfigPath, NugetSearchService nugetSearchService, String excludedDependencyTypes )
         {
             PackagesConfigPath = packagesConfigPath;
             NugetSearchService = nugetSearchService;
+            ExcludedDependencyTypes = excludedDependencyTypes;
         }
 
         public DependencyResult Process()
@@ -45,6 +48,8 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.PackagesConfig
             System.IO.Stream stream = new System.IO.FileStream(PackagesConfigPath, System.IO.FileMode.Open, System.IO.FileAccess.Read);
             PackagesConfigReader reader = new PackagesConfigReader(stream);
             List<PackageReference> packages = reader.GetPackages().ToList();
+            
+            bool isDevDependency = ExcludedDependencyTypeUtil.isDependencyTypeExcluded(ExcludedDependencyTypes,"DEV");
 
             var dependencies = new List<NugetDependency>();
 
@@ -55,9 +60,14 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.PackagesConfig
                 var versionRange = new NuGet.Versioning.VersionRange(version, true, version, true);
                 var framework = NuGet.Frameworks.NuGetFramework.Parse(packageRef.TargetFramework.Framework);
 
+                bool excludeDevDependency = isDevDependency && packageRef.IsDevelopmentDependency;
+
                 //TODO: Check that this works.
-                var dep = new NugetDependency(componentName, versionRange, framework);
-                dependencies.Add(dep);
+                if (!excludeDevDependency)
+                {
+                    var dep = new NugetDependency(componentName, versionRange, framework);
+                    dependencies.Add(dep);
+                }
             }
 
             return dependencies;
