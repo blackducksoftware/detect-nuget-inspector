@@ -49,7 +49,7 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.PackagesConfig
             PackagesConfigReader reader = new PackagesConfigReader(stream);
             List<PackageReference> packages = reader.GetPackages().ToList();
             
-            bool isDevDependency = ExcludedDependencyTypeUtil.isDependencyTypeExcluded(ExcludedDependencyTypes,"DEV");
+            bool isDevDependencyTypeExcluded = ExcludedDependencyTypeUtil.isDependencyTypeExcluded(ExcludedDependencyTypes,"DEV");
 
             var dependencies = new List<NugetDependency>();
 
@@ -60,7 +60,7 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.PackagesConfig
                 var versionRange = new NuGet.Versioning.VersionRange(version, true, version, true);
                 var framework = NuGet.Frameworks.NuGetFramework.Parse(packageRef.TargetFramework.Framework);
 
-                bool excludeDevDependency = isDevDependency && packageRef.IsDevelopmentDependency;
+                bool excludeDevDependency = isDevDependencyTypeExcluded && packageRef.IsDevelopmentDependency;
                 
                 if (!excludeDevDependency)
                 {
