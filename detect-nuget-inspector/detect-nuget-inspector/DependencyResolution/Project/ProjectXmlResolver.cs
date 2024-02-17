@@ -97,9 +97,9 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                         string versionStr = InspectorUtil.GetAttributeInformation(attributes, "Version", package);
                         string privateAssets = InspectorUtil.GetAttributeInformation(attributes, "PrivateAssets", package);
 
-                        bool isDevDependency = ExcludedDependencyTypeUtil.isDependencyTypeExcluded(ExcludedDependencyTypes,"DEV");
+                        bool isDevDependencyTypeExcluded = ExcludedDependencyTypeUtil.isDependencyTypeExcluded(ExcludedDependencyTypes,"DEV");
                                            
-                        bool excludeDevDependency = isDevDependency && !String.IsNullOrWhiteSpace(privateAssets);
+                        bool excludeDevDependency = isDevDependencyTypeExcluded && !String.IsNullOrWhiteSpace(privateAssets);
                         
                         if (!String.IsNullOrWhiteSpace(include) && !excludeDevDependency)
                         {

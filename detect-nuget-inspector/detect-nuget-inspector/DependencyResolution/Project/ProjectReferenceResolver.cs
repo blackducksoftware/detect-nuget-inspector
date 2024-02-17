@@ -50,9 +50,9 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                     var versionOverrideMetaData = reference.Metadata.Where(meta => meta.Name == "VersionOverride").FirstOrDefault();
                     var privateAssetsMetaData = reference.Metadata.Where(meta => meta.Name == "PrivateAssets").FirstOrDefault();
 
-                    bool isDevDependency = ExcludedDependencyTypeUtil.isDependencyTypeExcluded(ExcludedDependencyTypes,"DEV");
+                    bool isDevDependencyTypeExcluded = ExcludedDependencyTypeUtil.isDependencyTypeExcluded(ExcludedDependencyTypes,"DEV");
 
-                    bool excludeDevDependency = isDevDependency && privateAssetsMetaData != null;
+                    bool excludeDevDependency = isDevDependencyTypeExcluded && privateAssetsMetaData != null;
 
                     if (!excludeDevDependency)
                     {

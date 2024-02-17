@@ -83,9 +83,9 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                     string packageVersion = InspectorUtil.GetAttributeInformation(attributes,"Version", packageNode);
                     string privateAssets = InspectorUtil.GetAttributeInformation(attributes,"PrivateAssets", packageNode);
 
-                    bool isDevDependency = ExcludedDependencyTypeUtil.isDependencyTypeExcluded(ExcludedDependencyTypes,"DEV");
+                    bool isDevDependencyTypeExcluded = ExcludedDependencyTypeUtil.isDependencyTypeExcluded(ExcludedDependencyTypes,"DEV");
                                            
-                    bool excludeDevDependency = isDevDependency && !String.IsNullOrWhiteSpace(privateAssets);
+                    bool excludeDevDependency = isDevDependencyTypeExcluded && !String.IsNullOrWhiteSpace(privateAssets);
 
                     if (!String.IsNullOrWhiteSpace(packageVersion) && packageVersion.Contains("$("))
                     {
