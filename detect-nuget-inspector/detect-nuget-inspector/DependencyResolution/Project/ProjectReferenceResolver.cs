@@ -58,32 +58,28 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                     {
                         if (containsPkg)
                         {
-                            PackageId pkg =
-                                CentrallyManagedPackages.First(pkg => pkg.Name.Equals(reference.EvaluatedInclude));
+                            PackageId pkg = CentrallyManagedPackages.First(pkg => pkg.Name.Equals(reference.EvaluatedInclude));
 
                             if (CheckVersionOverride && versionOverrideMetaData != null)
                             {
-                                addNugetDependency(reference.EvaluatedInclude, versionOverrideMetaData.EvaluatedValue,
-                                    deps);
+                                addNugetDependency(reference.EvaluatedInclude, versionOverrideMetaData.EvaluatedValue, tree);
                             }
                             else if (!CheckVersionOverride && versionOverrideMetaData != null)
                             {
-                                Console.WriteLine(
-                                    "The Central Package Version Overriding is disabled, please enable version override or remove VersionOverride tags from project");
+                                Console.WriteLine("The Central Package Version Overriding is disabled, please enable version override or remove VersionOverride tags from project");
                             }
                             else
                             {
-                                addNugetDependency(reference.EvaluatedInclude, pkg.Version, deps);
+                                addNugetDependency(reference.EvaluatedInclude, pkg.Version, tree);
                             }
                         }
                         else if (versionMetaData != null)
                         {
-                            addNugetDependency(reference.EvaluatedInclude, versionMetaData.EvaluatedValue, deps);
+                            addNugetDependency(reference.EvaluatedInclude, versionMetaData.EvaluatedValue, tree);
                         }
                         else
                         {
-                            Console.WriteLine("Framework dependency had no version, will not be included: " +
-                                              reference.EvaluatedInclude);
+                            Console.WriteLine("Framework dependency had no version, will not be included: " + reference.EvaluatedInclude);
                         }
                     }
                 }
@@ -114,16 +110,10 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
                             version = packageInfoAfterVersionKey;
                         }
 
-                        var dep = new NugetDependency(artifact, NuGet.Versioning.VersionRange.Parse(version));
-                        deps.Add(dep);
+                        tree.Add(new NugetDependency(artifact, NuGet.Versioning.VersionRange.Parse(version)));
                     }
                 }
                 ProjectCollection.GlobalProjectCollection.UnloadProject(proj);
-
-                foreach (var dep in deps)
-                {
-                    tree.Add(dep);
-                }
 
                 var result = new DependencyResult()
                 {
@@ -152,13 +142,12 @@ namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project
             }
         }
         
-        private void addNugetDependency(string include, string versionMetadata, List<NugetDependency> deps)
+        private void addNugetDependency(string include, string versionMetadata, NugetTreeResolver tree)
         {
             NuGet.Versioning.VersionRange version;
             if (NuGet.Versioning.VersionRange.TryParse(versionMetadata, out version))
             {
-                var dep = new NugetDependency(include, version);
-                deps.Add(dep);
+                tree.Add(new NugetDependency(include, version));
             }
         }
     }
