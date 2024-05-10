@@ -13,7 +13,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection
     {
         public static InspectorExecutionResult ExecuteInspectors(InspectionOptions options)
         {
-            IEnumerable<string> lines = File.ReadLines(options.TargetPaths);
+            IEnumerable<string> lines = File.ReadLines(options.TargetPath);
             bool anyFailed = false;
             var index = 1;
             var originalOutputDirectory = options.OutputDirectory;
