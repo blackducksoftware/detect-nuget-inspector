@@ -17,18 +17,18 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection
         {
         }
 
-        public List<InspectionResult> Inspect(InspectionOptions options, NugetSearchService nugetService)
+        public List<InspectionResult> Inspect(string targetPath, InspectionOptions options, NugetSearchService nugetService)
         {
-            return CreateInspectors(options, nugetService)?.Select(insp => insp.Inspect()).ToList();
+            return CreateInspectors(targetPath, options, nugetService)?.Select(insp => insp.Inspect()).ToList();
         }
 
-        public List<IInspector> CreateInspectors(InspectionOptions options, NugetSearchService nugetService)
+        public List<IInspector> CreateInspectors(string targetPath, InspectionOptions options, NugetSearchService nugetService)
         {
             var inspectors = new List<IInspector>();
-            if (Directory.Exists(options.TargetPath))
+            if (Directory.Exists(targetPath))
             {
                 Console.WriteLine("Searching for solution files to process...");
-                string[] solutionPaths = Directory.GetFiles(options.TargetPath, "*.sln");
+                string[] solutionPaths = Directory.GetFiles(targetPath, "*.sln");
 
                 if (solutionPaths != null && solutionPaths.Length >= 1)
                 {
@@ -44,7 +44,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection
                 else
                 {
                     Console.WriteLine("No Solution file found.  Searching for a project file...");
-                    string[] projectPaths = SupportedProjectPatterns.AsList.SelectMany(pattern => Directory.GetFiles(options.TargetPath, pattern)).Distinct().ToArray();
+                    string[] projectPaths = SupportedProjectPatterns.AsList.SelectMany(pattern => Directory.GetFiles(targetPath, pattern)).Distinct().ToArray();
                     if (projectPaths != null && projectPaths.Length > 0)
                     {
                         foreach (var projectPath in projectPaths)
@@ -61,18 +61,18 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection
                     }
                 }
             }
-            else if (File.Exists(options.TargetPath))
+            else if (File.Exists(targetPath))
             {
-                if (options.TargetPath.Contains(".sln"))
+                if (targetPath.Contains(".sln"))
                 {
                     var solutionOp = new SolutionInspectionOptions(options);
-                    solutionOp.TargetPath = options.TargetPath;
+                    solutionOp.TargetPath = targetPath;
                     inspectors.Add(new SolutionInspector(solutionOp, nugetService));
                 }
                 else
                 {
                     var projectOp = new ProjectInspectionOptions(options);
-                    projectOp.TargetPath = options.TargetPath;
+                    projectOp.TargetPath = targetPath;
                     inspectors.Add(new ProjectInspector(projectOp, nugetService));
                 }
             }

@@ -13,59 +13,65 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection
     {
         public static InspectorExecutionResult ExecuteInspectors(InspectionOptions options)
         {
+            IEnumerable<string> lines = File.ReadLines(options.TargetPaths);
             bool anyFailed = false;
-
-            try
+            var index = 1;
+            var originalOutputDirectory = options.OutputDirectory;
+            foreach (var targetPath in lines)
             {
-                var dispatch = new InspectorDispatch();
-                var searchService = new NugetSearchService(options.PackagesRepoUrl, options.NugetConfigPath);
-                var inspectionResults = dispatch.Inspect(options, searchService);
-                if (inspectionResults != null)
+                try
                 {
-                    foreach (var result in inspectionResults)
+                    options.OutputDirectory = new File(originalOutputDirectory, "inspection-" + index);
+                    var dispatch = new InspectorDispatch();
+                    var searchService = new NugetSearchService(options.PackagesRepoUrl, options.NugetConfigPath);
+                    var inspectionResults = dispatch.Inspect(targetPath, options, searchService);
+                    if (inspectionResults != null)
                     {
-                        try
+                        foreach (var result in inspectionResults)
                         {
-                            if (result.ResultName != null)
+                            try
                             {
-                                Console.WriteLine("Inspection: " + result.ResultName);
-                            }
-                            if (result.Status == InspectionResult.ResultStatus.Success)
-                            {
-                                Console.WriteLine("Inspection Result: Success");
-                                var writer = new InspectionResultJsonWriter(result);
-                                writer.Write();
-                                Console.WriteLine("Info file created at {0}", writer.FilePath());
-                            }
-                            else
-                            {
-                                Console.WriteLine("Inspection Result: Error");
-                                if (result.Exception != null)
+                                if (result.ResultName != null)
                                 {
-                                    Console.WriteLine("Exception:");
-                                    Console.WriteLine(result.Exception);
-                                    anyFailed = true;
+                                    Console.WriteLine("Inspection: " + result.ResultName);
+                                }
+                                if (result.Status == InspectionResult.ResultStatus.Success)
+                                {
+                                    Console.WriteLine("Inspection Result: Success");
+                                    var writer = new InspectionResultJsonWriter(result);
+                                    writer.Write();
+                                    Console.WriteLine("Info file created at {0}", writer.FilePath());
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Inspection Result: Error");
+                                    if (result.Exception != null)
+                                    {
+                                        Console.WriteLine("Exception:");
+                                        Console.WriteLine(result.Exception);
+                                        anyFailed = true;
+                                    }
                                 }
                             }
-                        }
-                        catch (Exception e)
-                        {
-                            Console.WriteLine("Error processing inspection result.");
-                            Console.WriteLine(e.Message);
-                            Console.WriteLine(e.StackTrace);
-                            anyFailed = true;
+                            catch (Exception e)
+                            {
+                                Console.WriteLine("Error processing inspection result.");
+                                Console.WriteLine(e.Message);
+                                Console.WriteLine(e.StackTrace);
+                                anyFailed = true;
+                            }
                         }
                     }
+                index++;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Error iterating inspection results.");
+                    Console.WriteLine(e.Message);
+                    Console.WriteLine(e.StackTrace);
+                    anyFailed = true;
                 }
             }
-            catch (Exception e)
-            {
-                Console.WriteLine("Error iterating inspection results.");
-                Console.WriteLine(e.Message);
-                Console.WriteLine(e.StackTrace);
-                anyFailed = true;
-            }
-
             if (anyFailed)
             {
                 return InspectorExecutionResult.Failed();
