@@ -22,7 +22,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection
             {
                 try
                 {
-                    options.OutputDirectory = new File(originalOutputDirectory, "inspection-" + index);
+                    options.OutputDirectory = Directory.create(originalOutputDirectory + "/inspection-" + index);
                     var dispatch = new InspectorDispatch();
                     var searchService = new NugetSearchService(options.PackagesRepoUrl, options.NugetConfigPath);
                     var inspectionResults = dispatch.Inspect(targetPath, options, searchService);
