@@ -149,13 +149,17 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
 
                 try
                 {
-                    projectNode.OutputPaths = FindOutputPaths();
+                    (projectNode.OutputPaths, var baseIntermediatePath) = FindOutputPaths();
+                    if (!string.IsNullOrEmpty(baseIntermediatePath))
+                    {
+                        Options.ProjectAssetsJsonPath =
+                            CreateProjectAssetsJsonPathFromIntermediate(baseIntermediatePath);
+                    }
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine("Unable to determine output paths for this project.");
                 }
-
 
                 bool packagesConfigExists = !String.IsNullOrWhiteSpace(Options.PackagesConfigPath) && File.Exists(Options.PackagesConfigPath);
                 bool projectJsonExists = !String.IsNullOrWhiteSpace(Options.ProjectJsonPath) && File.Exists(Options.ProjectJsonPath);
@@ -265,7 +269,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
         }
 
 
-        public List<String> FindOutputPaths()
+        public ProjectInfo FindOutputPaths()
         {
             //TODO: Move to a new class (OutputPathResolver?)
             Console.WriteLine("Attempting to parse configuration output paths.");
@@ -275,6 +279,9 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                 Microsoft.Build.Evaluation.Project proj = new Microsoft.Build.Evaluation.Project(Options.TargetPath);
                 List<string> outputPaths = new List<string>();
                 List<string> configurations;
+                var intermediatePath = proj.GetPropertyValue("BaseIntermediateOutputPath") ?? "obj";
+                var fullIntermediatePath = PathUtil.Combine(proj.DirectoryPath, intermediatePath);
+                Console.WriteLine("Intermediate path: " + fullIntermediatePath);
                 proj.ConditionedProperties.TryGetValue("Configuration", out configurations);
                 if (configurations == null) configurations = new List<string>();
                 foreach (var config in configurations)
@@ -288,12 +295,12 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                 }
                 Microsoft.Build.Evaluation.ProjectCollection.GlobalProjectCollection.UnloadProject(proj);
                 Console.WriteLine($"Found {outputPaths.Count} paths.");
-                return outputPaths;
+                return new ProjectInfo(outputPaths, fullIntermediatePath);
             }
             catch (Exception e)
             {
                 Console.WriteLine("Skipping configuration output paths.");
-                return new List<string>() { };
+                return new ProjectInfo(new List<string>() { }, string.Empty);
             }
         }
 
@@ -381,7 +388,12 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
         {
             return PathUtil.Combine(projectDirectory, "obj", "project.assets.json");
         }
-        
+
+        private string CreateProjectAssetsJsonPathFromIntermediate(string intermediatePath)
+        {
+            return PathUtil.Combine(intermediatePath, "project.assets.json");
+        }
+
         private string CreateDirectoryPackagesPropsPath(string projectDirectory)
         {
             return PathUtil.Combine(projectDirectory, "Directory.Packages.props");
@@ -404,5 +416,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
             }
             return null;
         }
+
+        public record ProjectInfo(List<string> Output, string BaseIntermediatePath);
     }
 }
