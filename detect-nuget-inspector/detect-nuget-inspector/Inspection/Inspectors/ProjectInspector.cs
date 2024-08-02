@@ -279,7 +279,7 @@ namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
                 if (configurations == null) configurations = new List<string>();
                 foreach (var config in configurations)
                 {
-                    proj.SetProperty("Configuration", config);
+                    proj.SetGlobalProperty("Configuration", config);
                     proj.ReevaluateIfNecessary();
                     var path = proj.GetPropertyValue("OutputPath");
                     var fullPath = PathUtil.Combine(proj.DirectoryPath, path);
