@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using NuGet.Common;
 
-namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget
+namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
 {
     // For the NuGet API
     public class NugetLogger : NuGet.Common.ILogger

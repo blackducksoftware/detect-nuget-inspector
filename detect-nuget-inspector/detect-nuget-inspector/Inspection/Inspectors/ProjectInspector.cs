@@ -9,13 +9,13 @@ using System.IO;
 using System.Text;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
-using Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget;
-using Synopsys.Detect.Nuget.Inspector.Inspection.Util;
-using Synopsys.Detect.Nuget.Inspector.Model;
-using Synopsys.Detect.Nuget.Inspector.DependencyResolution.PackagesConfig;
-using Synopsys.Detect.Nuget.Inspector.DependencyResolution.Project;
+using Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget;
+using Blackduck.Detect.Nuget.Inspector.Inspection.Util;
+using Blackduck.Detect.Nuget.Inspector.Model;
+using Blackduck.Detect.Nuget.Inspector.DependencyResolution.PackagesConfig;
+using Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project;
 
-namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
+namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
 {
     class ProjectInspector : IInspector
     {

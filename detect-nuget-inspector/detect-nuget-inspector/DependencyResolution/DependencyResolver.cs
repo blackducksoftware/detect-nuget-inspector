@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution
+namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution
 {
     interface DependencyResolver
     {

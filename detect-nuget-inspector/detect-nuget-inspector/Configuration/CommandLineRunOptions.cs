@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Synopsys.Detect.Nuget.Inspector.Configuration
+namespace Blackduck.Detect.Nuget.Inspector.Configuration
 {
     public class RunOptions
     {

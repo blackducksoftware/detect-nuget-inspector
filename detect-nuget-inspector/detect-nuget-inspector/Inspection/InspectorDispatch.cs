@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget;
-using Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors;
-using Synopsys.Detect.Nuget.Inspector.Inspection.Util;
+using Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget;
+using Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors;
+using Blackduck.Detect.Nuget.Inspector.Inspection.Util;
 
-namespace Synopsys.Detect.Nuget.Inspector.Inspection
+namespace Blackduck.Detect.Nuget.Inspector.Inspection
 {
     //Given a generic InspectionOptions, InspectorDispatch is responsible for instantiating the correct Inspector (Project or Solution)
     class InspectorDispatch

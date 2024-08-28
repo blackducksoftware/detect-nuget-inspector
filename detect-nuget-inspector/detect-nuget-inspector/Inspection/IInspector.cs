@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Synopsys.Detect.Nuget.Inspector.Inspection
+namespace Blackduck.Detect.Nuget.Inspector.Inspection
 {
     interface IInspector
     {

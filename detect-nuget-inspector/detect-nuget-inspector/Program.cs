@@ -1,6 +1,6 @@
 ﻿using Microsoft.Build.Locator;
-using Synopsys.Detect.Nuget.Inspector.Configuration;
-using Synopsys.Detect.Nuget.Inspector.Inspection;
+using Blackduck.Detect.Nuget.Inspector.Configuration;
+using Blackduck.Detect.Nuget.Inspector.Inspection;
 
 class Program
 {

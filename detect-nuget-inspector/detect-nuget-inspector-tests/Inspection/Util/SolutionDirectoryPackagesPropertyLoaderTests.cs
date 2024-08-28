@@ -1,6 +1,6 @@
 using System.Security.Policy;
-using Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors;
-using Synopsys.Detect.Nuget.Inspector.Model;
+using Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors;
+using Blackduck.Detect.Nuget.Inspector.Model;
 
 namespace detect_nuget_inspector_tests.Inspection.Util
 {
