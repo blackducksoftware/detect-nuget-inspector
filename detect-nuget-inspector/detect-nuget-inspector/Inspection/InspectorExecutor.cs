@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget;
-using Blackduck.Detect.Nuget.Inspector.Inspection.Util;
-using Blackduck.Detect.Nuget.Inspector.Result;
+using SCA.Detect.Nuget.Inspector.DependencyResolution.Nuget;
+using SCA.Detect.Nuget.Inspector.Inspection.Util;
+using SCA.Detect.Nuget.Inspector.Result;
 
-namespace Blackduck.Detect.Nuget.Inspector.Inspection
+namespace SCA.Detect.Nuget.Inspector.Inspection
 {
     public class InspectorExecutor
     {

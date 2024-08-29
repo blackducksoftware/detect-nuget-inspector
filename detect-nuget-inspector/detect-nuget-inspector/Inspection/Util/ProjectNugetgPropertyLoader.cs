@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Xml;
-using Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget;
+using SCA.Detect.Nuget.Inspector.DependencyResolution.Nuget;
 
-namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
+namespace SCA.Detect.Nuget.Inspector.Inspection.Inspectors
 {
     class ProjectNugetgPropertyLoader : PropertyLoader
     {
