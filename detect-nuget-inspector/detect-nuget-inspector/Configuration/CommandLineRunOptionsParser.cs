@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Mono.Options;
 
-namespace Blackduck.Detect.Nuget.Inspector.Configuration
+namespace SCA.Detect.Nuget.Inspector.Configuration
 {
     class CommandLineRunOptionsParser
     {

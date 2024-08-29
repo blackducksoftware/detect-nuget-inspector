@@ -1,4 +1,4 @@
-﻿namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget.Test
+﻿namespace SCA.Detect.Nuget.Inspector.DependencyResolution.Nuget.Test
 {
     [TestClass]
     public class NugetLockFileResolverTest

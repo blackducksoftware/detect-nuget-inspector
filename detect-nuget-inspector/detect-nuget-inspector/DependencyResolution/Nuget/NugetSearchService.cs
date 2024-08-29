@@ -11,7 +11,7 @@ using NuGet.Packaging.Core;
 using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
 
-namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
+namespace SCA.Detect.Nuget.Inspector.DependencyResolution.Nuget
 {
     public class NugetSearchService
     {

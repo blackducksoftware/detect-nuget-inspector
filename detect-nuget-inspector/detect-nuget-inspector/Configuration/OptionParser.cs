@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Blackduck.Detect.Nuget.Inspector.Inspection;
+using SCA.Detect.Nuget.Inspector.Inspection;
 
-namespace Blackduck.Detect.Nuget.Inspector.Configuration
+namespace SCA.Detect.Nuget.Inspector.Configuration
 {
     public class OptionParser
     {

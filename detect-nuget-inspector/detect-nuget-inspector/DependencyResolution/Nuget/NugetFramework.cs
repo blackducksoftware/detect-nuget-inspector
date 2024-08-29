@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
+namespace SCA.Detect.Nuget.Inspector.DependencyResolution.Nuget
 {
     public class NugetFramework
     {

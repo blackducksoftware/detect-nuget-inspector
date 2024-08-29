@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 using NuGet.LibraryModel;
 using NuGet.ProjectModel;
 
-namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
+namespace SCA.Detect.Nuget.Inspector.DependencyResolution.Project
 {
     public class ProjectJsonResolver : DependencyResolver
     {

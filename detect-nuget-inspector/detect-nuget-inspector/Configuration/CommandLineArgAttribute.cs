@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Blackduck.Detect.Nuget.Inspector.Configuration
+namespace SCA.Detect.Nuget.Inspector.Configuration
 {
     class CommandLineArgAttribute : Attribute
     {

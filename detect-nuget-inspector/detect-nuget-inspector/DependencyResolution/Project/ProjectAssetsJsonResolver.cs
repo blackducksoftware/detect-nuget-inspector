@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget;
+using SCA.Detect.Nuget.Inspector.DependencyResolution.Nuget;
 
-namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
+namespace SCA.Detect.Nuget.Inspector.DependencyResolution.Project
 {
     class ProjectAssetsJsonResolver : DependencyResolver
     {

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using NuGet.Packaging.Core;
 using NuGet.Versioning;
 
-namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
+namespace SCA.Detect.Nuget.Inspector.DependencyResolution.Nuget
 {
     //Given a list of dependencies, resolve them such that all packages are shared in a flat list
     //Essentially means that no nodes in the tree that refer to the same package may have different versions.

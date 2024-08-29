@@ -1,6 +1,6 @@
 using Newtonsoft.Json.Linq;
 
-namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project.Test;
+namespace SCA.Detect.Nuget.Inspector.DependencyResolution.Project.Test;
 
 [TestClass]
 public class ProjectJsonResolverTests
