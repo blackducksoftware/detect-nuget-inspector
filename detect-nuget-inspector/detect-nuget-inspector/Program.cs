@@ -1,6 +1,6 @@
 ﻿using Microsoft.Build.Locator;
-using Blackduck.Detect.Nuget.Inspector.Configuration;
-using Blackduck.Detect.Nuget.Inspector.Inspection;
+using SCA.Detect.Nuget.Inspector.Configuration;
+using SCA.Detect.Nuget.Inspector.Inspection;
 
 class Program
 {
