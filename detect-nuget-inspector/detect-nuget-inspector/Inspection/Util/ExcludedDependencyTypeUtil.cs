@@ -1,4 +1,4 @@
-namespace SCA.Detect.Nuget.Inspector.Inspection.Util
+namespace Blackduck.Detect.Nuget.Inspector.Inspection.Util
 {
 
     static class ExcludedDependencyTypeUtil

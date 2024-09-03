@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static SCA.Detect.Nuget.Inspector.Inspection.Util.AssemblyInfoVersionParser;
+using static Blackduck.Detect.Nuget.Inspector.Inspection.Util.AssemblyInfoVersionParser;
 using System.Xml;
 
-namespace SCA.Detect.Nuget.Inspector.Inspection.Util
+namespace Blackduck.Detect.Nuget.Inspector.Inspection.Util
 {
     class InspectorUtil
     {

@@ -1,6 +1,6 @@
 using System.Security.Policy;
-using SCA.Detect.Nuget.Inspector.Inspection.Inspectors;
-using SCA.Detect.Nuget.Inspector.Model;
+using Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors;
+using Blackduck.Detect.Nuget.Inspector.Model;
 
 namespace detect_nuget_inspector_tests.Inspection.Util
 {

@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Xml;
-using SCA.Detect.Nuget.Inspector.DependencyResolution.Nuget;
-using SCA.Detect.Nuget.Inspector.Inspection.Util;
-using SCA.Detect.Nuget.Inspector.Model;
+using Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget;
+using Blackduck.Detect.Nuget.Inspector.Inspection.Util;
+using Blackduck.Detect.Nuget.Inspector.Model;
 
-namespace SCA.Detect.Nuget.Inspector.DependencyResolution.Project
+namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
 {
     class ProjectXmlResolver : DependencyResolver
     {

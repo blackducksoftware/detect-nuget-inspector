@@ -6,11 +6,11 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Build.Graph;
 using NuGet.Packaging;
-using SCA.Detect.Nuget.Inspector.DependencyResolution.Nuget;
-using SCA.Detect.Nuget.Inspector.Inspection.Util;
-using SCA.Detect.Nuget.Inspector.Model;
+using Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget;
+using Blackduck.Detect.Nuget.Inspector.Inspection.Util;
+using Blackduck.Detect.Nuget.Inspector.Model;
 
-namespace SCA.Detect.Nuget.Inspector.Inspection.Inspectors
+namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
 {
     class SolutionInspector : IInspector
     {

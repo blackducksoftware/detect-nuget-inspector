@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using NuGet.Packaging.Core;
 
-namespace SCA.Detect.Nuget.Inspector.DependencyResolution.Nuget
+namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
 {
     public class NugetTreeResolver
     {

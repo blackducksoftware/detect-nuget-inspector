@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SCA.Detect.Nuget.Inspector.Inspection.Inspectors
+namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
 {
     class SolutionInspectionOptions : InspectionOptions
     {
