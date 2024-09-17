@@ -1,4 +1,4 @@
-﻿namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget.Test
+﻿namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget.Test
 {
     [TestClass]
     public class NugetLockFileResolverTest

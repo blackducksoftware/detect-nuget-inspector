@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
-    <RootNamespace>Synopsys.Detect.Nuget.Inspector</RootNamespace>
+    <RootNamespace>Blackduck.Detect.Nuget.Inspector</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	<DisableMSBuildAssemblyCopyCheck>true</DisableMSBuildAssemblyCopyCheck>

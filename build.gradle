@@ -3,16 +3,16 @@ buildscript {
     apply from: 'https://raw.githubusercontent.com/blackducksoftware/integration-resources/master/gradle_common/buildscript-cgp-version.gradle'
 
     dependencies {
-        classpath "com.synopsys.integration:common-gradle-plugin:${managedCgpVersion}"
+        classpath "com.blackduck.integration:common-gradle-plugin:${managedCgpVersion}"
     }
 }
 
 ext.dotNetExec = project.hasProperty('dotNetExec') ? project.getProperty('dotNetExec') : 'dotnet6'
 
-group 'com.synopsys.integration'
-version = '1.3.1-SNAPSHOT'
+group 'com.blackduck.integration'
+version = '2.0.0-SNAPSHOT'
 
-apply plugin: 'com.synopsys.integration.solution'
+apply plugin: 'com.blackduck.integration.solution'
 apply plugin: 'distribution'
 
 project.tasks.create(name: 'buildSolutions') {

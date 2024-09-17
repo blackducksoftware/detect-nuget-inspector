@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Xml;
-using Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget;
-using Synopsys.Detect.Nuget.Inspector.Inspection.Util;
-using Synopsys.Detect.Nuget.Inspector.Model;
+using Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget;
+using Blackduck.Detect.Nuget.Inspector.Inspection.Util;
+using Blackduck.Detect.Nuget.Inspector.Model;
 
-namespace Synopsys.Detect.Nuget.Inspector.Inspection.Inspectors
+namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
 {
     class SolutionDirectoryBuildPropertyLoader : PackageReferenceLoader
     {

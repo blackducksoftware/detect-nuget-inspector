@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Synopsys.Detect.Nuget.Inspector.Model;
+using Blackduck.Detect.Nuget.Inspector.Model;
 using Newtonsoft.Json;
 
-namespace Synopsys.Detect.Nuget.Inspector.Inspection.Util
+namespace Blackduck.Detect.Nuget.Inspector.Inspection.Util
 {
     class InspectionResultJsonWriter
     {

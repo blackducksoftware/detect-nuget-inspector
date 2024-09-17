@@ -7,7 +7,7 @@ using NuGet.Frameworks;
 using NuGet.Packaging.Core;
 using NuGet.Versioning;
 
-namespace Synopsys.Detect.Nuget.Inspector.DependencyResolution.Nuget
+namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
 {
     public class NugetDependency
     {
