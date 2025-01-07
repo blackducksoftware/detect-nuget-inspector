@@ -183,6 +183,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                                 TargetPath = projectPath
                             }, NugetService, packagesProperty, checkVersionOverride);
 
+                            projectInspector.setSrcDirectory(solutionDirectory);
                             InspectionResult projectResult = projectInspector.Inspect();
                             if (projectResult != null && projectResult.Status == InspectionResult.ResultStatus.Success && projectResult.Containers != null)
                             {

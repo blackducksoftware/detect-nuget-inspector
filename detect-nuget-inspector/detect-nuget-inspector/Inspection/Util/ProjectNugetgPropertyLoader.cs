@@ -25,6 +25,15 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
 
             XmlDocument doc = new XmlDocument();
             doc.Load(PropertyPath);
+            
+            Microsoft.Build.Evaluation.Project proj = new Microsoft.Build.Evaluation.Project(PropertyPath);
+            string projectAssestsJsonPath = proj.GetPropertyValue("ProjectAssetsFile");
+
+            if (!String.IsNullOrWhiteSpace(projectAssestsJsonPath))
+            {
+                Microsoft.Build.Evaluation.ProjectCollection.GlobalProjectCollection.UnloadProject(proj);
+                return projectAssestsJsonPath;
+            }
 
             XmlNodeList projectAssetsFileNodes = doc.GetElementsByTagName("ProjectAssetsFile");
             if (projectAssetsFileNodes != null && projectAssetsFileNodes.Count > 0)
@@ -37,6 +46,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                     }
                 }
             }
+            
             return null;
         }
     }

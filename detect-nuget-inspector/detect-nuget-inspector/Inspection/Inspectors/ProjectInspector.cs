@@ -24,6 +24,17 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
         private HashSet<PackageId> CentrallyManagedPackages;
         private bool CheckVersionOverride;
 
+        private static String _baseIntermediateOutputPath = "BaseIntermediateOutputPath";
+
+        private static String _artifactsPath = "ArtifactsPath";
+        
+        Dictionary<String, String> ArtifactLocationsDirectory = new Dictionary<String, String>();
+
+        private string SrcDirectory;
+
+        private string FinalArtifactPath;
+        private string FinalBaseIntermediateOutputPath; 
+
         public ProjectInspector(ProjectInspectionOptions options, NugetSearchService nugetService)
         {
             Options = options;
@@ -149,11 +160,11 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
 
                 try
                 {
-                    projectNode.OutputPaths = FindOutputPaths();
+                    getArtifactsLocations();
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("Unable to determine output paths for this project.");
+                    Console.WriteLine("Unable to determine custom artifact paths for this project.");
                 }
 
 
@@ -244,7 +255,6 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
 
                 var projectAssetsJsonPathFromProperty = GetProjectAssetsJsonPathFromNugetProperty(Options.ProjectDirectory, Options.ProjectName);
                 if (!String.IsNullOrWhiteSpace(projectAssetsJsonPathFromProperty)
-                    && !String.Equals(projectAssetsJsonPathFromProperty, Options.ProjectAssetsJsonPath)
                     && File.Exists(projectAssetsJsonPathFromProperty))
                 {
                     Console.WriteLine("Using assets json file configured in property file: " + projectAssetsJsonPathFromProperty);
@@ -264,36 +274,82 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
             }
         }
 
-
-        public List<String> FindOutputPaths()
+        public void setSrcDirectory(string srcDirectory)
         {
-            //TODO: Move to a new class (OutputPathResolver?)
-            Console.WriteLine("Attempting to parse configuration output paths.");
+            this.SrcDirectory = srcDirectory;
+        }
+
+        public void getArtifactsLocations()
+        {
+            Console.WriteLine("Attempting to find the artifact locations for project.");
             Console.WriteLine("Project File: " + Options.TargetPath);
+
             try
             {
                 Microsoft.Build.Evaluation.Project proj = new Microsoft.Build.Evaluation.Project(Options.TargetPath);
-                List<string> outputPaths = new List<string>();
-                List<string> configurations;
-                proj.ConditionedProperties.TryGetValue("Configuration", out configurations);
-                if (configurations == null) configurations = new List<string>();
-                foreach (var config in configurations)
+                var artifactsPath = proj.GetPropertyValue(_artifactsPath);
+                if (String.IsNullOrEmpty(artifactsPath))
                 {
-                    proj.SetProperty("Configuration", config);
-                    proj.ReevaluateIfNecessary();
-                    var path = proj.GetPropertyValue("OutputPath");
-                    var fullPath = PathUtil.Combine(proj.DirectoryPath, path);
-                    outputPaths.Add(fullPath);
-                    Console.WriteLine("Found path: " + fullPath);
+                    var baseIntermediatePath = proj.GetPropertyValue(_baseIntermediateOutputPath);
+                    Console.WriteLine("BaseIntermediateOutputPath:" + baseIntermediatePath);
+                    ArtifactLocationsDirectory.Add(_baseIntermediateOutputPath, baseIntermediatePath);
                 }
+                else
+                {
+                    Console.WriteLine("ArtifactsPath:" + artifactsPath);
+                    if (!artifactsPath.EndsWith("\\") && !artifactsPath.EndsWith("/"))
+                    {
+                        if (OperatingSystem.IsWindows())
+                        {
+                            artifactsPath += "\\";
+                        }
+                        else
+                        {
+                            artifactsPath += "/";
+                        }
+                    }
+                    ArtifactLocationsDirectory.Add(_artifactsPath, artifactsPath);
+                }
+                
                 Microsoft.Build.Evaluation.ProjectCollection.GlobalProjectCollection.UnloadProject(proj);
-                Console.WriteLine($"Found {outputPaths.Count} paths.");
-                return outputPaths;
+                resolveObjFolderLocation();
             }
             catch (Exception e)
             {
-                Console.WriteLine("Skipping configuration output paths.");
-                return new List<string>() { };
+                Console.WriteLine("Looks like the project was not properly built. Please rebuild the project and try again.");
+            }
+        }
+
+        private void resolveObjFolderLocation()
+        {
+            Console.WriteLine("Attempting to find the obj folder for project.");
+
+            if (ArtifactLocationsDirectory.ContainsKey(_artifactsPath) &&
+                !String.IsNullOrWhiteSpace(ArtifactLocationsDirectory[_artifactsPath]))
+            {
+                if (SrcDirectory == null)
+                {
+                    SrcDirectory = Options.ProjectDirectory;
+                }
+
+                String objFolderCheck = PathUtil.Combine(SrcDirectory, ArtifactLocationsDirectory[_artifactsPath] + "obj");
+                if (Directory.Exists(objFolderCheck))
+                {
+                    Console.WriteLine("Found obj folder: " + objFolderCheck);
+                    FinalArtifactPath = objFolderCheck;
+                }
+            }
+            else if (ArtifactLocationsDirectory.ContainsKey(_baseIntermediateOutputPath) &&
+                     !String.IsNullOrWhiteSpace(ArtifactLocationsDirectory[_baseIntermediateOutputPath]))
+
+            {
+                String checkFolder =
+                    PathUtil.Combine(SrcDirectory, ArtifactLocationsDirectory[_baseIntermediateOutputPath]);
+                if (Directory.Exists(checkFolder))
+                {
+                    Console.WriteLine("Found the output of the obj folder: " + checkFolder);
+                    FinalBaseIntermediateOutputPath = checkFolder;
+                }
             }
         }
 
@@ -379,6 +435,21 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
 
         private string CreateProjectAssetsJsonPath(string projectDirectory)
         {
+            if (FinalArtifactPath != null)
+            {
+                if (File.Exists(PathUtil.Combine(FinalArtifactPath, Options.ProjectName, "project.assets.json")))
+                {
+                    return PathUtil.Combine(FinalArtifactPath, Options.ProjectName, "project.assets.json");
+                }
+            }
+            else if (FinalBaseIntermediateOutputPath != null)
+            {
+                if (File.Exists(PathUtil.Combine(FinalBaseIntermediateOutputPath, "project.assets.json")))
+                {
+                    return PathUtil.Combine(FinalBaseIntermediateOutputPath, "project.assets.json");
+                }
+            }
+            
             return PathUtil.Combine(projectDirectory, "obj", "project.assets.json");
         }
         
@@ -389,6 +460,19 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
 
         private string CreateProjectNugetgPropertyPath(string projectDirectory, string projectName)
         {
+            if (FinalArtifactPath != null)
+            {
+                if (File.Exists(PathUtil.Combine(FinalArtifactPath, projectName, projectName + ".csproj.nuget.g.props")))
+                {
+                    return PathUtil.Combine(FinalArtifactPath, projectName, projectName + ".csproj.nuget.g.props");
+                }
+            } else if (FinalBaseIntermediateOutputPath != null) 
+            {
+                if (File.Exists(PathUtil.Combine(FinalBaseIntermediateOutputPath, projectName + ".csproj.nuget.g.props")))
+                {
+                    return PathUtil.Combine(FinalBaseIntermediateOutputPath, projectName + ".csproj.nuget.g.props");
+                }
+            }
             return PathUtil.Combine(projectDirectory, "obj", projectName + ".csproj.nuget.g.props");
         }
 
@@ -400,7 +484,13 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
             {
                 Console.WriteLine("Using project nuget property file: " + projectNugetgPropertyPath);
                 var xmlResolver = new ProjectNugetgPropertyLoader(projectNugetgPropertyPath, NugetService);
-                return xmlResolver.Process();
+                string xmlPath = xmlResolver.Process();
+
+                if (FinalArtifactPath != null)
+                {
+                    return CreateProjectAssetsJsonPath(projectDirectory);
+                }
+                return xmlPath;
             }
             return null;
         }
