@@ -323,15 +323,15 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
         private void resolveObjFolderLocation()
         {
             Console.WriteLine("Attempting to find the obj folder for project.");
+            
+            if (SrcDirectory == null)
+            {
+                SrcDirectory = Options.ProjectDirectory;
+            }
 
             if (ArtifactLocationsDirectory.ContainsKey(_artifactsPath) &&
                 !String.IsNullOrWhiteSpace(ArtifactLocationsDirectory[_artifactsPath]))
             {
-                if (SrcDirectory == null)
-                {
-                    SrcDirectory = Options.ProjectDirectory;
-                }
-
                 String objFolderCheck = PathUtil.Combine(SrcDirectory, ArtifactLocationsDirectory[_artifactsPath] + "obj");
                 if (Directory.Exists(objFolderCheck))
                 {
@@ -486,7 +486,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                 var xmlResolver = new ProjectNugetgPropertyLoader(projectNugetgPropertyPath, NugetService);
                 string xmlPath = xmlResolver.Process();
 
-                if (FinalArtifactPath != null)
+                if (FinalArtifactPath != null || FinalBaseIntermediateOutputPath != null)
                 {
                     return CreateProjectAssetsJsonPath(projectDirectory);
                 }
