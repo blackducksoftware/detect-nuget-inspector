@@ -42,6 +42,16 @@ namespace Blackduck.Detect.Nuget.Inspector.Configuration
         [AppConfigArg(AppConfigKeys.ExcludedDependencyTypes)]
         [CommandLineArg(CommandLineArgKeys.ExcludedDependencyTypes, "The names of the dependency types to exclude from dependency node generation")]
         public string ExcludedDependencyTypes = "";
+        
+        [AppConfigArg(AppConfigKeys.ArtifactsPath)]
+        [CommandLineArg(CommandLineArgKeys.ArtifactsPath, "The output path to Nuget build artifacts to derive package information from.")]
+        public string ArtifactsPath = "";
+
+        
+        [AppConfigArg(AppConfigKeys.BaseIntermediateOutputPath)]
+        [CommandLineArg(CommandLineArgKeys.BaseIntermediateOutputPath, "The output path to Nuget build artifacts specifically the obj directory containing nuget package sources.")]
+        public string BaseIntermediateOutputPath = "";
+
 
         public bool ShowHelp;
         public bool Verbose;
@@ -59,6 +69,8 @@ namespace Blackduck.Detect.Nuget.Inspector.Configuration
             ExcludedDependencyTypes = String.IsNullOrEmpty(overide.ExcludedDependencyTypes)
                 ? this.ExcludedDependencyTypes
                 : overide.ExcludedDependencyTypes;
+            ArtifactsPath = String.IsNullOrEmpty(overide.ArtifactsPath) ? this.ArtifactsPath : overide.ArtifactsPath;
+            BaseIntermediateOutputPath = String.IsNullOrEmpty(overide.BaseIntermediateOutputPath) ? this.BaseIntermediateOutputPath : overide.BaseIntermediateOutputPath;
         }
     }
 }
