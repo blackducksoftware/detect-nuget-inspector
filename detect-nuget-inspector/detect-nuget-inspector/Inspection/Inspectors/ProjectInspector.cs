@@ -384,7 +384,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
             }
             else if (!String.IsNullOrWhiteSpace(Options.BaseIntermediateOutputPath))
             {
-                return PathUtil.Combine(Options.BaseIntermediateOutputPath, "project.assets.json");
+                return PathUtil.Combine(Options.BaseIntermediateOutputPath, Options.ProjectName, "project.assets.json");
             }
             return PathUtil.Combine(projectDirectory, "obj", "project.assets.json");
         }
@@ -402,7 +402,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
             }
             else if (!String.IsNullOrWhiteSpace(Options.BaseIntermediateOutputPath))
             {
-                return PathUtil.Combine(Options.BaseIntermediateOutputPath, projectName + ".csproj.nuget.g.props");
+                return PathUtil.Combine(Options.BaseIntermediateOutputPath, projectName, projectName + ".csproj.nuget.g.props");
             }
             return PathUtil.Combine(projectDirectory, "obj", projectName + ".csproj.nuget.g.props");
         }
