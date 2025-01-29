@@ -316,7 +316,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
             }
             catch (Exception e)
             {
-                Console.WriteLine("Looks like the project was not properly built. Please rebuild the project and try again.");
+                Console.WriteLine("Looks like the project was not properly built. Please rebuild the project and try again." + e);
             }
         }
 
