@@ -339,7 +339,11 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
         {
             if (!String.IsNullOrWhiteSpace(Options.ArtifactsPath))
             {
-                return FindProjectArtifactsFolder();
+                if (Directory.Exists(Options.ArtifactsPath))
+                {
+                    return FindProjectArtifactsFolder();
+                }
+                Console.WriteLine("The Artifacts Path is invalid or Detect does not have appropriate permissions. Please specify a valid path.");
             }
             return PathUtil.Combine(projectDirectory, "obj", "project.assets.json");
         }
