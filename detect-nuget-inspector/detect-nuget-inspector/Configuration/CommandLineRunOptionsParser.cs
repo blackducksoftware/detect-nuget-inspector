@@ -67,7 +67,6 @@ namespace Blackduck.Detect.Nuget.Inspector.Configuration
             Console.WriteLine("Property {0} = {1}", CommandLineArgKeys.NugetConfigPath, options.NugetConfigPath);
             Console.WriteLine("Property {0} = {1}", CommandLineArgKeys.ExcludedDependencyTypes, options.ExcludedDependencyTypes);
             Console.WriteLine("Property {0} = {1}", CommandLineArgKeys.ArtifactsPath, options.ArtifactsPath);
-            Console.WriteLine("Property {0} = {1}", CommandLineArgKeys.BaseIntermediateOutputPath, options.BaseIntermediateOutputPath);
         }
 
         public RunOptions LoadAppSettings(string path)

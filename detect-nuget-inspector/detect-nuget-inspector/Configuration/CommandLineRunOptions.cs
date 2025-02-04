@@ -47,11 +47,6 @@ namespace Blackduck.Detect.Nuget.Inspector.Configuration
         [CommandLineArg(CommandLineArgKeys.ArtifactsPath, "The output path to Nuget build artifacts to derive package information from.")]
         public string ArtifactsPath = "";
 
-        
-        [AppConfigArg(AppConfigKeys.BaseIntermediateOutputPath)]
-        [CommandLineArg(CommandLineArgKeys.BaseIntermediateOutputPath, "The output path to Nuget build artifacts specifically the obj directory containing nuget package sources.")]
-        public string BaseIntermediateOutputPath = "";
-
 
         public bool ShowHelp;
         public bool Verbose;
@@ -70,7 +65,6 @@ namespace Blackduck.Detect.Nuget.Inspector.Configuration
                 ? this.ExcludedDependencyTypes
                 : overide.ExcludedDependencyTypes;
             ArtifactsPath = String.IsNullOrEmpty(overide.ArtifactsPath) ? this.ArtifactsPath : overide.ArtifactsPath;
-            BaseIntermediateOutputPath = String.IsNullOrEmpty(overide.BaseIntermediateOutputPath) ? this.BaseIntermediateOutputPath : overide.BaseIntermediateOutputPath;
         }
     }
 }

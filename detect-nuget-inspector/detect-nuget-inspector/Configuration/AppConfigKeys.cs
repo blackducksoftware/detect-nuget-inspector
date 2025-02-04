@@ -17,6 +17,5 @@ namespace Blackduck.Detect.Nuget.Inspector.Configuration
         public const string IgnoreFailures = "ignore_failure";
         public const string ExcludedDependencyTypes = "excluded_dependency_types";
         public const string ArtifactsPath = "artifacts_path";
-        public const string BaseIntermediateOutputPath = "base_intermediate_output_path";
     }
 }

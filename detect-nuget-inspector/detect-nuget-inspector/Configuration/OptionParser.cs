@@ -44,8 +44,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Configuration
                     TargetPath = parsedOptions.TargetPath,
                     Verbose = parsedOptions.Verbose,
                     ExcludedDependencyTypes = parsedOptions.ExcludedDependencyTypes,
-                    ArtifactsPath = parsedOptions.ArtifactsPath,
-                    BaseIntermediateOutputPath = parsedOptions.BaseIntermediateOutputPath
+                    ArtifactsPath = parsedOptions.ArtifactsPath
                 };
 
                 return ParsedOptions.Succeeded(options);

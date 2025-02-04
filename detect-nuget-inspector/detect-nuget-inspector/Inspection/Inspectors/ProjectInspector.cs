@@ -23,6 +23,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
         public NugetSearchService NugetService;
         private HashSet<PackageId> CentrallyManagedPackages;
         private bool CheckVersionOverride;
+        private string ProjectArtifactsDirectory;
 
         public ProjectInspector(ProjectInspectionOptions options, NugetSearchService nugetService)
         {
@@ -147,15 +148,6 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                 projectNode.SourcePath = Options.TargetPath;
                 projectNode.Type = "Project";
 
-                // try
-                // {
-                //     projectNode.OutputPaths = FindOutputPaths();
-                // }
-                // catch (Exception e)
-                // {
-                //     Console.WriteLine("Unable to determine output paths for this project.");
-                // }
-
 
                 bool packagesConfigExists = !String.IsNullOrWhiteSpace(Options.PackagesConfigPath) && File.Exists(Options.PackagesConfigPath);
                 bool projectJsonExists = !String.IsNullOrWhiteSpace(Options.ProjectJsonPath) && File.Exists(Options.ProjectJsonPath);
@@ -252,7 +244,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                     projectNode.Packages.AddRange(projectAssetsJsonResult.Packages);
                     projectNode.Dependencies.AddRange(projectAssetsJsonResult.Dependencies);
                 }
-
+ 
                 if (projectNode != null && projectNode.Dependencies != null && projectNode.Packages != null)
                 {
                     Console.WriteLine("Found {0} dependencies among {1} packages.", projectNode.Dependencies.Count, projectNode.Packages.Count);
@@ -262,39 +254,6 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                 return projectNode;
             }
         }
-
-
-        // public List<String> FindOutputPaths()
-        // {
-        //     //TODO: Move to a new class (OutputPathResolver?)
-        //     Console.WriteLine("Attempting to parse configuration output paths.");
-        //     Console.WriteLine("Project File: " + Options.TargetPath);
-        //     try
-        //     {
-        //         Microsoft.Build.Evaluation.Project proj = new Microsoft.Build.Evaluation.Project(Options.TargetPath);
-        //         List<string> outputPaths = new List<string>();
-        //         List<string> configurations;
-        //         proj.ConditionedProperties.TryGetValue("Configuration", out configurations);
-        //         if (configurations == null) configurations = new List<string>();
-        //         foreach (var config in configurations)
-        //         {
-        //             proj.SetProperty("Configuration", config);
-        //             proj.ReevaluateIfNecessary();
-        //             var path = proj.GetPropertyValue("OutputPath");
-        //             var fullPath = PathUtil.Combine(proj.DirectoryPath, path);
-        //             outputPaths.Add(fullPath);
-        //             Console.WriteLine("Found path: " + fullPath);
-        //         }
-        //         Microsoft.Build.Evaluation.ProjectCollection.GlobalProjectCollection.UnloadProject(proj);
-        //         Console.WriteLine($"Found {outputPaths.Count} paths.");
-        //         return outputPaths;
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         Console.WriteLine("Skipping configuration output paths.");
-        //         return new List<string>() { };
-        //     }
-        // }
 
         public bool IsExcluded()
         {
@@ -380,11 +339,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
         {
             if (!String.IsNullOrWhiteSpace(Options.ArtifactsPath))
             {
-                return PathUtil.Combine(Options.ArtifactsPath, "obj", Options.ProjectName, "project.assets.json");
-            }
-            else if (!String.IsNullOrWhiteSpace(Options.BaseIntermediateOutputPath))
-            {
-                return PathUtil.Combine(Options.BaseIntermediateOutputPath, Options.ProjectName, "project.assets.json");
+                return FindProjectArtifactsFolder();
             }
             return PathUtil.Combine(projectDirectory, "obj", "project.assets.json");
         }
@@ -396,35 +351,65 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
 
         private string CreateProjectNugetgPropertyPath(string projectDirectory, string projectName)
         {
-            if (!String.IsNullOrWhiteSpace(Options.ArtifactsPath))
-            {
-                return PathUtil.Combine(Options.ArtifactsPath, "obj", projectName, projectName + ".csproj.nuget.g.props");
-            }
-            else if (!String.IsNullOrWhiteSpace(Options.BaseIntermediateOutputPath))
-            {
-                return PathUtil.Combine(Options.BaseIntermediateOutputPath, projectName, projectName + ".csproj.nuget.g.props");
-            }
             return PathUtil.Combine(projectDirectory, "obj", projectName + ".csproj.nuget.g.props");
         }
 
         private string GetProjectAssetsJsonPathFromNugetProperty(string projectDirectory, string projectName)
         {
+            if (!String.IsNullOrWhiteSpace(Options.ArtifactsPath))
+            {
+                return CreateProjectAssetsJsonPath(projectDirectory);
+            }
             string projectNugetgPropertyPath = CreateProjectNugetgPropertyPath(projectDirectory, projectName);
             bool projectNugetgPropertyExists = !String.IsNullOrWhiteSpace(projectNugetgPropertyPath) && File.Exists(projectNugetgPropertyPath);
             if (projectNugetgPropertyExists)
             {
                 Console.WriteLine("Using project nuget property file: " + projectNugetgPropertyPath);
                 var xmlResolver = new ProjectNugetgPropertyLoader(projectNugetgPropertyPath, NugetService);
-                string xmlPath = xmlResolver.Process();
-                
-                if (!String.IsNullOrWhiteSpace(Options.ArtifactsPath) ||  !String.IsNullOrWhiteSpace(Options.BaseIntermediateOutputPath))
-                {
-                    return CreateProjectAssetsJsonPath(projectDirectory);
-                }
-
-                return xmlPath;
+                return xmlResolver.Process();
             }
             return null;
+        }
+
+        private string FindProjectArtifactsFolder()
+        {
+            if (File.Exists(Path.Combine(Options.ArtifactsPath, "obj", Options.ProjectName, "project.assets.json")))
+            {
+                return Path.Combine(Options.ArtifactsPath, "obj", Options.ProjectName, "project.assets.json");
+            }
+            
+            ParseThroughDirectories(Options.ArtifactsPath);
+
+            if (String.IsNullOrWhiteSpace(ProjectArtifactsDirectory))
+            {
+                Console.WriteLine("Could not find project.assets.json for this project, please check the artifacts directory provided and try again.");
+                return null;
+            }
+
+            return Path.Combine(ProjectArtifactsDirectory, "project.assets.json");
+        }
+
+        private void ParseThroughDirectories(string path)
+        {
+            string[] directories = Directory.GetDirectories(path);
+
+            if (directories.Length == 0)
+            {
+                return;
+            }
+            
+            foreach (string directory in directories)
+            {
+                if (!directory.EndsWith("bin") && !directory.EndsWith("debug"))
+                {
+                    if (File.Exists(Path.Combine(directory, "project.assets.json")) && directory.Contains(Options.ProjectName))
+                    { 
+                        ProjectArtifactsDirectory = directory;
+                        break;
+                    }
+                    ParseThroughDirectories(directory);
+                }
+            }
         }
     }
 }

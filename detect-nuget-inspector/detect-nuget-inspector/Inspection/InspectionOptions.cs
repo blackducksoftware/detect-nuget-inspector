@@ -18,6 +18,5 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection
         public bool IgnoreFailure { get; set; } = false;
         public string ExcludedDependencyTypes { get; set; } = "NONE";
         public string ArtifactsPath { get; set; } = "";
-        public string BaseIntermediateOutputPath { get; set; } = "";
     }
 }
