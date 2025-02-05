@@ -161,7 +161,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                 // File.exists is a safe method that will not throw exceptions and simply return false
                 if (!packagesConfigExists)
                 {
-                    Console.WriteLine("Unable to find packages config file. Checking if file permissions were denied...");
+                    Console.WriteLine($"Unable to find packages config file: {Options.PackagesConfigPath}. Checking if file permissions were denied...");
                     CheckFilePermissions(Options.PackagesConfigPath);
                 }
 
@@ -282,7 +282,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
             }
             catch (UnauthorizedAccessException ex)
             {
-                Console.WriteLine("UnauthorizedAccessException when trying to open packages config file: " + path);
+                Console.WriteLine("UnauthorizedAccessException when trying to open packages config file. \n" + ex.Message);
             }
             catch (Exception ex)
             {
@@ -389,6 +389,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
 
         private string CreateProjectPackageConfigPath(string projectDirectory)
         {
+            Console.WriteLine($"Creating packages.config path from project directory: {projectDirectory}");
             return PathUtil.Combine(projectDirectory, "packages.config");
         }
 
