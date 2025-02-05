@@ -158,6 +158,13 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
 
 
                 bool packagesConfigExists = !String.IsNullOrWhiteSpace(Options.PackagesConfigPath) && File.Exists(Options.PackagesConfigPath);
+                // File.exists is a safe method that will not throw exceptions and simply return false
+                if (!packagesConfigExists)
+                {
+                    Console.WriteLine($"Unable to find packages config file: {Options.PackagesConfigPath}. Checking if file permissions were denied...");
+                    CheckFilePermissions(Options.PackagesConfigPath);
+                }
+
                 bool projectJsonExists = !String.IsNullOrWhiteSpace(Options.ProjectJsonPath) && File.Exists(Options.ProjectJsonPath);
                 bool projectJsonLockExists = !String.IsNullOrWhiteSpace(Options.ProjectJsonLockPath) && File.Exists(Options.ProjectJsonLockPath);
                 bool projectAssetsJsonExists = !String.IsNullOrWhiteSpace(Options.ProjectAssetsJsonPath) && File.Exists(Options.ProjectAssetsJsonPath);
@@ -265,6 +272,24 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
         }
 
 
+        private void CheckFilePermissions(String path)
+        {
+            try
+            {
+                // Attempt to read file, will throw UnauthorizedAccessException if denied
+                using (File.OpenRead(path)) { }
+                Console.WriteLine("File permissions confirmed.");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.WriteLine("UnauthorizedAccessException when trying to open packages config file. \n" + ex.Message);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Unexpected exception when trying to open packages config file: " + ex.Message);
+            }
+        }
+
         public List<String> FindOutputPaths()
         {
             //TODO: Move to a new class (OutputPathResolver?)
@@ -364,6 +389,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
 
         private string CreateProjectPackageConfigPath(string projectDirectory)
         {
+            Console.WriteLine($"Creating packages.config path from project directory: {projectDirectory}");
             return PathUtil.Combine(projectDirectory, "packages.config");
         }
 
