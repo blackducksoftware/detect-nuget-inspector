@@ -20,6 +20,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
             this.IncludedModules = old.IncludedModules;
             this.IgnoreFailure = old.IgnoreFailure;
             this.ExcludedDependencyTypes = old.ExcludedDependencyTypes;
+            this.ArtifactsPath = old.ArtifactsPath;
         }
 
         public string ProjectName { get; set; }
