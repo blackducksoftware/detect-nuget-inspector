@@ -272,7 +272,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
         }
 
 
-        private void CheckFilePermissions(String path)
+        public static void CheckFilePermissions(String path)
         {
             try
             {
@@ -282,11 +282,11 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
             }
             catch (UnauthorizedAccessException ex)
             {
-                Console.WriteLine("UnauthorizedAccessException when trying to open packages config file. \n" + ex.Message);
+                Console.WriteLine("UnauthorizedAccessException when trying to open file. \n" + ex.Message);
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Unexpected exception when trying to open packages config file: " + ex.Message);
+                Console.WriteLine("Some other exception when trying to open file: " + ex.Message);
             }
         }
 
@@ -317,7 +317,8 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
             }
             catch (Exception e)
             {
-                Console.WriteLine("Skipping configuration output paths.");
+                Console.WriteLine("Skipping configuration output paths because a problem occurred (likely during project evaluation at target path).");
+                Console.WriteLine("Exception was: " + e.Message);
                 return new List<string>() { };
             }
         }

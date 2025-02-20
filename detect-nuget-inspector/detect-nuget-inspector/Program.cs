@@ -9,6 +9,7 @@ class Program
 
         try
         {
+            Console.WriteLine("Running 4588 Debug version of NuGet Inspector standalone.");
             Console.WriteLine("Registering MSBuild defaults.");
             MSBuildLocator.RegisterDefaults();
         }

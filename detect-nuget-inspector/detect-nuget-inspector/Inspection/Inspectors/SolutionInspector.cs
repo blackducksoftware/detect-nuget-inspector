@@ -116,11 +116,16 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                         .Where(group => group.Count() > 1)
                         .Select(group => group.Key);
 
+                    Console.WriteLine("Processing project files found in solution file.");
                     foreach (ProjectFile project in projectFiles)
                     {
                         try
                         {
                             string projectRelativePath = project.Path;
+                            Console.WriteLine("Project file relative path: '{0}'", projectRelativePath);
+                            Console.WriteLine("Contains null character? " + projectRelativePath.Contains('\0'));
+                            Console.WriteLine("Contains space character? " + projectRelativePath.Contains(' '));
+
                             string projectPath = null;
                             Boolean directoryPackagesExists = false;
                             if (projectRelativePath.Contains("Directory.Packages.props"))
@@ -137,7 +142,13 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                                     }
                                     parentPath =
                                         parentPath.Substring(0, OperatingSystem.IsWindows() ? parentPath.LastIndexOf("\\") : parentPath.LastIndexOf("/"));
+                                    Console.WriteLine("Parent path is: '{0}'", parentPath);
                                     directoryPackagesExists = File.Exists(checkFile);
+                                    if (!directoryPackagesExists)
+                                    {
+                                        Console.WriteLine($"Unable to find project file: {checkFile}. Checking if file permissions were denied...");
+                                        ProjectInspector.CheckFilePermissions(checkFile);
+                                    }
                                     fileNotFound = !directoryPackagesExists;
                                     projectPath = checkFile;
                                 }
@@ -157,10 +168,21 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                             try
                             {
                                 projectFileExists = File.Exists(projectPath);
+                                if (!projectFileExists)
+                                {
+                                    Console.WriteLine($"Unable to find project file: {projectPath}. Checking if file permissions were denied...");
+                                    if (projectPath != null)
+                                    { ProjectInspector.CheckFilePermissions(projectPath);}
+                                }
                                 if (!projectFileExists && !directoryPackagesExists)
                                 {
                                     projectPath = PathUtil.Combine(projectPath, "Directory.Packages.props");
                                     directoryPackagesExists = File.Exists(projectPath);
+                                    if (!directoryPackagesExists)
+                                    {
+                                        Console.WriteLine($"Unable to find project file: {projectPath}. Checking if file permissions were denied...");
+                                        ProjectInspector.CheckFilePermissions(projectPath);
+                                    }
                                 }
                                 
                             }
