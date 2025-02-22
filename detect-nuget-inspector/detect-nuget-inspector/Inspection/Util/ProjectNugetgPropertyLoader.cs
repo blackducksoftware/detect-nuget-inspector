@@ -25,14 +25,22 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
 
             XmlDocument doc = new XmlDocument();
             doc.Load(PropertyPath);
-            
-            Microsoft.Build.Evaluation.Project proj = new Microsoft.Build.Evaluation.Project(PropertyPath);
-            string projectAssestsJsonPath = proj.GetPropertyValue("ProjectAssetsFile");
-            
-            if (!String.IsNullOrWhiteSpace(projectAssestsJsonPath))
-            {    
-                Microsoft.Build.Evaluation.ProjectCollection.GlobalProjectCollection.UnloadProject(proj);    
-                return projectAssestsJsonPath;
+
+
+            try
+            {
+                Microsoft.Build.Evaluation.Project proj = new Microsoft.Build.Evaluation.Project(PropertyPath);
+                string projectAssestsJsonPath = proj.GetPropertyValue("ProjectAssetsFile");
+                
+                if (!String.IsNullOrWhiteSpace(projectAssestsJsonPath))
+                {    
+                    Microsoft.Build.Evaluation.ProjectCollection.GlobalProjectCollection.UnloadProject(proj);    
+                    return projectAssestsJsonPath;
+                }
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("There was an error building the project using API, falling back to XML Parser");
             }
 
             XmlNodeList projectAssetsFileNodes = doc.GetElementsByTagName("ProjectAssetsFile");
