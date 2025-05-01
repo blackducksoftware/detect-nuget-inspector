@@ -10,10 +10,12 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
     class ProjectAssetsJsonResolver : DependencyResolver
     {
         private string ProjectAssetsJsonPath;
+        private string ExcludedDependencyTypes;
 
-        public ProjectAssetsJsonResolver(string projectAssetsJsonPath)
+        public ProjectAssetsJsonResolver(string projectAssetsJsonPath, string excludedDependencyTypes)
         {
             ProjectAssetsJsonPath = projectAssetsJsonPath;
+            ExcludedDependencyTypes = excludedDependencyTypes;
         }
 
         public DependencyResult Process()
@@ -21,7 +23,7 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
 
             NuGet.ProjectModel.LockFile lockFile = NuGet.ProjectModel.LockFileUtilities.GetLockFile(ProjectAssetsJsonPath, null);
 
-            var resolver = new NugetLockFileResolver(lockFile);
+            var resolver = new NugetLockFileResolver(lockFile, ExcludedDependencyTypes);
 
             return resolver.Process();
         }

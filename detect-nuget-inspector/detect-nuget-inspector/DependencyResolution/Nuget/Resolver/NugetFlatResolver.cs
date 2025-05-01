@@ -48,7 +48,7 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
             return result;
         }
 
-        public List<Model.PackageSet> ProcessAll(List<NugetDependency> packages)
+        public HashSet<Model.PackageSet> ProcessAll(List<NugetDependency> packages)
         {
             foreach (NugetDependency package in packages)
             {

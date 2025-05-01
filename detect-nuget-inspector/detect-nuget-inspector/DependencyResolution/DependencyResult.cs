@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Blackduck.Detect.Nuget.Inspector.Model;
 
 namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution
 {
@@ -10,7 +11,7 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution
     {
         public bool Success { get; set; } = true;
         public string ProjectVersion { get; set; } = null;
-        public List<Model.PackageSet> Packages { get; set; } = new List<Model.PackageSet>();
-        public List<Model.PackageId> Dependencies { get; set; } = new List<Model.PackageId>();
+        public HashSet<PackageSet> Packages { get; set; } = new HashSet<PackageSet>();
+        public HashSet<PackageId> Dependencies { get; set; } = new HashSet<PackageId>();
     }
 }

@@ -129,7 +129,7 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
                 {
                     Success = true,
                     Packages = tree.GetPackageList(),
-                    Dependencies = new List<PackageId>()
+                    Dependencies = new HashSet<PackageId>()
                 };
 
                 foreach (var package in result.Packages)

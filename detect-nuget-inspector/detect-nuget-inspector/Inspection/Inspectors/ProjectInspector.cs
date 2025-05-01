@@ -128,6 +128,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
 
         public Container GetContainer()
         {
+            bool ProjectAssetsJsonResolved = false;
             if (IsExcluded())
             {
                 Console.WriteLine("Project {0} excluded from task", Options.ProjectName);
@@ -162,7 +163,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                     var packagesPropertyLoader =
                         new SolutionDirectoryPackagesPropertyLoader(Options.DirectoryPackagesPropsPath, Options.ExcludedDependencyTypes, CentrallyManagedPackages);
                     projectNode.PackagePropertyPackages = packagesPropertyLoader.Process();
-                    projectNode.Dependencies = packagesPropertyLoader.GetGlobalPackageReferences().ToList();
+                    projectNode.Dependencies = packagesPropertyLoader.GetGlobalPackageReferences().ToHashSet();
                 }
                 else if (packagesConfigExists)
                 {
@@ -175,7 +176,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                 else if (projectJsonLockExists)
                 {
                     Console.WriteLine("Using json lock: " + Options.ProjectJsonLockPath);
-                    var projectJsonLockResolver = new ProjectLockJsonResolver(Options.ProjectJsonLockPath);
+                    var projectJsonLockResolver = new ProjectLockJsonResolver(Options.ProjectJsonLockPath, Options.ExcludedDependencyTypes);
                     var projectJsonLockResult = projectJsonLockResolver.Process();
                     projectNode.Packages = projectJsonLockResult.Packages;
                     projectNode.Dependencies = projectJsonLockResult.Dependencies;
@@ -183,10 +184,11 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                 else if (projectAssetsJsonExists)
                 {
                     Console.WriteLine("Using assets json file: " + Options.ProjectAssetsJsonPath);
-                    var projectAssetsJsonResolver = new ProjectAssetsJsonResolver(Options.ProjectAssetsJsonPath);
+                    var projectAssetsJsonResolver = new ProjectAssetsJsonResolver(Options.ProjectAssetsJsonPath, Options.ExcludedDependencyTypes);
                     var projectAssetsJsonResult = projectAssetsJsonResolver.Process();
                     projectNode.Packages = projectAssetsJsonResult.Packages;
                     projectNode.Dependencies = projectAssetsJsonResult.Dependencies;
+                    ProjectAssetsJsonResolved = true;
                 }
                 else if (projectJsonExists)
                 {
@@ -234,15 +236,17 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                     }
                 }
 
-                var projectAssetsJsonPathFromProperty = GetProjectAssetsJsonPathFromNugetProperty(Options.ProjectDirectory, Options.ProjectName);
-                if (!String.IsNullOrWhiteSpace(projectAssetsJsonPathFromProperty)
-                    && File.Exists(projectAssetsJsonPathFromProperty))
-                {
-                    Console.WriteLine("Using assets json file configured in property file: " + projectAssetsJsonPathFromProperty);
-                    var projectAssetsJsonResolver = new ProjectAssetsJsonResolver(projectAssetsJsonPathFromProperty);
-                    var projectAssetsJsonResult = projectAssetsJsonResolver.Process();
-                    projectNode.Packages.AddRange(projectAssetsJsonResult.Packages);
-                    projectNode.Dependencies.AddRange(projectAssetsJsonResult.Dependencies);
+                if(!ProjectAssetsJsonResolved) {
+                    var projectAssetsJsonPathFromProperty = GetProjectAssetsJsonPathFromNugetProperty(Options.ProjectDirectory, Options.ProjectName);
+                    if (!String.IsNullOrWhiteSpace(projectAssetsJsonPathFromProperty)
+                        && File.Exists(projectAssetsJsonPathFromProperty))
+                    {
+                        Console.WriteLine("Using assets json file configured in property file: " + projectAssetsJsonPathFromProperty);
+                        var projectAssetsJsonResolver = new ProjectAssetsJsonResolver(projectAssetsJsonPathFromProperty, Options.ExcludedDependencyTypes);
+                        var projectAssetsJsonResult = projectAssetsJsonResolver.Process();
+                        projectNode.Packages.UnionWith(projectAssetsJsonResult.Packages);
+                        projectNode.Dependencies.UnionWith(projectAssetsJsonResult.Dependencies);
+                    }
                 }
  
                 if (projectNode != null && projectNode.Dependencies != null && projectNode.Packages != null)

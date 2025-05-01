@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using NuGet.Packaging;
 using Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget;
 using Blackduck.Detect.Nuget.Inspector.Inspection.Util;
+using Blackduck.Detect.Nuget.Inspector.Model;
 
 namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.PackagesConfig
 {
@@ -30,7 +31,7 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.PackagesConfig
             var result = new DependencyResult();
             result.Packages = CreatePackageSets(dependencies);
 
-            result.Dependencies = new List<Model.PackageId>();
+            result.Dependencies = new HashSet<PackageId>();
             foreach (var package in result.Packages)
             {
                 var anyPackageReferences = result.Packages.Where(pkg => pkg.Dependencies.Contains(package.PackageId)).Any();
@@ -72,7 +73,7 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.PackagesConfig
             return dependencies;
         }
 
-        private List<Model.PackageSet> CreatePackageSets(List<NugetDependency> dependencies)
+        private HashSet<Model.PackageSet> CreatePackageSets(List<NugetDependency> dependencies)
         {
             try
             {
@@ -92,7 +93,7 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.PackagesConfig
                 catch (Exception treeException)
                 {
                     Console.WriteLine("There was an issue processing packages.config as a tree: " + treeException.Message);
-                    var packages = new List<Model.PackageSet>(dependencies.Select(dependency => dependency.ToEmptyPackageSet()));
+                    var packages = new HashSet<PackageSet>(dependencies.Select(dependency => dependency.ToEmptyPackageSet()));
                     return packages;
                 }
             }
