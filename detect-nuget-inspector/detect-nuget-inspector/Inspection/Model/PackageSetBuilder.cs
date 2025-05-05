@@ -55,9 +55,9 @@ namespace Blackduck.Detect.Nuget.Inspector.Model
             set.Dependencies.UnionWith(dependencies);
         }
 
-        public List<PackageSet> GetPackageList()
+        public HashSet<PackageSet> GetPackageList()
         {
-            return packageSets.Values.ToList();
+            return packageSets.Values.ToHashSet();
         }
 
         private class VersionPair

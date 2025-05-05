@@ -3,16 +3,22 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Blackduck.Detect.Nuget.Inspector.Inspection.Util;
+using Blackduck.Detect.Nuget.Inspector.Model;
+using NuGet.LibraryModel;
 
 namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
 {
     public class NugetLockFileResolver
     {
         private NuGet.ProjectModel.LockFile LockFile;
+        private string ExcludedDependencyTypes;
+        private HashSet<string> ExcludedDependencies = new HashSet<string>();
 
-        public NugetLockFileResolver(NuGet.ProjectModel.LockFile lockFile)
+        public NugetLockFileResolver(NuGet.ProjectModel.LockFile lockFile, string excludedDependencyTypes)
         {
             LockFile = lockFile;
+            ExcludedDependencyTypes = excludedDependencyTypes;
         }
 
         private NuGet.Versioning.NuGetVersion BestVersion(string name, NuGet.Versioning.VersionRange range, IList<NuGet.ProjectModel.LockFileTargetLibrary> libraries)
@@ -108,27 +114,11 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
                 }
 
             }
-
-
-
-            if (LockFile.PackageSpec.Dependencies.Count != 0)
+           
+            foreach (var dep in LockFile.PackageSpec.Dependencies)
             {
-                foreach (var dep in LockFile.PackageSpec.Dependencies)
-                {
-                    var version = builder.GetBestVersion(dep.Name, dep.LibraryRange.VersionRange);
-                    result.Dependencies.Add(new Model.PackageId(dep.Name, version));
-                }
-            }
-            else
-            {
-                foreach (var framework in LockFile.PackageSpec.TargetFrameworks)
-                {
-                    foreach (var dep in framework.Dependencies)
-                    {
-                        var version = builder.GetBestVersion(dep.Name, dep.LibraryRange.VersionRange);
-                        result.Dependencies.Add(new Model.PackageId(dep.Name, version));
-                    }
-                }
+                var version = builder.GetBestVersion(dep.Name, dep.LibraryRange.VersionRange);
+                result.Dependencies.Add(new Model.PackageId(dep.Name, version));
             }
 
             foreach (var projectFileDependencyGroup in LockFile.ProjectFileDependencyGroups)
@@ -145,6 +135,28 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
                     result.Dependencies.Add(new Model.PackageId(projectDependencyParsed.GetName(), version));
                 }
             }
+            
+            
+            foreach (var framework in LockFile.PackageSpec.TargetFrameworks)
+            {
+                foreach (var dep in framework.Dependencies)
+                {
+                    bool isDevDependencyTypeExcluded = ExcludedDependencyTypeUtil.isDependencyTypeExcluded(ExcludedDependencyTypes,"DEV");
+                    bool excludeDevDependency = isDevDependencyTypeExcluded && (dep.SuppressParent == LibraryIncludeFlags.All);
+
+                    if (!excludeDevDependency)
+                    {
+                        var version = builder.GetBestVersion(dep.Name, dep.LibraryRange.VersionRange);
+                        result.Dependencies.Add(new PackageId(dep.Name, version));
+                    }
+                    else
+                    {
+                        ExcludedDependencies.Add(dep.Name);
+                        result.Dependencies.RemoveWhere(package => package.Name.Equals(dep.Name));
+                    }
+                }
+            }
+            
 
 
             if (result.Dependencies.Count == 0)
@@ -153,9 +165,17 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
             }
 
             result.Packages = builder.GetPackageList();
+            ExcludeDevDependenciesFromPackages(result);
             return result;
         }
 
+        private void ExcludeDevDependenciesFromPackages(DependencyResult result)
+        {
+            if (ExcludedDependencies.Count != 0)
+            {
+                result.Packages.RemoveWhere(package => ExcludedDependencies.Contains(package.PackageId.Name));
+            }
+        }
 
 
         public ProjectFileDependency ParseProjectFileDependencyGroup(String projectFileDependency)

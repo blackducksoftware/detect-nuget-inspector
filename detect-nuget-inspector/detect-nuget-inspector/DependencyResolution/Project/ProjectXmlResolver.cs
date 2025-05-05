@@ -135,7 +135,7 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
             }
 
             result.Packages = tree.GetPackageList();
-            result.Dependencies = new List<PackageId>();
+            result.Dependencies = new HashSet<PackageId>();
             foreach (var package in result.Packages)
             {
                 var anyPackageReferences = result.Packages.Where(pkg => pkg.Dependencies.Contains(package.PackageId)).Any();

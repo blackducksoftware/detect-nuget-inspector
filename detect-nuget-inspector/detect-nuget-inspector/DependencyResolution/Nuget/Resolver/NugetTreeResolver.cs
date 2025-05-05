@@ -18,7 +18,7 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
             nuget = service;
         }
 
-        public List<Model.PackageSet> GetPackageList()
+        public HashSet<Model.PackageSet> GetPackageList()
         {
             return builder.GetPackageList();
         }
