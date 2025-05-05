@@ -114,16 +114,11 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
                 }
 
             }
-
-
-
-            if (LockFile.PackageSpec.Dependencies.Count != 0)
+           
+            foreach (var dep in LockFile.PackageSpec.Dependencies)
             {
-                foreach (var dep in LockFile.PackageSpec.Dependencies)
-                {
-                    var version = builder.GetBestVersion(dep.Name, dep.LibraryRange.VersionRange);
-                    result.Dependencies.Add(new Model.PackageId(dep.Name, version));
-                }
+                var version = builder.GetBestVersion(dep.Name, dep.LibraryRange.VersionRange);
+                result.Dependencies.Add(new Model.PackageId(dep.Name, version));
             }
 
             foreach (var projectFileDependencyGroup in LockFile.ProjectFileDependencyGroups)
@@ -141,28 +136,27 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
                 }
             }
             
-            if(LockFile.PackageSpec.TargetFrameworks.Count != 0)
+            
+            foreach (var framework in LockFile.PackageSpec.TargetFrameworks)
             {
-                foreach (var framework in LockFile.PackageSpec.TargetFrameworks)
+                foreach (var dep in framework.Dependencies)
                 {
-                    foreach (var dep in framework.Dependencies)
-                    {
-                        bool isDevDependencyTypeExcluded = ExcludedDependencyTypeUtil.isDependencyTypeExcluded(ExcludedDependencyTypes,"DEV");
-                        bool excludeDevDependency = isDevDependencyTypeExcluded && (dep.SuppressParent == LibraryIncludeFlags.All);
+                    bool isDevDependencyTypeExcluded = ExcludedDependencyTypeUtil.isDependencyTypeExcluded(ExcludedDependencyTypes,"DEV");
+                    bool excludeDevDependency = isDevDependencyTypeExcluded && (dep.SuppressParent == LibraryIncludeFlags.All);
 
-                        if (!excludeDevDependency)
-                        {
-                            var version = builder.GetBestVersion(dep.Name, dep.LibraryRange.VersionRange);
-                            result.Dependencies.Add(new PackageId(dep.Name, version));
-                        }
-                        else
-                        {
-                            ExcludedDependencies.Add(dep.Name);
-                            result.Dependencies.RemoveWhere(package => package.Name.Equals(dep.Name));
-                        }
+                    if (!excludeDevDependency)
+                    {
+                        var version = builder.GetBestVersion(dep.Name, dep.LibraryRange.VersionRange);
+                        result.Dependencies.Add(new PackageId(dep.Name, version));
+                    }
+                    else
+                    {
+                        ExcludedDependencies.Add(dep.Name);
+                        result.Dependencies.RemoveWhere(package => package.Name.Equals(dep.Name));
                     }
                 }
             }
+            
 
 
             if (result.Dependencies.Count == 0)
