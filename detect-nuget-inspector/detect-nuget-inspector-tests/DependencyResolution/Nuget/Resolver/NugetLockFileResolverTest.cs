@@ -6,7 +6,7 @@
         [TestMethod]
         public void ParseProjectFileDependencyGroupTestWithMinInclusiveOnly()
         {
-            NugetLockFileResolver lockFileResolver = new NugetLockFileResolver(null);
+            NugetLockFileResolver lockFileResolver = new NugetLockFileResolver(null, String.Empty);
             var lockFileDependency = "Newtonsoft.Json >= 13.0.1";
 
             var dependency = lockFileResolver.ParseProjectFileDependencyGroup(lockFileDependency);
@@ -17,7 +17,7 @@
         [TestMethod]
         public void ParseProjectFileDependencyGroupTestWithMinExclusiveOnly()
         {
-            NugetLockFileResolver lockFileResolver = new NugetLockFileResolver(null);
+            NugetLockFileResolver lockFileResolver = new NugetLockFileResolver(null, String.Empty);
             var lockFileDependency = "Newtonsoft.Json > 13.0.1";
 
             var dependency = lockFileResolver.ParseProjectFileDependencyGroup(lockFileDependency);
@@ -28,7 +28,7 @@
         [TestMethod]
         public void ParseProjectFileDependencyGroupTestWithSameRange()
         {
-            NugetLockFileResolver lockFileResolver = new NugetLockFileResolver(null);
+            NugetLockFileResolver lockFileResolver = new NugetLockFileResolver(null, String.Empty);
             var lockFileDependency = "Newtonsoft.Json >= 13.0.1 <= 13.0.1";
 
             var dependency = lockFileResolver.ParseProjectFileDependencyGroup(lockFileDependency);
@@ -39,7 +39,7 @@
         [TestMethod]
         public void ParseProjectFileDependencyGroupTestWithMinAndMaxExclusiveRange()
         {
-            NugetLockFileResolver lockFileResolver = new NugetLockFileResolver(null);
+            NugetLockFileResolver lockFileResolver = new NugetLockFileResolver(null, String.Empty);
             var lockFileDependency = "Newtonsoft.Json >= 12.0.1 < 13.0.1";
 
             var dependency = lockFileResolver.ParseProjectFileDependencyGroup(lockFileDependency);
@@ -50,7 +50,7 @@
         [TestMethod]
         public void ParseProjectFileDependencyGroupTestWithMinExclusiveAndMaxInclusiveRange()
         {
-            NugetLockFileResolver lockFileResolver = new NugetLockFileResolver(null);
+            NugetLockFileResolver lockFileResolver = new NugetLockFileResolver(null, String.Empty);
             var lockFileDependency = "Newtonsoft.Json > 12.0.1 <= 13.0.1";
 
             var dependency = lockFileResolver.ParseProjectFileDependencyGroup(lockFileDependency);
@@ -61,7 +61,7 @@
         [TestMethod]
         public void ParseProjectFileDependencyGroupTestWithMinExclusiveAndMaxExclusiveRange()
         {
-            NugetLockFileResolver lockFileResolver = new NugetLockFileResolver(null);
+            NugetLockFileResolver lockFileResolver = new NugetLockFileResolver(null, String.Empty);
             var lockFileDependency = "Newtonsoft.Json > 12.0.1 < 13.0.1";
 
             var dependency = lockFileResolver.ParseProjectFileDependencyGroup(lockFileDependency);
@@ -72,7 +72,7 @@
         [TestMethod]
         public void ParseProjectFileDependencyGroupTestWithMaxInclusiveOnly()
         {
-            NugetLockFileResolver lockFileResolver = new NugetLockFileResolver(null);
+            NugetLockFileResolver lockFileResolver = new NugetLockFileResolver(null, String.Empty);
             var lockFileDependency = "Newtonsoft.Json <= 13.0.1";
 
             var dependency = lockFileResolver.ParseProjectFileDependencyGroup(lockFileDependency);
@@ -83,7 +83,7 @@
         [TestMethod]
         public void ParseProjectFileDependencyGroupTestWithMaxExclusiveOnly()
         {
-            NugetLockFileResolver lockFileResolver = new NugetLockFileResolver(null);
+            NugetLockFileResolver lockFileResolver = new NugetLockFileResolver(null, String.Empty);
             var lockFileDependency = "Newtonsoft.Json < 13.0.1";
 
             var dependency = lockFileResolver.ParseProjectFileDependencyGroup(lockFileDependency);
