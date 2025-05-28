@@ -20,6 +20,11 @@ project.tasks.create(name: 'buildSolutions') {
     description 'Build executable for all defined operating systems'
 }
 
+projects.tasks.create(name: 'signNugetExe') {
+    group 'sign Exe'
+    description 'sign Executable files for all created nuget executables'
+}
+
 project.tasks.create(name: 'testUnit', type: Exec){
     group 'dotnet test'
     description 'Run all Unit Tests defined inside detect-nuget-inspector-tests and generate test result'
@@ -65,6 +70,8 @@ dotNetSolutions.each { os, buildCmd ->
 
     String signTaskName = "${os}SignTask"
     project.tasks.create(name: signTaskName, type: Exec) {
+        group 'sign Exe'
+        description 'sign Executable files for all created nuget executables'
         dependsOn buildTaskName
 //        finalizedBy 'verifyExe'
         doLast {
