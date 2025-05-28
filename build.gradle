@@ -67,6 +67,7 @@ dotNetSolutions.each { os, buildCmd ->
 
         commandLine buildCommand
     }
+    project.tasks.findByName('buildSolutions').dependsOn buildTaskName
 
     String signTaskName = "${os}SignTask"
     project.tasks.create(name: signTaskName, type: Exec) {
@@ -89,7 +90,8 @@ dotNetSolutions.each { os, buildCmd ->
 //        }
 //    }
 
-    project.tasks.findByName('buildSolutions').dependsOn buildTaskName
+
+    project.tasks.findByName('signNugetExe').dependsOn signTaskName
 
     distributions {
         "${os}" {
