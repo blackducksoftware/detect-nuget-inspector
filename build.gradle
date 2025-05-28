@@ -62,16 +62,13 @@ dotNetSolutions.each { os, buildCmd ->
 
         commandLine buildCommand
     }
-    project.tasks.findByName('buildSolutions').dependsOn buildTaskName
 
     String signTaskName = "${os}SignTask"
     project.tasks.create(name: signTaskName, type: Exec) {
         dependsOn buildTaskName
 //        finalizedBy 'verifyExe'
         doLast {
-            exec {
-                commandLine 'signing-client', '--username', "${System.getenv('SIGNING_USER')}", '--password', "env:SIGNING_TOKEN", '--server', "${System.getenv('SIGNING_SERVER')}", '--port', "${System.getenv('SIGNING_SERVER_PORT')}", '--signer', 'wininstaller', '--output', "${createArtifactName(buildOutputDir)}", "${createArtifactName(buildOutputDir)}"
-            }
+            commandLine 'signing-client', '--username', "${System.getenv('SIGNING_USER')}", '--password', "env:SIGNING_TOKEN", '--server', "${System.getenv('SIGNING_SERVER')}", '--port', "${System.getenv('SIGNING_SERVER_PORT')}", '--signer', 'wininstaller', '--output', "${createArtifactName(buildOutputDir)}", "${createArtifactName(buildOutputDir)}"
         }
     }
 
@@ -85,6 +82,7 @@ dotNetSolutions.each { os, buildCmd ->
 //        }
 //    }
 
+    project.tasks.findByName('buildSolutions').dependsOn buildTaskName
 
     distributions {
         "${os}" {
