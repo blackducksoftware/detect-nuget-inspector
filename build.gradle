@@ -122,7 +122,7 @@ dotNetSolutions.each { os, buildCmd ->
 }
 
 def createArtifactName(String buildOutputDir) {
-    return "${buildOutputDir}/${project.name}"
+    return "${buildOutputDir}/${project.name}.exe"
 }
 
 
