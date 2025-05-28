@@ -20,7 +20,7 @@ project.tasks.create(name: 'buildSolutions') {
     description 'Build executable for all defined operating systems'
 }
 
-projects.tasks.create(name: 'signNugetExe') {
+project.tasks.create(name: 'signNugetExe') {
     group 'sign Exe'
     description 'sign Executable files for all created nuget executables'
 }
