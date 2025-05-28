@@ -64,6 +64,28 @@ dotNetSolutions.each { os, buildCmd ->
     }
     project.tasks.findByName('buildSolutions').dependsOn buildTaskName
 
+    String signTaskName = "${os}SignTask"
+    project.tasks.create(name: signTaskName, type: Exec) {
+        dependsOn buildTaskName
+//        finalizedBy 'verifyExe'
+        doLast {
+            exec {
+                commandLine 'signing-client', '--username', "${System.getenv('SIGNING_USER')}", '--password', "env:SIGNING_TOKEN", '--server', "${System.getenv('SIGNING_SERVER')}", '--port', "${System.getenv('SIGNING_SERVER_PORT')}", '--signer', 'wininstaller', '--output', "${createArtifactName(buildOutputDir)}", "${createArtifactName(buildOutputDir)}"
+            }
+        }
+    }
+
+//    task verifyExe() {
+//        dependsOn signExe
+//        doLast {
+//            exec {
+//                // returns 0 if successfully verified as signed; non-0 if not
+//                commandLine 'jarsigner', '-verify', '-strict', "${createArtifactName(buildOutputDir)}"
+//            }
+//        }
+//    }
+
+
     distributions {
         "${os}" {
             distributionBaseName = "${project.name}-${os}"
@@ -89,6 +111,11 @@ dotNetSolutions.each { os, buildCmd ->
         }
     }
 }
+
+def createArtifactName(String buildOutputDir) {
+    return "${buildOutputDir}/${project.name}"
+}
+
 
 artifactory {
     publish {
