@@ -76,7 +76,9 @@ dotNetSolutions.each { os, buildCmd ->
         dependsOn buildTaskName
 //        finalizedBy 'verifyExe'
         doLast {
-            commandLine 'signing-client', '--username', "${System.getenv('SIGNING_USER')}", '--password', "env:SIGNING_TOKEN", '--server', "${System.getenv('SIGNING_SERVER')}", '--port', "${System.getenv('SIGNING_SERVER_PORT')}", '--signer', 'wininstaller', '--output', "${createArtifactName(buildOutputDir)}", "${createArtifactName(buildOutputDir)}"
+            exec {
+                commandLine 'signing-client', '--username', "${System.getenv('SIGNING_USER')}", '--password', "env:SIGNING_TOKEN", '--server', "${System.getenv('SIGNING_SERVER')}", '--port', "${System.getenv('SIGNING_SERVER_PORT')}", '--signer', 'wininstaller', '--output', "${createArtifactName(buildOutputDir)}", "${createArtifactName(buildOutputDir)}"
+            }
         }
     }
 
