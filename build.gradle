@@ -75,15 +75,11 @@ dotNetSolutions.each { os, buildCmd ->
         description 'sign Executable files for all created nuget executables'
         dependsOn buildTaskName
 //        finalizedBy 'verifyExe'
-        if(os == "windows") {
-            doLast {
-                exec {
+        doLast {
+            exec {
+                if(os == "windows") {
                     commandLine 'signing-client', '--username', "${System.getenv('SIGNING_USER')}", '--password', "env:SIGNING_TOKEN", '--server', "${System.getenv('SIGNING_SERVER')}", '--port', "${System.getenv('SIGNING_SERVER_PORT')}", '--signer', 'wininstaller', '--output', "${createArtifactName(buildOutputDir)}", "${createArtifactName(buildOutputDir)}"
-                }
-            }
-        } else if (os == "mac") {
-            doLast {
-                exec {
+                } else if (os == "mac") {
                     commandLine 'signing-client', '--debug', 'end2end', "${createArtifactName(buildOutputDir)}"
                 }
             }
