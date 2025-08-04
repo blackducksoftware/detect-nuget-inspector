@@ -81,6 +81,12 @@ dotNetSolutions.each { os, buildCmd ->
                     commandLine 'signing-client', '--username', "${System.getenv('SIGNING_USER')}", '--password', "env:SIGNING_TOKEN", '--server', "${System.getenv('SIGNING_SERVER')}", '--port', "${System.getenv('SIGNING_SERVER_PORT')}", '--signer', 'wininstaller', '--output', "${createArtifactName(buildOutputDir)}", "${createArtifactName(buildOutputDir)}"
                 }
             }
+        } else if (os == "macosx") {
+            doLast {
+                exec {
+                    commandLine 'signing-client', '--debug', 'end2end', "${createArtifactName(buildOutputDir)}"
+                }
+            }
         }
     }
 
@@ -123,8 +129,12 @@ dotNetSolutions.each { os, buildCmd ->
     }
 }
 
-def createArtifactName(String buildOutputDir) {
-    return "${buildOutputDir}/${project.name}.exe"
+def createArtifactName(String buildOutputDir, String osName) {
+    if(osName == "windows") {
+        return "${buildOutputDir}/${project.name}.exe"
+    } else {
+        return "${buildOutputDir}/${project.name}"
+    }
 }
 
 
