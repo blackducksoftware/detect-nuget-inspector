@@ -75,18 +75,11 @@ dotNetSolutions.each { os, buildCmd ->
         description 'sign Executable files for all created nuget executables'
         dependsOn buildTaskName
 //        finalizedBy 'verifyExe'
-        doLast {
 
-            if(os == "linux") {
-                println "Linux OS is not supported for signing yet"
-                return
-            }
-
-            project.exec {
-                if(os == "windows") {
+        if(os == "windows") {
+            doLast {
+                exec {
                     commandLine 'signing-client', '--username', "${System.getenv('SIGNING_USER')}", '--password', "env:SIGNING_TOKEN", '--server', "${System.getenv('SIGNING_SERVER')}", '--port', "${System.getenv('SIGNING_SERVER_PORT')}", '--signer', 'wininstaller', '--output', "${createArtifactName(buildOutputDir, os)}", "${createArtifactName(buildOutputDir, os)}"
-                } else if (os == "mac") {
-                    commandLine 'signing-client', 'end2end', "${createArtifactName(buildOutputDir, os)}"
                 }
             }
         }
@@ -134,8 +127,6 @@ dotNetSolutions.each { os, buildCmd ->
 def createArtifactName(String buildOutputDir, String osName) {
     if(osName == "windows") {
         return "${buildOutputDir}/${project.name}.exe"
-    } else {
-        return "${buildOutputDir}/${project.name}"
     }
 }
 
