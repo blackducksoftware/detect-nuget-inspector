@@ -1,4 +1,4 @@
-FROM ureleng/base-gitlab-runner:jdk17-python3.11-git
+FROM releng/base-gitlab-runner:jdk17-python3.11-git
 
 ARG PYTHON_PYPI_URL
 
