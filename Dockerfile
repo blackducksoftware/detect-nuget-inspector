@@ -18,4 +18,4 @@ COPY /entrypoint.sh /signing
 
 RUN chmod +x /signing/entrypoint.sh
 
-ENTRYPOINT ["/signing/entrypoint.sh"]
+ENTRYPOINT ["/bin/bash","/signing/entrypoint.sh"]
