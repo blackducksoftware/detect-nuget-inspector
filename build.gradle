@@ -115,7 +115,7 @@ dotNetSolutions.each { os, buildCmd ->
                 exec {
                     commandLine "sh", "-c", """
                             pwd
-                            cd .
+                            cd build/distributions/
                             ls -a
                     """
                 }
