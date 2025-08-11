@@ -16,4 +16,4 @@ RUN echo "Start signing the zip project"
 
 COPY /entrypoint.sh /signing
 
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/signing/entrypoint.sh"]

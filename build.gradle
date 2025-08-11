@@ -114,7 +114,7 @@ dotNetSolutions.each { os, buildCmd ->
                 }
                 exec {
                     commandLine "sh", "-c", """
-                            cd ${buildOutputDir}
+                            cd /
                             ls -a
                     """
                 }
