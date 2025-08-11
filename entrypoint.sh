@@ -1,0 +1,1 @@
+exec signing-client --debug end2end "${OUTPUT_FILE_NAME}" "@"
