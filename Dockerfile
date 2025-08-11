@@ -4,6 +4,9 @@ ARG PYTHON_PYPI_URL
 
 ARG OUTPUT_FILE_NAME
 
+RUN mkdir signing \
+    && cd signing
+
 RUN python3 -m venv ./environment \
     && . ./environment/bin/activate \
     && pip3 install --upgrade pip ${PYTHON_PYPI_URL} \

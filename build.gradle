@@ -20,9 +20,14 @@ project.tasks.create(name: 'buildSolutions') {
     description 'Build executable for all defined operating systems'
 }
 
-project.tasks.create(name: 'signNugetExe') {
-    group 'sign Exe'
-    description 'sign Executable files for all created nuget executables'
+project.tasks.create(name: 'signWindowsExe') {
+    group 'sign Windows Exe'
+    description 'sign Executable files for all created windows executables'
+}
+
+project.tasks.create(name: 'signMacExe') {
+    group 'sign Mac Exe'
+    description 'sign Executable files for all created mac executables'
 }
 
 project.tasks.create(name: 'testUnit', type: Exec){
@@ -71,8 +76,8 @@ dotNetSolutions.each { os, buildCmd ->
 
     String signTaskName = "${os}SignTask"
     project.tasks.create(name: signTaskName) {
-        group 'sign Exe'
-        description 'sign Executable files for all created nuget executables'
+        group 'sign Windows Exe'
+        description 'sign Executable files for all created windows executables'
         dependsOn buildTaskName
 //        finalizedBy 'verifyExe'
 
@@ -95,8 +100,27 @@ dotNetSolutions.each { os, buildCmd ->
 //        }
 //    }
 
+    String signZipTaskName = "${os}SignZipTask"
+    project.tasks.create(name: signZipTaskName) {
+        group 'sign Mac Exe'
+        description 'sign Executable files for all created mac executables'
+        dependsOn distZip
+//        finalizedBy 'verifyExe'
 
-    project.tasks.findByName('signNugetExe').dependsOn signTaskName
+        if(os == "mac") {
+            doLast {
+                exec {
+                    commandLine 'docker', 'build', '.', '-t', 'signing_image', '--build-arg', "PYTHON_PYPI_URL=${System.getenv('PYTHON_PYPI_URL')}", '--build-arg', "OUTPUT_FILE_NAME=${createArtifactName(buildOutputDir, os)}"
+                    commandLine 'docker', 'run', '-it', '--name', 'signing_image', '--mount', 'type=bind,src=/,dst=/signing'
+                }
+            }
+        }
+    }
+
+
+    project.tasks.findByName('signWindowsExe').dependsOn signTaskName
+
+    project.tasks.findByName('signMacExe').dependsOn signZipTaskName
 
     distributions {
         "${os}" {
@@ -127,6 +151,8 @@ dotNetSolutions.each { os, buildCmd ->
 def createArtifactName(String buildOutputDir, String osName) {
     if(osName == "windows") {
         return "${buildOutputDir}/${project.name}.exe"
+    } else if (osName == "mac") {
+        return "${project.name}-${project.version}-${osName}.zip"
     }
 }
 
