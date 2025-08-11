@@ -14,4 +14,6 @@ RUN python3 -m venv ./environment \
 
 RUN echo "Start signing the zip project"
 
+COPY /entrypoint.sh /signing
+
 ENTRYPOINT ["/entrypoint.sh"]
