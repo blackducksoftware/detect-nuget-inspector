@@ -111,8 +111,7 @@ dotNetSolutions.each { os, buildCmd ->
             doLast {
                 exec {
                     commandLine "sh", "-c", """
-                        ls -a
-                        docker build -t signing_image --build-arg PYTHON_PYPI_URL=${System.getenv('PYTHON_PYPI_URL')} --build-arg OUTPUT_FILE_NAME=${createArtifactName(buildOutputDir, os)} .
+                        docker build -t signing_image:latest --build-arg PYTHON_PYPI_URL=${System.getenv('PYTHON_PYPI_URL')} --build-arg OUTPUT_FILE_NAME=${createArtifactName(buildOutputDir, os)} . &&
                         docker run signing_image --mount type=bind,src=/,dst=/signing
                     """
                 }
