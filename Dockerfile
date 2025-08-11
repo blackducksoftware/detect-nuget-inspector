@@ -14,4 +14,4 @@ RUN python3 -m venv ./environment \
 
 RUN echo "Start signing the zip project"
 
-RUN signing-client --debug end2end ${OUTPUT_FILE_NAME}
+ENTRYPOINT ["bash", "signing-client --debug end2end ${OUTPUT_FILE_NAME}"]
