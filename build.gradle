@@ -114,12 +114,13 @@ dotNetSolutions.each { os, buildCmd ->
                 }
                 exec {
                     commandLine "sh", "-c", """
-                            cd /
+                            pwd
+                            cd .
                             ls -a
                     """
                 }
                 exec {
-                    commandLine 'docker', 'run', 'signing_image:latest', '--mount', 'type=bind,src=/,dst=/signing', "${createArtifactName(buildOutputDir, os)}"
+                    commandLine 'docker', 'run', 'signing_image:latest', '--mount', 'type=bind,src=$(pwd)/build/distributions/,dst=/signing', "${createArtifactName(buildOutputDir, os)}"
                 }
             }
         }
