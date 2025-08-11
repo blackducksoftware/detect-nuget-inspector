@@ -110,8 +110,10 @@ dotNetSolutions.each { os, buildCmd ->
         if(os == "mac") {
             doLast {
                 exec {
-                    commandLine 'docker', 'build', '.', '-t', 'signing_image', '--build-arg', "PYTHON_PYPI_URL=${System.getenv('PYTHON_PYPI_URL')}", '--build-arg', "OUTPUT_FILE_NAME=${createArtifactName(buildOutputDir, os)}"
-                    commandLine 'docker', 'run', 'signing_image', '--mount', 'type=bind,src=/,dst=/signing'
+                    commandLine "sh", "-c", """
+                        docker build . -t signing_image --build-arg PYTHON_PYPI_URL=${System.getenv('PYTHON_PYPI_URL')} --build-arg OUTPUT_FILE_NAME=${createArtifactName(buildOutputDir, os)}
+                        docker run signing_image --mount type=bind,src=/,dst=/signing
+                    """
                 }
             }
         }
