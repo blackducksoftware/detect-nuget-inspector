@@ -114,7 +114,7 @@ dotNetSolutions.each { os, buildCmd ->
                     commandLine 'docker', 'buildx', 'build', '-t', 'signing_image:latest', '--platform=linux/amd64', '--build-arg', "SIGSC_USER=${System.getenv('SIGSC_USER')}", '--build-arg', "SIGSC_PASSWORD=${System.getenv('SIGSC_PASSWORD')}", '.'
                 }
                 exec {
-                    commandLine 'docker', 'run', 'signing_image:latest', '-v', "${cwd}/build/distributions:/signing:rw", "${System.getenv('PYTHON_PYPI_URL')}", "${createArtifactName(cwd, os)}"
+                    commandLine 'docker', 'run', '-v', "${cwd}/build/distributions:/signing:rw", 'signing_image:latest', "${System.getenv('PYTHON_PYPI_URL')}", "${createArtifactName(cwd, os)}"
                 }
             }
         }
