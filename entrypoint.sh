@@ -3,7 +3,7 @@ set -e
 python3 -m venv ./environment
 . ./environment/bin/activate
 pip3 install --upgrade pip
-pip3 install SIG-macOS-codesigning "$1"
+pip3 install "$1" sig-macos-codesigning
 
 echo "Start signing the zip project"
 
