@@ -9,7 +9,7 @@ ENV SIGSC_PASSWORD=$SIGSC_PASSWORD
 RUN mkdir signing \
     && cd signing
 
-COPY /entrypoint.sh /signing
+COPY entrypoint.sh /signing
 
 RUN chmod +x /signing/entrypoint.sh
 
