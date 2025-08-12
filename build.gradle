@@ -155,7 +155,7 @@ def createArtifactName(String buildOutputDir, String osName) {
     if(osName == "windows") {
         return "${buildOutputDir}/${project.name}.exe"
     } else if (osName == "mac") {
-        return "${buildOutputDir}/build/distributions/${project.name}-${osName}-${project.version}.zip"
+        return "${project.name}-${osName}-${project.version}.zip"
     }
 }
 
