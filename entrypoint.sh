@@ -1,5 +1,8 @@
 set -e
 
+echo "$1"
+echo "$2"
+
 python3 -m venv ./environment
 . ./environment/bin/activate
 pip3 install --upgrade pip "$1"

@@ -114,7 +114,7 @@ dotNetSolutions.each { os, buildCmd ->
                     commandLine 'docker', 'buildx', 'build', '-t', 'signing_image:latest', '--platform=linux/amd64', '--build-arg', "SIGSC_USER=${System.getenv('SIGSC_USER')}", '--build-arg', "SIGSC_PASSWORD=${System.getenv('SIGSC_PASSWORD')}", '.'
                 }
                 exec {
-                    commandLine 'docker', 'run', 'signing_image:latest', '-v', "${cwd}/build/distributions:/signing:rw", "${System.getenv('PYTHON_PYPI_URL')}", "${createArtifactName(buildOutputDir, os)}"
+                    commandLine 'docker', 'run', 'signing_image:latest', '-v', "${cwd}/build/distributions:/signing:rw", "${System.getenv('PYTHON_PYPI_URL')}", "${createArtifactName(cwd, os)}"
                 }
             }
         }
@@ -155,7 +155,7 @@ def createArtifactName(String buildOutputDir, String osName) {
     if(osName == "windows") {
         return "${buildOutputDir}/${project.name}.exe"
     } else if (osName == "mac") {
-        return "${project.name}-${osName}-${project.version}.zip"
+        return "${buildOutputDir}/build/distributions/${project.name}-${osName}-${project.version}.zip"
     }
 }
 
