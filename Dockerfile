@@ -1,8 +1,10 @@
 FROM releng/base-gitlab-runner:jdk17-python3.11-git
 
-ARG PYTHON_PYPI_URL
+ARG SIGSC_USER
+ENV SIGSC_USER=$SIGSC_USER
 
-ARG OUTPUT_FILE_NAME
+ARG SIGSC_PASSWORD
+ENV SIGSC_PASSWORD=$SIGSC_PASSWORD
 
 RUN mkdir signing \
     && cd signing
