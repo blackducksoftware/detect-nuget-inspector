@@ -113,7 +113,7 @@ dotNetSolutions.each { os, buildCmd ->
                     commandLine 'docker', 'buildx', 'build', '-t', 'signing_image:latest', '--platform=linux/amd64', '--build-arg', "PYTHON_PYPI_URL=${System.getenv('PYTHON_PYPI_URL')}", '.'
                 }
                 exec {
-                    commandLine 'docker', 'run', 'signing_image:latest', '--mount', 'type=bind,src=$(pwd)/build/distributions/,dst=/signing', "${createArtifactName(buildOutputDir, os)}"
+                    commandLine 'docker', 'run', '-it', 'signing_image:latest', '--mount', 'type=bind,src=$(pwd)/build/distributions/,dst=/signing', "${createArtifactName(buildOutputDir, os)}"
                 }
             }
         }
