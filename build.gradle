@@ -25,11 +25,6 @@ project.tasks.create(name: 'signWindowsExe') {
     description 'sign Executable files for all created windows executables'
 }
 
-project.tasks.create(name: 'signMacExe') {
-    group 'sign Mac Exe'
-    description 'sign Executable files for all created mac executables'
-}
-
 project.tasks.create(name: 'testUnit', type: Exec){
     group 'dotnet test'
     description 'Run all Unit Tests defined inside detect-nuget-inspector-tests and generate test result'
@@ -90,30 +85,7 @@ dotNetSolutions.each { os, buildCmd ->
         }
     }
 
-    String signZipTaskName = "${os}SignZipTask"
-    project.tasks.create(name: signZipTaskName) {
-        group 'sign Mac Exe'
-        description 'sign Executable files for all created mac executables'
-        dependsOn distZip
-
-        if(os == "mac") {
-            doLast {
-                def currentDir = project.projectDir.absolutePath
-                def signing_directory = "/signing"
-                exec {
-                    commandLine 'docker', 'buildx', 'build', '-t', 'signing_image:latest', '--platform=linux/amd64', '--build-arg', "SIGSC_USER=${System.getenv('SIGSC_USER')}", '--build-arg', "SIGSC_PASSWORD=${System.getenv('SIGSC_PASSWORD')}", '--build-arg', "PYTHON_PYPI=${System.getenv('PYTHON_PYPI_URL')}", '.'
-                }
-                exec {
-                    commandLine 'docker', 'run', '-v', "${currentDir}/build/distributions:${signing_directory}:rw", 'signing_image:latest', "${createArtifactName(signing_directory, os)}"
-                }
-            }
-        }
-    }
-
-
     project.tasks.findByName('signWindowsExe').dependsOn signTaskName
-
-    project.tasks.findByName('signMacExe').dependsOn signZipTaskName
 
     distributions {
         "${os}" {
@@ -137,6 +109,24 @@ dotNetSolutions.each { os, buildCmd ->
                     extension 'zip'
                 }
             }
+        }
+    }
+}
+
+project.tasks.create(name: 'signMacExe') {
+    group 'sign Mac Exe'
+    description 'sign Executable files for all created mac executables'
+
+    dependsOn distZip
+
+    doLast {
+        def currentDir = project.projectDir.absolutePath
+        def signing_directory = "/signing"
+        exec {
+            commandLine 'docker', 'buildx', 'build', '-t', 'signing_image:latest', '--platform=linux/amd64', '--build-arg', "PYTHON_PYPI=${System.getenv('PYTHON_PYPI_URL')}", '.'
+        }
+        exec {
+            commandLine 'docker', 'run', '-v', "${currentDir}/build/distributions:${signing_directory}:rw", '-e', "SIGSC_USER=${System.getenv('SIGSC_USER')}", "SIGSC_PASSWORD=${System.getenv('SIGSC_PASSWORD')}", 'signing_image:latest', "${createArtifactName(signing_directory, "mac")}"
         }
     }
 }

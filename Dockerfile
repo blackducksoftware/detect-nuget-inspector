@@ -1,11 +1,5 @@
 FROM releng/base-gitlab-runner:jdk17-python3.11-git
 
-ARG SIGSC_USER
-ENV SIGSC_USER=$SIGSC_USER
-
-ARG SIGSC_PASSWORD
-ENV SIGSC_PASSWORD=$SIGSC_PASSWORD
-
 ARG PYTHON_PYPI
 
 RUN mkdir signing \
