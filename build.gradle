@@ -10,7 +10,7 @@ buildscript {
 ext.dotNetExec = project.hasProperty('dotNetExec') ? project.getProperty('dotNetExec') : 'dotnet6'
 
 group 'com.blackduck.integration'
-version = '2.3.0-SIGQA2'
+version = '2.3.0-SIGQA3-SNAPSHOT'
 
 apply plugin: 'com.blackduck.integration.solution'
 apply plugin: 'distribution'
