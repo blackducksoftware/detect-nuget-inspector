@@ -70,12 +70,13 @@ dotNetSolutions.each { os, buildCmd ->
     project.tasks.findByName('buildSolutions').dependsOn buildTaskName
 
     String signTaskName = "${os}SignTask"
-    project.tasks.create(name: signTaskName) {
-        group 'sign Windows Exe'
-        description 'sign Executable files for all created windows executables'
-        dependsOn buildTaskName
 
-        if(os == "windows") {
+    if (os == "windows") {
+        project.tasks.create(name: signTaskName) {
+            group 'sign Windows Exe'
+            description 'sign Executable files for all created windows executables'
+            dependsOn buildTaskName
+
             doLast {
                 println("Starting the windows exe signing process")
                 exec {
@@ -83,9 +84,9 @@ dotNetSolutions.each { os, buildCmd ->
                 }
             }
         }
-    }
 
-    project.tasks.findByName('signWindowsExe').dependsOn signTaskName
+        project.tasks.findByName('signWindowsExe').dependsOn signTaskName
+    }
 
     distributions {
         "${os}" {
