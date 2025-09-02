@@ -102,7 +102,7 @@ dotNetSolutions.each { os, buildCmd ->
                 def tempZipFile = file("${buildOutputDir}/tmp-dir/tmp-${project.name}.zip")
 
                 ant.zip(destfile: tempZipFile) {
-                    fileset(dir: "${buildOutputDir}", includes: execFile, fileMode: "755")
+                    zipfileset(dir: "${buildOutputDir}", includes: execFile, fileMode: "755")
                 }
 
                 exec {
