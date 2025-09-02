@@ -117,7 +117,12 @@ dotNetSolutions.each { os, buildCmd ->
                     into "${buildOutputDir}"
                 }
 
-//                tempDir.deleteDir()
+                tempDir.deleteDir()
+
+                exec {
+                    commandLine 'chmod', '755', "${buildOutputDir}/${execFile}"
+                }
+
             }
         }
 
