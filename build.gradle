@@ -117,7 +117,7 @@ dotNetSolutions.each { os, buildCmd ->
                     into "${buildOutputDir}"
                 }
 
-                tempDir.deleteDir()
+//                tempDir.deleteDir()
             }
         }
 
