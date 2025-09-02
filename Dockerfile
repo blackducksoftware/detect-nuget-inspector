@@ -6,6 +6,7 @@ RUN mkdir signing \
     && cd signing
 
 COPY entrypoint.sh /
+COPY entitlements.mac.inherit.plist /
 
 RUN chmod +x /entrypoint.sh
 

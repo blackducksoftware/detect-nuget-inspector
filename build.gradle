@@ -98,12 +98,11 @@ dotNetSolutions.each { os, buildCmd ->
                 println("Starting the mac exe signing process")
                 def signing_directory = "/signing"
                 def execFile = "${project.name}"
-                def tempDir = file("${buildOutputDir}/tmp-dir")
-                def tempZipFile = file("${buildOutputDir}/tmp-dir/tmp-${project.name}.zip")
+                def tempDir = file("/tmp-dir")
+                def tempZipFile = file("/tmp-dir/tmp-${project.name}.zip")
 
                 ant.zip(destfile: tempZipFile) {
                     zipfileset(dir: "${buildOutputDir}", includes: execFile, fileMode: "755")
-                    zipfileset(dir: "${buildOutputDir}", includes: "*.dylib")
                 }
 
                 exec {
