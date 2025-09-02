@@ -102,7 +102,7 @@ dotNetSolutions.each { os, buildCmd ->
                 def tempZipFile = file("${buildOutputDir}/tmp-dir/tmp-${project.name}.zip")
 
                 ant.zip(destfile: tempZipFile) {
-                    fileset(dir: "${buildOutputDir}", includes: execFile)
+                    fileset(dir: "${buildOutputDir}", includes: execFile, fileMode: "755")
                 }
 
                 exec {
@@ -115,13 +115,10 @@ dotNetSolutions.each { os, buildCmd ->
                 copy {
                     from zipTree(tempZipFile)
                     into "${buildOutputDir}"
+                    fileMode = 0755
                 }
 
                 tempDir.deleteDir()
-
-                exec {
-                    commandLine 'chmod', '755', "${buildOutputDir}/${execFile}"
-                }
 
             }
         }
