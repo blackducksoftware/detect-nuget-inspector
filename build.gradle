@@ -97,7 +97,7 @@ dotNetSolutions.each { os, buildCmd ->
             doLast {
                 println("Starting the mac exe signing process")
                 def signing_directory = "/signing"
-                def execFile = ${project.name}
+                def execFile = "${project.name}"
                 def tempDir = file("${buildOutputDir}/tmp-dir")
                 def tempZipFile = file("${buildOutputDir}/tmp-dir/tmp-${project.name}.zip")
 
