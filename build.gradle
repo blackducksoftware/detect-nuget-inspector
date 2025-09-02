@@ -88,43 +88,43 @@ dotNetSolutions.each { os, buildCmd ->
         project.tasks.findByName('signExe').dependsOn signTaskName
     }
 
-    if (os == "mac") {
-        project.tasks.create(name: signTaskName) {
-            group 'sign Exe'
-            description 'sign Executable files for all created executables'
-            dependsOn buildTaskName
-
-            doLast {
-                println("Starting the mac exe signing process")
-                def signing_directory = "/signing"
-                def execFile = "${project.name}"
-                def tempDir = file("${buildOutputDir}/tmp-dir")
-                def tempZipFile = file("${buildOutputDir}/tmp-dir/tmp-${project.name}.zip")
-
-                ant.zip(destfile: tempZipFile) {
-                    zipfileset(dir: "${buildOutputDir}", includes: execFile, fileMode: "755")
-                }
-
-                exec {
-                     commandLine 'docker', 'buildx', 'build', '-t', 'signing_image:latest', '--platform=linux/amd64', '--build-arg', "PYTHON_PYPI=${System.getenv('PYTHON_PYPI_URL')}", '.'
-                }
-                exec {
-                     commandLine 'docker', 'run', '--rm', '-v', "${tempDir}:${signing_directory}:rw", '-e', "SIGSC_USER=${System.getenv('SIGSC_USER')}", '-e', "SIGSC_PASSWORD=${System.getenv('SIGSC_PASSWORD')}", 'signing_image:latest', "${createArtifactName(signing_directory, "mac")}"
-                }
-
-                copy {
-                    from zipTree(tempZipFile)
-                    into "${buildOutputDir}"
-                    fileMode = 0755
-                }
-
-                tempDir.deleteDir()
-
-            }
-        }
-
-        project.tasks.findByName('signExe').dependsOn signTaskName
-    }
+//    if (os == "mac") {
+//        project.tasks.create(name: signTaskName) {
+//            group 'sign Exe'
+//            description 'sign Executable files for all created executables'
+//            dependsOn buildTaskName
+//
+//            doLast {
+//                println("Starting the mac exe signing process")
+//                def signing_directory = "/signing"
+//                def execFile = "${project.name}"
+//                def tempDir = file("${buildOutputDir}/tmp-dir")
+//                def tempZipFile = file("${buildOutputDir}/tmp-dir/tmp-${project.name}.zip")
+//
+//                ant.zip(destfile: tempZipFile) {
+//                    zipfileset(dir: "${buildOutputDir}", includes: execFile, fileMode: "755")
+//                }
+//
+//                exec {
+//                     commandLine 'docker', 'buildx', 'build', '-t', 'signing_image:latest', '--platform=linux/amd64', '--build-arg', "PYTHON_PYPI=${System.getenv('PYTHON_PYPI_URL')}", '.'
+//                }
+//                exec {
+//                     commandLine 'docker', 'run', '--rm', '-v', "${tempDir}:${signing_directory}:rwx", '-e', "SIGSC_USER=${System.getenv('SIGSC_USER')}", '-e', "SIGSC_PASSWORD=${System.getenv('SIGSC_PASSWORD')}", 'signing_image:latest', "${createArtifactName(signing_directory, "mac")}"
+//                }
+//
+//                copy {
+//                    from zipTree(tempZipFile)
+//                    into "${buildOutputDir}"
+//                    fileMode = 0755
+//                }
+//
+//                tempDir.deleteDir()
+//
+//            }
+//        }
+//
+//        project.tasks.findByName('signExe').dependsOn signTaskName
+//    }
 
     distributions {
         "${os}" {
