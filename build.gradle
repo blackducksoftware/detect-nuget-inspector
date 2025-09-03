@@ -84,6 +84,8 @@ dotNetSolutions.each { os, buildCmd ->
                 }
             }
         }
+
+        project.tasks.findByName('signExe').dependsOn signTaskName
     }
 
     if (os == "mac") {
@@ -118,9 +120,9 @@ dotNetSolutions.each { os, buildCmd ->
                 tmpDir.deleteDir()
             }
         }
-    }
 
-    project.tasks.findByName('signExe').dependsOn signTaskName
+        project.tasks.findByName('signExe').dependsOn signTaskName
+    }
 
     distributions {
         "${os}" {
