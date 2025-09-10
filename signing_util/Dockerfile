@@ -5,7 +5,8 @@ ARG PYTHON_PYPI
 RUN mkdir signing \
     && cd signing
 
-COPY entrypoint.sh /
+COPY /signing_util/entrypoint.sh /
+COPY /signing_util/entitlements.mac.inherit.plist /
 
 RUN chmod +x /entrypoint.sh
 
