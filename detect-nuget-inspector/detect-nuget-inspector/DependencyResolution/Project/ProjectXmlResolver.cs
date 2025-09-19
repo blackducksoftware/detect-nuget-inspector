@@ -9,7 +9,7 @@ using Blackduck.Detect.Nuget.Inspector.Model;
 
 namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
 {
-    class ProjectXmlResolver : DependencyResolver
+    public class ProjectXmlResolver : DependencyResolver
     {
 
         private string ProjectPath;

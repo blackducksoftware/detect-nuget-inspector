@@ -1,0 +1,10 @@
+<Project>
+  <PropertyGroup>
+    <!-- Enable central package management -->
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="PackageA" Version="1.0.0" />
+    <PackageVersion Include="PackageA" Version="2.0.0" />
+  </ItemGroup>
+</Project>
