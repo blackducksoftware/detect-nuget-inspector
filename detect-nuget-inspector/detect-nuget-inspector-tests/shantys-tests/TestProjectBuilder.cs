@@ -26,7 +26,7 @@ namespace DetectNugetInspectorTests.ShantysTests
             {
                 StartInfo = new ProcessStartInfo
                 {
-                    FileName = "dotnet",
+                    FileName = _environment.DotNetCommand,  // Use the environment's command
                     Arguments = $"new sln -n {solutionName}",
                     WorkingDirectory = _solutionDirectory,
                     UseShellExecute = false,
@@ -49,7 +49,7 @@ namespace DetectNugetInspectorTests.ShantysTests
             {
                 StartInfo = new ProcessStartInfo
                 {
-                    FileName = "dotnet",
+                    FileName = _environment.DotNetCommand, // Use the environment's command
                     Arguments = "new console -n Project1",
                     WorkingDirectory = _solutionDirectory,
                     UseShellExecute = false,
@@ -72,7 +72,7 @@ namespace DetectNugetInspectorTests.ShantysTests
             {
                 StartInfo = new ProcessStartInfo
                 {
-                    FileName = "dotnet",
+                    FileName = _environment.DotNetCommand, // Use the environment's command
                     Arguments = "sln add Project1/Project1.csproj",
                     WorkingDirectory = _solutionDirectory,
                     UseShellExecute = false,

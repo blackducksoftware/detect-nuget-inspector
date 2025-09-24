@@ -8,15 +8,15 @@ namespace DetectNugetInspectorTests.ShantysTests
     {
         private List<string> _executedBranches = new List<string>();
 
-        public NIResult RunBasicSetupTest(string dotnetVersion = "6.0.136", string solutionName = "TestSolution")
+        public NIResult RunBasicSetupTest(string dotnetVersion = "6.0.428", string solutionName = "TestSolution", string dotnetCommand = "dotnet")
         {
-            Console.WriteLine($"Starting basic setup test with .NET version: {dotnetVersion}");
+            Console.WriteLine($"Starting basic setup test with .NET version: {dotnetVersion} using command: {dotnetCommand}");
             
             // 1. Setup environment
             var env = new TestEnvironmentManager();
             try
             {
-                env.SetupEnvironment(dotnetVersion);
+                env.SetupEnvironment(dotnetVersion, dotnetCommand);
                 Console.WriteLine($"✓ Environment setup successful - Working directory: {env.WorkingDirectory}");
             }
             catch (Exception ex)
@@ -69,7 +69,7 @@ namespace DetectNugetInspectorTests.ShantysTests
             return new NIResult
             {
                 Success = true,
-                Message = $"Basic setup test completed successfully for .NET {dotnetVersion}",
+                Message = $"Basic setup test completed successfully for .NET {dotnetVersion} using {dotnetCommand}",
                 SolutionPath = solutionPath
             };
         }
