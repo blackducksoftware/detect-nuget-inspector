@@ -11,10 +11,10 @@ namespace DetectNugetInspectorTests.ShantysTests
         public string DotNetCommand { get; private set; }
         public string WorkingDirectory { get; private set; }
 
-        public TestEnvironmentManager SetupEnvironment(string dotnetVersion, string dotnetCommand = "dotnet")
+        public TestEnvironmentManager SetupEnvironment(string dotnetVersion, string desiredDotnetCommand = "dotnet")
         {
             DotNetVersion = dotnetVersion;
-            DotNetCommand = ResolveDotNetCommand(dotnetCommand);  // Resolve to actual executable path, will need to be changed/generalized so this works in jenkins 
+            DotNetCommand = ResolveDotNetCommand(desiredDotnetCommand);  // Resolve to actual executable path, will need to be changed/generalized so this works in jenkins 
             WorkingDirectory = Path.Combine(Path.GetTempPath(), "NI-Tests", Guid.NewGuid().ToString());
             
             Directory.CreateDirectory(WorkingDirectory);
@@ -27,7 +27,7 @@ namespace DetectNugetInspectorTests.ShantysTests
 
         private string ResolveDotNetCommand(string command)
         {
-            // The build machine has aliases for dotnet 3,5 and 6
+            // The build machine has symlinks for dotnet3,5 and 6. This method will need to be made more robust before being added to jenkins pipeline to just find the desired version on the system if it exists. And maybe not expect installations to be in certain directories.
             switch (command)
             {
                 case "dotnet6":
@@ -35,7 +35,7 @@ namespace DetectNugetInspectorTests.ShantysTests
                 case "dotnet7":
                     return "~/.dotnet7/dotnet".Replace("~", Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
                 default:
-                    return command; // Default dotnet (6)
+                    return "dotnet"; // Default dotnet with no alias (6)
             }
         }
 
@@ -57,7 +57,7 @@ namespace DetectNugetInspectorTests.ShantysTests
             if (!actualDotNetVersion.StartsWith(expectedVersion))
             {
                 Console.WriteLine($"❌ Version mismatch: Expected {expectedVersion}, but got {actualDotNetVersion}");
-                throw new InvalidOperationException($"Requested .NET version {expectedVersion} is not available. System returned version {actualDotNetVersion}. Please install the required .NET SDK version or update your test.");
+                throw new InvalidOperationException($"Requested .NET version {expectedVersion} is not available. System returned version {actualDotNetVersion}. Please install the required .NET SDK version and create appropriate alias.");
             }
             
             // Check NuGet version
