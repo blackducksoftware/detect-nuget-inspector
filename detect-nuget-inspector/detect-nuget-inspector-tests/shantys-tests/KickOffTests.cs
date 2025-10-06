@@ -18,6 +18,8 @@ namespace DetectNugetInspectorTests.ShantysTests
             });
         }
 
+        
+        // dotnet 6 tests (nuget v6.3.4.2)
         [TestMethod]
         public void TestBasicSetup_DotNet6()
         {
@@ -27,6 +29,7 @@ namespace DetectNugetInspectorTests.ShantysTests
             Assert.IsTrue(result.Success, result.Message);
         }
 
+        // dotnet 7 tests (nuget v6.7.1.1)
         [TestMethod]
         public void TestBasicSetup_DotNet7()
         {
@@ -36,6 +39,7 @@ namespace DetectNugetInspectorTests.ShantysTests
             Assert.IsTrue(result.Success, result.Message);
         }
         
+        // dotnet 8 tests (nuget v...)
         [TestMethod]
         public void TestBasicSetup_DotNet8()
         {

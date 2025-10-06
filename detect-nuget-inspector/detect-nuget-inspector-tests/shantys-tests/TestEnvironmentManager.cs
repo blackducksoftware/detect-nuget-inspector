@@ -27,11 +27,12 @@ namespace DetectNugetInspectorTests.ShantysTests
 
         private string ResolveDotNetCommand(string command)
         {
-            // The build machine has symlinks for dotnet3,5 and 6. This method will need to be made more robust before being added to jenkins pipeline to just find the desired version on the system if it exists. And maybe not expect installations to be in certain directories.
+            // The build machine has symlinks for dotnet3, 5 and 6. This method will need to be made more robust before being added to jenkins pipeline to just find the desired version on the system if it exists. And maybe not expect installations to be in certain directories.
             switch (command)
             {
                 case "dotnet6":
-                    return "~/.dotnet/dotnet".Replace("~", Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
+                    return "dotnet6";
+                    //return "~/.dotnet/dotnet".Replace("~", Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
                 case "dotnet7":
                     return "~/.dotnet7/dotnet".Replace("~", Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
                 default:
@@ -44,7 +45,7 @@ namespace DetectNugetInspectorTests.ShantysTests
             Console.WriteLine($"🔍 Validating environment with command: {command}");
             
             // Check .NET version
-            var dotnetVersionResult = RunCommand(command, "--version");
+            var dotnetVersionResult = RunCommand(command, " --version");
             if (dotnetVersionResult.ExitCode != 0)
             {
                 throw new InvalidOperationException($"Failed to get .NET version using command '{command}': {dotnetVersionResult.Error}");
