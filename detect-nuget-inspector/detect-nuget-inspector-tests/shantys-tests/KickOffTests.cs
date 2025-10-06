@@ -24,7 +24,7 @@ namespace DetectNugetInspectorTests.ShantysTests
         public void TestBasicSetup_DotNet6()
         {
             var runner = new NITestRunner();
-            var result = runner.RunBasicSetupTest("6.0.428", "MyTestSolution", "dotnet6");
+            var result = runner.RunBasicSetupTest("6.0.201", "MyTestSolution", "dotnet6");
 
             Assert.IsTrue(result.Success, result.Message);
         }
