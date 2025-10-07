@@ -13,16 +13,24 @@ namespace DetectNugetInspectorTests.ShantysTests
 
         public TestEnvironmentManager SetupEnvironment(string dotnetVersion, string desiredDotnetCommand = "dotnet")
         {
-            DotNetVersion = dotnetVersion;
-            DotNetCommand = desiredDotnetCommand;  
-            WorkingDirectory = Path.Combine(Path.GetTempPath(), "NI-Tests", Guid.NewGuid().ToString());
+            try
+            {
+                DotNetVersion = dotnetVersion;
+                DotNetCommand = desiredDotnetCommand;  
+                WorkingDirectory = Path.Combine(Path.GetTempPath(), "NI-Tests", Guid.NewGuid().ToString());
             
-            Directory.CreateDirectory(WorkingDirectory);
+                Directory.CreateDirectory(WorkingDirectory);
             
-            // Validate and log .NET and NuGet versions
-            ValidateAndLogVersions(dotnetVersion, DotNetCommand);
-            
-            return this;
+                // Validate and log .NET and NuGet versions
+                ValidateAndLogVersions(dotnetVersion, DotNetCommand);
+                
+                Console.WriteLine($"✓ Environment setup successful - Working directory: {this.WorkingDirectory}");
+                return this;
+            } catch (Exception ex)
+            {
+                Console.WriteLine($"✗ Environment setup failed: {ex.Message}");
+                throw;
+            }
         }
 
         private void ValidateAndLogVersions(string expectedVersion, string command)

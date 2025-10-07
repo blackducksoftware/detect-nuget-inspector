@@ -4,20 +4,22 @@ using System.IO;
 
 namespace DetectNugetInspectorTests.ShantysTests
 {
-    public class TestProjectBuilder
+    public class TestSolutionBuilder
     {
         private readonly TestEnvironmentManager _environment;
         private string _solutionDirectory;
         private string _solutionName;
 
-        public TestProjectBuilder(TestEnvironmentManager environment)
+        public TestSolutionBuilder(TestEnvironmentManager environment)
         {
             _environment = environment;
         }
 
-        public TestProjectBuilder CreateSimpleSolution(string solutionName = "TestSolution")
+        public TestSolutionBuilder CreateSimpleSolution(string solutionName)
         {
-            _solutionName = solutionName;
+            try
+            {
+                            _solutionName = solutionName;
             _solutionDirectory = Path.Combine(_environment.WorkingDirectory, solutionName);
             Directory.CreateDirectory(_solutionDirectory);
 
@@ -91,6 +93,13 @@ namespace DetectNugetInspectorTests.ShantysTests
             }
 
             return this;
+            } catch (Exception ex)
+            {
+                Console.WriteLine($"✗ Solution creation failed: {ex.Message}");
+                _environment.Cleanup();
+                throw;
+            }
+
         }
 
         public string Build()

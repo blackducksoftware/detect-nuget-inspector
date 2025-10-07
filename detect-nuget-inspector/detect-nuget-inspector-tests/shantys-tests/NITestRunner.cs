@@ -13,20 +13,10 @@ namespace DetectNugetInspectorTests.ShantysTests
             Console.WriteLine($"Starting basic setup test with .NET version: {dotnetVersion} using command: {dotnetCommand}");
             
             // 1. Setup environment
-            var env = new TestEnvironmentManager();
-            try
-            {
-                env.SetupEnvironment(dotnetVersion, dotnetCommand);
-                Console.WriteLine($"✓ Environment setup successful - Working directory: {env.WorkingDirectory}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"✗ Environment setup failed: {ex.Message}");
-                throw;
-            }
+            var env = new TestEnvironmentManager().SetupEnvironment(dotnetVersion, dotnetCommand);
 
             // 2. Create simple solution
-            var projectBuilder = new TestProjectBuilder(env);
+            var projectBuilder = new TestSolutionBuilder(env);
             string solutionPath;
             try
             {

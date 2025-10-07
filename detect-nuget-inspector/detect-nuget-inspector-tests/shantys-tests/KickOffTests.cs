@@ -19,7 +19,7 @@ namespace DetectNugetInspectorTests.ShantysTests
         }
 
         
-        // dotnet 6 tests (nuget v6.3.4.2)
+        // dotnet 6 (nuget v6.3.4.2)
         [TestMethod]
         public void TestBasicSetup_DotNet6()
         {
@@ -29,7 +29,7 @@ namespace DetectNugetInspectorTests.ShantysTests
             Assert.IsTrue(result.Success, result.Message);
         }
 
-        // dotnet 7 tests (nuget v6.7.1.1)
+        // dotnet 7 (nuget v6.7.1.1)
         [TestMethod]
         public void TestBasicSetup_DotNet7()
         {
@@ -49,6 +49,22 @@ namespace DetectNugetInspectorTests.ShantysTests
             {
                 runner.RunBasicSetupTest("8.0.0", "MyTestSolution", "dotnet8");
             });
+        }
+
+        [TestMethod]
+        public void TestBasicSetup_DotNet6_NoCPM()
+        {
+            // 1. Set up environment with .NET 6
+            var dotnetVersion = "6.0.428"; // todo change me to match what is on jenkins 
+            var env = new TestEnvironmentManager().SetupEnvironment(dotnetVersion, "dotnet6");
+
+            // 2. Build a .NET 6 project without CPM
+            var builder = new TestSolutionBuilder(env).CreateSimpleSolution("MySimpleDotnet6Solution").Build();
+          
+
+            // 3. Run inspector and assert output
+
+            // Make assertions on the result json
         }
     }
 }
