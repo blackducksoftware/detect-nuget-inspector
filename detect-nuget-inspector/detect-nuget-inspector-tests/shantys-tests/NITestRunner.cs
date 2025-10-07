@@ -8,7 +8,7 @@ namespace DetectNugetInspectorTests.ShantysTests
     {
         private List<string> _executedBranches = new List<string>();
 
-        public NIResult RunBasicSetupTest(string dotnetVersion = "6.0.428", string solutionName = "TestSolution", string dotnetCommand = "dotnet")
+        public NIResult RunBasicSetupTest(string dotnetVersion, string solutionName, string dotnetCommand)
         {
             Console.WriteLine($"Starting basic setup test with .NET version: {dotnetVersion} using command: {dotnetCommand}");
             

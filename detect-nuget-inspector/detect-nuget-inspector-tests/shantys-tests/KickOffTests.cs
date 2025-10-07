@@ -14,7 +14,7 @@ namespace DetectNugetInspectorTests.ShantysTests
 
             Assert.ThrowsException<InvalidOperationException>(() =>
             {
-                runner.RunBasicSetupTest("99.0.999", "FailureSolution");
+                runner.RunBasicSetupTest("99.0.999", "FailureSolution", "nonExistentDotnetVersion");
             });
         }
 

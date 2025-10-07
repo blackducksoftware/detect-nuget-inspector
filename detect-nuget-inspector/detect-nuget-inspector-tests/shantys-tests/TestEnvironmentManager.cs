@@ -14,30 +14,15 @@ namespace DetectNugetInspectorTests.ShantysTests
         public TestEnvironmentManager SetupEnvironment(string dotnetVersion, string desiredDotnetCommand = "dotnet")
         {
             DotNetVersion = dotnetVersion;
-            DotNetCommand = ResolveDotNetCommand(desiredDotnetCommand);  // Resolve to actual executable path, will need to be changed/generalized so this works in jenkins 
+            DotNetCommand = desiredDotnetCommand;  
             WorkingDirectory = Path.Combine(Path.GetTempPath(), "NI-Tests", Guid.NewGuid().ToString());
             
             Directory.CreateDirectory(WorkingDirectory);
             
-            // Validate and log .NET version
+            // Validate and log .NET and NuGet versions
             ValidateAndLogVersions(dotnetVersion, DotNetCommand);
             
             return this;
-        }
-
-        private string ResolveDotNetCommand(string command)
-        {
-            // The build machine has symlinks for dotnet3, 5 and 6. This method will need to be made more robust before being added to jenkins pipeline to just find the desired version on the system if it exists. And maybe not expect installations to be in certain directories.
-            switch (command)
-            {
-                case "dotnet6":
-                    return "dotnet6";
-                    //return "~/.dotnet/dotnet".Replace("~", Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
-                case "dotnet7":
-                    return "~/.dotnet7/dotnet".Replace("~", Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
-                default:
-                    return "dotnet"; // Default dotnet with no alias (6)
-            }
         }
 
         private void ValidateAndLogVersions(string expectedVersion, string command)
@@ -80,25 +65,33 @@ namespace DetectNugetInspectorTests.ShantysTests
 
         private (int ExitCode, string Output, string Error) RunCommand(string command, string arguments)
         {
-            var process = new Process
+            try
             {
-                StartInfo = new ProcessStartInfo
+                var process = new Process
                 {
-                    FileName = command,
-                    Arguments = arguments,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true
-                }
-            };
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = command,
+                        Arguments = arguments,
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        CreateNoWindow = true
+                    }
+                };
 
-            process.Start();
-            string output = process.StandardOutput.ReadToEnd();
-            string error = process.StandardError.ReadToEnd();
-            process.WaitForExit();
+                process.Start();
+                string output = process.StandardOutput.ReadToEnd();
+                string error = process.StandardError.ReadToEnd();
+                process.WaitForExit();
 
-            return (process.ExitCode, output, error);
+                return (process.ExitCode, output, error);
+            }
+            catch (Exception ex)
+            {
+                //Console.Error.WriteLine($"❌ Error running command '{command} {arguments}': {ex.Message}");
+                return (-1, string.Empty, ex.Message);
+            }
         }
 
         public void Cleanup()
