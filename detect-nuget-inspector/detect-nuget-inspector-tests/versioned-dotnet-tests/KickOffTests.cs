@@ -19,7 +19,7 @@ namespace DetectNugetInspectorTests.ShantysTests
         public void TestBasicSolution_DotNet6_ProjectAssetsJsonFile()
         {
             // 1. Set up environment with .NET 6 (nuget v6.3.4.2)
-            var dotnetVersion = "6.0.428"; // todo change me to match what is on jenkins 
+            var dotnetVersion = "6.0.201";
             var env = new TestEnvironmentManager().SetupEnvironment(dotnetVersion, "dotnet6");
 
             // 2. Create .NET 6 solution
@@ -89,7 +89,7 @@ namespace DetectNugetInspectorTests.ShantysTests
         public void TestBasicSolution_DotNet6_DuplicatePackageReference_XMLResolver()
         {
             // 1. Set up environment with .NET 6 (nuget v6.3.4.2)
-            var dotnetVersion = "6.0.428";
+            var dotnetVersion = "6.0.201";
             var env = new TestEnvironmentManager().SetupEnvironment(dotnetVersion, "dotnet6");
 
             // 2. Create .NET 6 solution
