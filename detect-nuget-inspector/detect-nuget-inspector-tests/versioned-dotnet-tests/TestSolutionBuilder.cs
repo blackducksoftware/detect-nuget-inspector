@@ -57,6 +57,11 @@ namespace DetectNugetInspectorTests.ShantysTests
         {
             try {
                 var projectDir = Path.Combine(_solutionDirectory, projectName);
+                
+                // First, restore the project to ensure it's in a proper state
+                RunDotNetCommand("restore", projectDir);
+                
+                // Then add the package
                 var args = $"add package {packageName} --version {version}";
                 RunDotNetCommand(args, projectDir);
                 return this;
