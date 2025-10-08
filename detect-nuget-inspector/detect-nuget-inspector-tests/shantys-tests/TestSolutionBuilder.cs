@@ -29,7 +29,7 @@ namespace DetectNugetInspectorTests.ShantysTests
                 return this;
             } catch (Exception ex)
             {
-                Console.WriteLine($"✗ Test Solution creation failed: {ex.Message}");
+                Console.WriteLine($"✗ Test solution creation failed: {ex.Message}");
                 _environment.Cleanup();
                 throw;
             }
@@ -38,20 +38,34 @@ namespace DetectNugetInspectorTests.ShantysTests
 
         public TestSolutionBuilder CreateAndAddProject(string projectName)
         {
-            // Create ProjectA
-            RunDotNetCommand($"new console -n {projectName}", _solutionDirectory);
+            try {
+                // Create ProjectA
+                RunDotNetCommand($"new console -n {projectName}", _solutionDirectory);
 
-            // Add ProjectA to solution
-            RunDotNetCommand("sln add ProjectA/ProjectA.csproj", _solutionDirectory);
-            return this;
+                // Add ProjectA to solution
+                RunDotNetCommand("sln add ProjectA/ProjectA.csproj", _solutionDirectory);
+                return this;
+            } catch (Exception ex)
+            {
+                Console.WriteLine($"✗ Test subproject creation failed: {ex.Message}");
+                _environment.Cleanup();
+                throw;
+            }
         }
         
         public TestSolutionBuilder AddDependencyToProject(string projectName, string packageName, string version)
         {
-            var projectDir = Path.Combine(_solutionDirectory, projectName);
-            var args = $"add package {packageName} --version {version}";
-            RunDotNetCommand(args, projectDir);
-            return this;
+            try {
+                var projectDir = Path.Combine(_solutionDirectory, projectName);
+                var args = $"add package {packageName} --version {version}";
+                RunDotNetCommand(args, projectDir);
+                return this;
+            } catch (Exception ex)
+            {
+                Console.WriteLine($"✗ Adding dependency to subproject failed: {ex.Message}");
+                _environment.Cleanup();
+                throw;
+            }
         }
         
         

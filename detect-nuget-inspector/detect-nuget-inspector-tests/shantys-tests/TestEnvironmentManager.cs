@@ -71,7 +71,7 @@ namespace DetectNugetInspectorTests.ShantysTests
             Console.WriteLine("✅ Environment validation complete");
         }
 
-        private (int ExitCode, string Output, string Error) RunCommand(string command, string arguments)
+        private (int ExitCode, string Output, string Error) RunCommand(string command, string arguments) // TODO only need one dotnet command runner
         {
             try
             {

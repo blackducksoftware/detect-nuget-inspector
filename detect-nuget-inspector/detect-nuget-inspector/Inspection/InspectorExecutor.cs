@@ -14,12 +14,13 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection
         public static InspectorExecutionResult ExecuteInspectors(InspectionOptions options)
         {
             bool anyFailed = false;
+            List<InspectionResult>? inspectionResults = null;
 
             try
             {
                 var dispatch = new InspectorDispatch();
                 var searchService = new NugetSearchService(options.PackagesRepoUrl, options.NugetConfigPath);
-                var inspectionResults = dispatch.Inspect(options, searchService);
+                inspectionResults = dispatch.Inspect(options, searchService);
                 if (inspectionResults != null)
                 {
                     foreach (var result in inspectionResults)
@@ -72,7 +73,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection
             }
             else
             {
-                return InspectorExecutionResult.Succeeded();
+                return InspectorExecutionResult.Succeeded(inspectionResults);
             }
         }
     }
