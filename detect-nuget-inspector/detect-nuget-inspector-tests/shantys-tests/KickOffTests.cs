@@ -52,19 +52,24 @@ namespace DetectNugetInspectorTests.ShantysTests
         }
 
         [TestMethod]
-        public void TestBasicSetup_DotNet6_NoCPM()
+        public void TestBasicSolution_DotNet6_NoCPM()
         {
-            // 1. Set up environment with .NET 6
+            // 1. Set up environment with .NET 6 (nuget v6.3.4.2)
             var dotnetVersion = "6.0.428"; // todo change me to match what is on jenkins 
             var env = new TestEnvironmentManager().SetupEnvironment(dotnetVersion, "dotnet6");
 
-            // 2. Build a .NET 6 project without CPM
-            var builder = new TestSolutionBuilder(env).CreateSimpleSolution("MySimpleDotnet6Solution").Build();
-          
-
+            // 2. Create .NET 6 solution
+            var builder = new TestSolutionBuilder(env)
+                .CreateSolution("MySimpleDotnet6Solution")
+                .CreateAndAddProject("ProjectA")
+                .AddDependencyToProject("ProjectA", "Newtonsoft.Json", "13.0.3")
+                .Build();
+            
             // 3. Run inspector and assert output
 
             // Make assertions on the result json
+            
+            // Clean up everything. start at state 0. 
         }
     }
 }

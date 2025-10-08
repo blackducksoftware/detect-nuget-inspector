@@ -10,7 +10,7 @@ namespace DetectNugetInspectorTests.ShantysTests
 
         public NIResult RunBasicSetupTest(string dotnetVersion, string solutionName, string dotnetCommand)
         {
-            Console.WriteLine($"Starting basic setup test with .NET version: {dotnetVersion} using command: {dotnetCommand}");
+            Console.WriteLine($"Starting basic test with .NET version: {dotnetVersion} using command: {dotnetCommand}");
             
             // 1. Setup environment
             var env = new TestEnvironmentManager().SetupEnvironment(dotnetVersion, dotnetCommand);
@@ -21,7 +21,7 @@ namespace DetectNugetInspectorTests.ShantysTests
             try
             {
                 solutionPath = projectBuilder
-                    .CreateSimpleSolution(solutionName)
+                    .CreateSolution(solutionName)
                     .Build();
                 Console.WriteLine($"✓ Solution created successfully at: {solutionPath}");
             }

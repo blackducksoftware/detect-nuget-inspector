@@ -15,91 +15,72 @@ namespace DetectNugetInspectorTests.ShantysTests
             _environment = environment;
         }
 
-        public TestSolutionBuilder CreateSimpleSolution(string solutionName)
+        public TestSolutionBuilder CreateSolution(string solutionName)
         {
             try
             {
-                            _solutionName = solutionName;
-            _solutionDirectory = Path.Combine(_environment.WorkingDirectory, solutionName);
-            Directory.CreateDirectory(_solutionDirectory);
+                _solutionName = solutionName;
+                _solutionDirectory = Path.Combine(_environment.WorkingDirectory, solutionName);
+                Directory.CreateDirectory(_solutionDirectory);
 
-            // Create solution
-            var createSolutionProcess = new Process
-            {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = _environment.DotNetCommand,  // Use the environment's command
-                    Arguments = $"new sln -n {solutionName}",
-                    WorkingDirectory = _solutionDirectory,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true
-                }
-            };
+                // Create solution
+                RunDotNetCommand($"new sln -n {solutionName}", _solutionDirectory);
 
-            createSolutionProcess.Start();
-            createSolutionProcess.WaitForExit();
-
-            if (createSolutionProcess.ExitCode != 0)
-            {
-                throw new InvalidOperationException($"Failed to create solution: {createSolutionProcess.StandardError.ReadToEnd()}");
-            }
-
-            // Create Project1
-            var createProjectProcess = new Process
-            {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = _environment.DotNetCommand, // Use the environment's command
-                    Arguments = "new console -n Project1",
-                    WorkingDirectory = _solutionDirectory,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true
-                }
-            };
-
-            createProjectProcess.Start();
-            createProjectProcess.WaitForExit();
-
-            if (createProjectProcess.ExitCode != 0)
-            {
-                throw new InvalidOperationException($"Failed to create Project1: {createProjectProcess.StandardError.ReadToEnd()}");
-            }
-
-            // Add Project1 to solution
-            var addProjectProcess = new Process
-            {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = _environment.DotNetCommand, // Use the environment's command
-                    Arguments = "sln add Project1/Project1.csproj",
-                    WorkingDirectory = _solutionDirectory,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true
-                }
-            };
-
-            addProjectProcess.Start();
-            addProjectProcess.WaitForExit();
-
-            if (addProjectProcess.ExitCode != 0)
-            {
-                throw new InvalidOperationException($"Failed to add Project1 to solution: {addProjectProcess.StandardError.ReadToEnd()}");
-            }
-
-            return this;
+                return this;
             } catch (Exception ex)
             {
-                Console.WriteLine($"✗ Solution creation failed: {ex.Message}");
+                Console.WriteLine($"✗ Test Solution creation failed: {ex.Message}");
                 _environment.Cleanup();
                 throw;
             }
 
+        }
+
+        public TestSolutionBuilder CreateAndAddProject(string projectName)
+        {
+            // Create ProjectA
+            RunDotNetCommand($"new console -n {projectName}", _solutionDirectory);
+
+            // Add ProjectA to solution
+            RunDotNetCommand("sln add ProjectA/ProjectA.csproj", _solutionDirectory);
+            return this;
+        }
+        
+        public TestSolutionBuilder AddDependencyToProject(string projectName, string packageName, string version)
+        {
+            var projectDir = Path.Combine(_solutionDirectory, projectName);
+            var args = $"add package {packageName} --version {version}";
+            RunDotNetCommand(args, projectDir);
+            return this;
+        }
+        
+        
+        private void RunDotNetCommand(string arguments, string workingDirectory)
+        {
+            var command = $"{_environment.DotNetCommand} {arguments}";
+            Console.WriteLine($"> {command}");
+            
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = _environment.DotNetCommand,
+                    Arguments = arguments,
+                    WorkingDirectory = workingDirectory,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true
+                }
+            };
+
+            process.Start();
+            process.WaitForExit();
+
+            if (process.ExitCode != 0)
+            {
+                throw new InvalidOperationException($"dotnet {arguments} failed: {process.StandardError.ReadToEnd()}");
+            }
         }
 
         public string Build()
