@@ -3,21 +3,19 @@ using Microsoft.Build.Locator;
 
 namespace DetectNugetInspectorTests.ShantysTests;
 
-// Tests cases for scenarios where MSBuild is registered via MSBuildLocator need to be in their own class to avoid
-// conflicts with other tests (MSBuild registration is process-wide and can only be done once per process.)
 [TestClass]
-public class TestsWithMsBuildRegistrationDotnet6
+public class TestsWithMsBuildRegistrationDotnet8
 {
-          [TestMethod]
-        public void TestBasicSolution_DotNet6_DuplicatePackageReference_ProjectReferenceResolver()
+    [TestMethod]
+        public void TestBasicSolution_DotNet8_DuplicatePackageReference_ProjectReferenceResolver()
         {
-            // 1. Set up environment with .NET 6 (nuget v6.3.4.2)
-            var dotnetVersion = "6.0.428";
-            var env = new TestEnvironmentManager().SetupEnvironment(dotnetVersion, "dotnet6");
+            // 1. Set up environment with .NET 8 (nuget v6.11.1.2)
+            var dotnetVersion = "8.0.414";
+            var env = new TestEnvironmentManager().SetupEnvironment(dotnetVersion, "dotnet8");
 
-            // 2. Create .NET 6 solution
+            // 2. Create .NET 8 solution
             var builder = new TestSolutionBuilder(env)
-                .CreateSolution("MySimpleDotnet6Solution")
+                .CreateSolution("MySimpleDotnet8Solution")
                 .CreateAndAddProject("ProjectA")
                 .AddDependencyToProject("ProjectA", "Newtonsoft.Json", "13.0.3")
                 .AddPackageReferenceToCsprojManually("ProjectA", "Newtonsoft.Json", "12.0.1")
@@ -59,7 +57,7 @@ public class TestsWithMsBuildRegistrationDotnet6
                 Assert.AreEqual(1, result.Containers.Count);
                 var solutionContainer = result.Containers[0];
                 Assert.AreEqual(solutionContainer.Type, "Solution");
-                Assert.AreEqual("MySimpleDotnet6Solution", solutionContainer.Name);
+                Assert.AreEqual("MySimpleDotnet8Solution", solutionContainer.Name);
 
                 var projectContainer = solutionContainer.Children[0];
                 Assert.AreEqual(projectContainer.Type, "Project");

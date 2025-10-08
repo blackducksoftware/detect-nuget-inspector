@@ -24,12 +24,12 @@ namespace Blackduck.Detect.Nuget.Inspector.Result
 
         public static InspectorExecutionResult Succeeded(List<InspectionResult>? results)
         {
-            var something = new InspectorExecutionResult
+            var inspectionResults = new InspectorExecutionResult
             {
                 Success = true
             };
-            something.Results = results;
-            return something;
+            inspectionResults.Results = results;
+            return inspectionResults;
         }
     }
 }
