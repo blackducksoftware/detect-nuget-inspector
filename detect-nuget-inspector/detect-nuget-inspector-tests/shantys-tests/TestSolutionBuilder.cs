@@ -39,8 +39,8 @@ namespace DetectNugetInspectorTests.ShantysTests
         public TestSolutionBuilder CreateAndAddProject(string projectName)
         {
             try {
-                // Create ProjectA
-                RunDotNetCommand($"new console -n {projectName}", _solutionDirectory);
+                // Create a minimal project with a class
+                RunDotNetCommand($"new classlib -n {projectName}", _solutionDirectory);
 
                 // Add ProjectA to solution
                 RunDotNetCommand("sln add ProjectA/ProjectA.csproj", _solutionDirectory);
@@ -67,8 +67,44 @@ namespace DetectNugetInspectorTests.ShantysTests
                 throw;
             }
         }
-        
-        
+
+        public TestSolutionBuilder AddPackageReferenceToCsprojManually(string projectName, string packageName, string version)
+        {
+            // Adding the same package with a different version will cause the dotnet add package command to update the
+            // existing reference to the new version, not add a duplicate. So we need to manually update the project file.
+            var projectDir = Path.Combine(_solutionDirectory, projectName);
+            var csprojPath = Path.Combine(projectDir, $"{projectName}.csproj");
+            var csprojContent = File.ReadAllText(csprojPath);
+            var packageReference = $"  <PackageReference Include=\"{packageName}\" Version=\"{version}\" />";
+            csprojContent = csprojContent.Replace("</ItemGroup>", $"{packageReference}\n  </ItemGroup>");
+            File.WriteAllText(csprojPath, csprojContent);
+
+            return this;
+        }
+
+        public TestSolutionBuilder NoBuildArtifacts()
+        {
+            try
+            {
+                // Remove bin and obj directories
+                foreach (var dir in Directory.GetDirectories(_solutionDirectory, "*", SearchOption.AllDirectories))
+                {
+                    if (dir.EndsWith("bin") || dir.EndsWith("obj"))
+                    {
+                        Directory.Delete(dir, true);
+                    }
+                }
+
+                return this;
+            } catch (Exception ex)
+            {
+                Console.WriteLine($"✗ Removing build artifacts failed: {ex.Message}");
+                _environment.Cleanup();
+                throw;
+            }
+        }
+
+
         private void RunDotNetCommand(string arguments, string workingDirectory)
         {
             var command = $"{_environment.DotNetCommand} {arguments}";
