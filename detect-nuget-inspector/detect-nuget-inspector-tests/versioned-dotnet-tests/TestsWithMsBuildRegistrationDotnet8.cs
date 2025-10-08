@@ -17,7 +17,8 @@ public class TestsWithMsBuildRegistrationDotnet8
             var builder = new TestSolutionBuilder(env)
                 .CreateSolution("MySimpleDotnet8Solution")
                 .CreateAndAddProject("ProjectA")
-                .AddDependencyToProject("ProjectA", "Newtonsoft.Json", "13.0.3")
+                // Add them manually because dotnet8 doesn't allow adding duplicate PackageReference via CLI
+                .AddPackageReferenceToCsprojManually("ProjectA", "Newtonsoft.Json", "13.0.3")
                 .AddPackageReferenceToCsprojManually("ProjectA", "Newtonsoft.Json", "12.0.1")
                 .NoBuildArtifacts() // So we can force using ProjectReferenceResolver instead of assets file
                 .Build();
