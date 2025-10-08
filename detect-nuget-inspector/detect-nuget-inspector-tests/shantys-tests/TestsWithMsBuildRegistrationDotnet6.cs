@@ -5,7 +5,7 @@ namespace DetectNugetInspectorTests.ShantysTests;
 
 // Tests cases for scenarios where MSBuild is registered via MSBuildLocator need to be in their own class to avoid
 // conflicts with other tests (MSBuild registration is process-wide and can only be done once per process.)
-public class TestsWithMsBuildRegistration
+public class TestsWithMsBuildRegistrationDotnet6
 {
           [TestMethod]
         public void TestBasicSolution_DotNet6_DuplicatePackageReference_ProjectReferenceResolver()

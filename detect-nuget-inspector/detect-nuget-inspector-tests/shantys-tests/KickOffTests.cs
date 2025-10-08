@@ -9,34 +9,9 @@ namespace DetectNugetInspectorTests.ShantysTests
         [TestMethod]
         public void TestBasicSetup_InvalidDotNetVersion()
         {
-            var runner = new NITestRunner();
-
             Assert.ThrowsException<InvalidOperationException>(() =>
             {
-                runner.RunBasicSetupTest("99.0.999", "FailureSolution", "nonExistentDotnetVersion");
-            });
-        }
-        
-
-        // dotnet 7.0.410 (nuget v6.7.1.1)
-        /*[TestMethod]
-        public void TestBasicSetup_DotNet7()
-        {
-            var runner = new NITestRunner();
-            var result = runner.RunBasicSetupTest("7.0.410", "MyTestSolution", "dotnet7");
-
-            Assert.IsTrue(result.Success, result.Message);
-        }*/
-
-        // dotnet 8 tests (nuget v...)
-        [TestMethod]
-        public void TestBasicSetup_DotNet8()
-        {
-            var runner = new NITestRunner();
-
-            Assert.ThrowsException<InvalidOperationException>(() =>
-            {
-                runner.RunBasicSetupTest("8.0.0", "MyTestSolution", "dotnet8");
+                var env = new TestEnvironmentManager().SetupEnvironment("99.0.999", "nonExistentDotnetVersion");
             });
         }
 
@@ -184,13 +159,58 @@ namespace DetectNugetInspectorTests.ShantysTests
             }
         }
 
-        // for dotnet6, we could add .csproj branch, raw xml parser branch ... etc. 
         // So what tests is REQUIRED so you can close your tickets:
         // 1. for validating nuget up to 6.3.4: 
-        // duplicate PackageReference in .csproj file. Confirm both are captured. 
-        // Duplicate PackageVersion in Directory.Packages.props. Confirm both are captured.
+        // duplicate PackageReference in .csproj file. Confirm both are captured. (done)
+        // Duplicate PackageVersion in Directory.Packages.props. Confirm both are captured.(stretch goal.... well no it has to be a CPM test haha)
 
         // 2. for validating nuget up to 6.7.1:
         // Central Package Management. Create solution with that very complicated set up. Confirm all captured.
+
+        [TestMethod]
+        public void TestCPMSolution_DotNet7() // TODO finish me. 
+        {
+            // 1. Set up environment with .NET 7 (nuget v6.7.1.1)
+            var dotnetVersion = "7.0.410";
+            var env = new TestEnvironmentManager().SetupEnvironment(dotnetVersion, "dotnet7");
+            
+            // 2. Create solution and projects with CPM enabled
+            var builder = new TestSolutionBuilder(env)
+                .CreateSolution("MyCPMDotnet7Solution")
+                .CreateAndAddProject("ProjectA")
+                .CreateAndAddProject("ProjectB")
+                .EnableCentralPackageManagementWithDesiredStructure()
+                .AddCentrallyManagedPackage("Newtonsoft.Json", "13.0.3")
+                .Build();
+            
+            // 3. Run inspector
+            var options = new InspectionOptions
+            {
+                TargetPath = builder,
+                Verbose = true,
+                PackagesRepoUrl = "https://api.nuget.org/v3/index.json",
+                OutputDirectory = env.WorkingDirectory,
+                IgnoreFailure = false
+            };
+            
+            try
+            {
+                var inspection = InspectorExecutor.ExecuteInspectors(options);
+
+                // 4. Assert results
+                Assert.IsTrue(inspection.Success);
+                // ... further assertions for CPM dependencies ...
+            }
+            finally
+            {
+                env.Cleanup();
+            }
+        }
+        
+        
+        // 3. Validates until nuget 6.11 (.NET 8.0.414)
+        [TestMethod]
+        public void TestSolution_DotNet8() // TODO
+        {}
     }
 }

@@ -103,6 +103,58 @@ namespace DetectNugetInspectorTests.ShantysTests
                 throw;
             }
         }
+        
+        public TestSolutionBuilder EnableCentralPackageManagementWithDesiredStructure()
+        {
+            // 1. Create Directory.Packages.props at solution root directory
+            // Create Directory.Packages.props manually for .NET 7
+            var propsPath = Path.Combine(_solutionDirectory, "Directory.Packages.props");
+            var propsContent = @"<Project>
+  <ItemGroup>
+    <!-- Central package versions go here -->
+  </ItemGroup>
+</Project>";
+            File.WriteAllText(propsPath, propsContent);
+
+            // 2. For each project, add <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+            var projectDirs = Directory.GetDirectories(_solutionDirectory)
+                .Where(d => File.Exists(Path.Combine(d, $"{Path.GetFileName(d)}.csproj")));
+            foreach (var projectDir in projectDirs)
+            {
+                var projectName = Path.GetFileName(projectDir);
+                var csprojPath = Path.Combine(projectDir, $"{projectName}.csproj");
+                var csprojXml = System.Xml.Linq.XDocument.Load(csprojPath);
+                var propertyGroup = csprojXml.Root.Elements("PropertyGroup").FirstOrDefault();
+                if (propertyGroup == null)
+                {
+                    propertyGroup = new System.Xml.Linq.XElement("PropertyGroup");
+                    csprojXml.Root.AddFirst(propertyGroup);
+                }
+                propertyGroup.Add(new System.Xml.Linq.XElement("ManagePackageVersionsCentrally", "true"));
+                csprojXml.Save(csprojPath);
+            }
+
+            // Optionally, update Directory.Packages.props manually here if needed
+
+            return this;
+        }
+
+        public TestSolutionBuilder AddCentrallyManagedPackage(string packageName, string version)
+        { // TODO handle error where Directory.Packages.props does not exist
+            var propsPath = Path.Combine(_solutionDirectory, "Directory.Packages.props");
+            var propsXml = System.Xml.Linq.XDocument.Load(propsPath);
+            var itemGroup = propsXml.Root.Elements("ItemGroup").FirstOrDefault();
+            if (itemGroup == null)
+            {
+                itemGroup = new System.Xml.Linq.XElement("ItemGroup");
+                propsXml.Root.Add(itemGroup);
+            }
+            itemGroup.Add(new System.Xml.Linq.XElement("PackageVersion",
+                new System.Xml.Linq.XAttribute("Include", packageName),
+                new System.Xml.Linq.XAttribute("Version", version)));
+            propsXml.Save(propsPath);
+            return this;
+        }
 
 
         private void RunDotNetCommand(string arguments, string workingDirectory)
