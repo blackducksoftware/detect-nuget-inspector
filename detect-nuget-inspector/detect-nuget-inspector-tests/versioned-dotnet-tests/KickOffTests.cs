@@ -268,7 +268,7 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
 
 
         [TestMethod]
-        public void TestSolution_DotNet8() // TODO: This test and TestSolution_DotNet6_DuplicatePackageReference_XMLResolver are duplicates, parameterize them
+        public void TestSolution_DotNet8() 
         {
             // 1. Set up environment with .NET 8 (nuget v6.11.1.2)
             var dotnetVersion = "8.0.414";
