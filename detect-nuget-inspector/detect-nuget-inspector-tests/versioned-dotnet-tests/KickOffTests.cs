@@ -1,7 +1,6 @@
 using Blackduck.Detect.Nuget.Inspector.Inspection;
-using Microsoft.Build.Locator;
 
-namespace DetectNugetInspectorTests.ShantysTests
+namespace detect_nuget_inspector_tests.versioned_dotnet_tests
 {
     [TestClass]
     public class KickOffTests

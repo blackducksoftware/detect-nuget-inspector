@@ -1,8 +1,6 @@
-using System;
 using System.Diagnostics;
-using System.IO;
 
-namespace DetectNugetInspectorTests.ShantysTests
+namespace detect_nuget_inspector_tests.versioned_dotnet_tests
 {
     public class TestSolutionBuilder
     {
