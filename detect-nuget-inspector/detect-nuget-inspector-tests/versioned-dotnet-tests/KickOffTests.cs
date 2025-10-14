@@ -5,13 +5,39 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
     [TestClass]
     public class KickOffTests
     {
+        public TestContext TestContext { get; set; }
+        private bool _testFailed;
+
+        [TestInitialize]
+        public void PrintTestName()
+        {
+            Console.WriteLine($"Starting test: {TestContext.TestName}");
+        }
+
+        [TestCleanup]
+        public void PrintTestResult()
+        {
+            Console.WriteLine(_testFailed
+                ? $"❌ Test {TestContext.TestName} FAILED"
+                : $"✅ Test {TestContext.TestName} PASSED");
+        }
+
+
         [TestMethod]
         public void TestBasicSetup_InvalidDotNetVersion()
         {
-            Assert.ThrowsException<InvalidOperationException>(() =>
+            try
             {
-                var env = new TestEnvironmentManager().SetupEnvironment("99.0.999", "nonExistentDotnetVersion");
-            });
+                Assert.ThrowsException<InvalidOperationException>(() =>
+                {
+                    var env = new TestEnvironmentManager().SetupEnvironment("99.0.999", "nonExistentDotnetVersion");
+                });
+            }
+            catch
+            {
+                _testFailed = true;
+                throw;
+            }
         }
 
         [TestMethod]
@@ -76,6 +102,11 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
                 Assert.IsTrue(output.Contains("Using assets json file:"));
                 originalOut.Write(stringWriter.ToString());
             }
+            catch
+            {
+                _testFailed = true;
+                throw;
+            }
             finally
             {
                 // Undo redirect, go back to writing to standard out
@@ -83,8 +114,8 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
                 env.Cleanup();
             }
         }
-        
-        [TestMethod]  
+
+        [TestMethod]
         public void TestSolution_DotNet6_DuplicatePackageReference_XMLResolver()
         {
             // 1. Set up environment with .NET 6 (nuget v6.3.4.2)
@@ -150,6 +181,11 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
                 Assert.IsTrue(output.Contains("Using backup XML resolver."));
                 originalOut.Write(stringWriter.ToString());
             }
+            catch
+            {
+                _testFailed = true;
+                throw;
+            }
             finally
             {
                 // Undo redirect, go back to writing to standard out
@@ -164,7 +200,7 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
             // 1. Set up environment with .NET 7 (nuget v6.7.1.1)
             var dotnetVersion = "7.0.410";
             var env = new TestEnvironmentManager().SetupEnvironment(dotnetVersion, "dotnet7");
-            
+
             // 2. Create solution and projects with CPM enabled
             var builder = new TestSolutionBuilder(env)
                 .CreateSolution("MyCPMDotnet7Solution")
@@ -173,7 +209,7 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
                 .EnableCentralPackageManagementWithDesiredStructure()
                 .AddCentrallyManagedPackage("Newtonsoft.Json", "13.0.3")
                 .Build();
-            
+
             // 3. Run inspector
             var options = new InspectionOptions
             {
@@ -183,7 +219,7 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
                 OutputDirectory = env.WorkingDirectory,
                 IgnoreFailure = false
             };
-            
+
             try
             {
                 var inspection = InspectorExecutor.ExecuteInspectors(options);
@@ -192,17 +228,21 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
                 Assert.IsTrue(inspection.Success);
                 // ... further assertions for CPM dependencies ...
             }
+            catch
+            {
+                _testFailed = true;
+                throw;
+            }
             finally
             {
                 env.Cleanup();
             }
         }
-        
-        
+
+
         [TestMethod]
         public void TestSolution_DotNet8()
         {
-                    {
             // 1. Set up environment with .NET 8 (nuget v6.11.1.2)
             var dotnetVersion = "8.0.414";
             var env = new TestEnvironmentManager().SetupEnvironment(dotnetVersion, "dotnet8");
@@ -266,13 +306,17 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
                 Assert.IsTrue(output.Contains("Reference resolver succeeded."));
                 originalOut.Write(stringWriter.ToString());
             }
+            catch
+            {
+                _testFailed = true;
+                throw;
+            }
             finally
             {
                 // Undo redirect, go back to writing to standard out
                 Console.SetOut(originalOut);
                 env.Cleanup();
             }
-        }
         }
     }
 }
