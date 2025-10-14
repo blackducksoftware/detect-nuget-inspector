@@ -195,7 +195,7 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
         }
 
         [TestMethod]
-        public void TestCPMSolution_DotNet7()
+        public void TestCPMSolution_DotNet7_ProjectAssetsJsonFile()
         {
             // 1. Set up environment with .NET 7 (nuget v6.7.1.1)
             var dotnetVersion = "7.0.410";
@@ -208,6 +208,11 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
                 .Build();
 
             // 3. Run inspector
+            // Redirect console output for assertions later
+            var stringWriter = new StringWriter();
+            var originalOut = Console.Out;
+            Console.SetOut(stringWriter);
+            
             var options = new InspectionOptions
             {
                 TargetPath = builder,
@@ -219,14 +224,36 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
 
             try
             {
-                // run dotnet7 restore 
-                // run dotnet7 list package
-                // pause here ans ask me what to do with the output. 
                 var inspection = InspectorExecutor.ExecuteInspectors(options);
 
                 // 4. Assert results
                 Assert.IsTrue(inspection.Success);
-                // ... further assertions for CPM dependencies ...
+                var inspectionResults = inspection.Results;
+                Assert.IsNotNull(inspectionResults);
+                Assert.AreEqual(1, inspectionResults.Count);
+                var result = inspectionResults[0];
+                Assert.AreEqual(InspectionResult.ResultStatus.Success, result.Status);
+                Assert.IsNotNull(result.Containers);
+                Assert.AreEqual(1, result.Containers.Count);
+                var solutionContainer = result.Containers[0];
+                Assert.AreEqual(solutionContainer.Type, "Solution");
+                Assert.AreEqual("MyCPMDotnet7Solution", solutionContainer.Name);
+                
+                var projectContainer = solutionContainer.Children[0];
+                Assert.AreEqual(projectContainer.Type, "Project");
+                Assert.AreEqual("ProjectA", projectContainer.Name);
+                
+                Assert.IsNotNull(projectContainer.Dependencies);
+                var dependencies = projectContainer.Dependencies;
+                Assert.AreEqual(1, dependencies.Count);
+                var dependency = dependencies.Single();
+                Assert.AreEqual("Newtonsoft.Json", dependency.Name);
+                Assert.AreEqual("12.0.3", dependency.Version);
+                
+                // Assert console output
+                string output = stringWriter.ToString();
+                Assert.IsTrue(output.Contains("Using assets json file:"));
+                originalOut.Write(stringWriter.ToString());
             }
             catch
             {

@@ -138,8 +138,7 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
             // |  |
             // |  └─ProjectA
             // |      └─ProjectA.csproj (CPM enabled)
-            //    └─ProjectB
-            //        └─ProjectB.csproj (CPM not enabled, direct reference to version 13.0.3)
+
             
             // 1. Create Directory.Packages.props at solution root directory
             CreateBlankDirectoryPackagesPropsFile(_solutionDirectory);
@@ -148,9 +147,6 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
             CreateAndAddProject("ProjectA");
             EnableCentralPackageManagementForProject("ProjectA");
             AddCentrallyManagedPackageReferenceToProject("ProjectA", "Newtonsoft.Json");
- 
-            CreateAndAddProject("ProjectB");
-            AddDependencyToProject("ProjectB", "Newtonsoft.Json", "13.0.3");
 
             return this;
         }
