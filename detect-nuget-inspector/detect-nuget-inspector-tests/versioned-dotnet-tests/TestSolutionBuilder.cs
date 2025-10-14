@@ -133,51 +133,24 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
         public TestSolutionBuilder EnableCentralPackageManagementWithDesiredStructure()
         {
             // This method creates a CPM enabled project with the following structure:
-            // (root)
-            // ├─Directory.Packages.props (13.0.3)
-            // |
             // ├─Solution1
             // |  ├─Directory.Packages.props (12.0.3)
             // |  |
             // |  └─ProjectA
-            // |      └─ProjectA.csproj
-            // |
-            // └─Solution2
+            // |      └─ProjectA.csproj (CPM enabled)
             //    └─ProjectB
-            //        └─ProjectB.csproj
+            //        └─ProjectB.csproj (CPM not enabled, direct reference to version 13.0.3)
             
             // 1. Create Directory.Packages.props at solution root directory
-            // Each time we create a new solution, the builder switches context to that solution. So here we will keep
-            // track of our root solution:
-            var rootSolutionDir = _solutionDirectory;
-            var rootSolutionName = _solutionName;
-            CreateBlankDirectoryPackagesPropsFile(_solutionDirectory);
-            AddCentrallyManagedPackageToPropsFile("Newtonsoft.Json", "13.0.3");
-            
-            // 2. Create Solution1
-            CreateNestedSolution(rootSolutionDir, "Solution1");
-            var nestedSolution1Dir = _solutionDirectory;
-            var nestedSolution1Name = _solutionName;
-            // 2a. Inside Solution1, create its own Directory.Packages.props
             CreateBlankDirectoryPackagesPropsFile(_solutionDirectory);
             AddCentrallyManagedPackageToPropsFile("Newtonsoft.Json", "12.0.3");
-            // 2b. Inside Solution1, create ProjectA
+            // 2b. Create ProjectA
             CreateAndAddProject("ProjectA");
             EnableCentralPackageManagementForProject("ProjectA");
             AddCentrallyManagedPackageReferenceToProject("ProjectA", "Newtonsoft.Json");
-
-            // 3. Create Solution2
-            CreateNestedSolution(rootSolutionDir, "Solution2");
-            var nestedSolution2Dir = _solutionDirectory;
-            var nestedSolution2Name = _solutionName;
-            // 3a. Inside Solution2, create ProjectB
+ 
             CreateAndAddProject("ProjectB");
-            EnableCentralPackageManagementForProject("ProjectB");
-            AddCentrallyManagedPackageReferenceToProject("ProjectB", "Newtonsoft.Json");
-            
-            // Switch context back to root solution
-            _solutionDirectory = rootSolutionDir;
-            _solutionName = rootSolutionName;
+            AddDependencyToProject("ProjectB", "Newtonsoft.Json", "13.0.3");
 
             return this;
         }
