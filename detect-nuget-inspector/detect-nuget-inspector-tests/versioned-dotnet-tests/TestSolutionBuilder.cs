@@ -33,6 +33,29 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
             }
 
         }
+        
+        public TestSolutionBuilder CreateNestedSolution(string parentDirectory, string solutionName)
+        {
+            try
+            {
+                var nestedSolutionDir = Path.Combine(parentDirectory, solutionName);
+                Directory.CreateDirectory(nestedSolutionDir);
+
+                RunDotNetCommand($"new sln -n {solutionName}", nestedSolutionDir);
+
+                // Optionally update _solutionDirectory/_solutionName if you want to work with this nested solution next
+                _solutionDirectory = nestedSolutionDir;
+                _solutionName = solutionName;
+
+                return this;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"✗ Nested solution creation failed: {ex.Message}");
+                _environment.Cleanup();
+                throw;
+            }
+        }
 
         public TestSolutionBuilder CreateAndAddProject(string projectName)
         {
@@ -40,8 +63,8 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
                 // Create a minimal project with a class
                 RunDotNetCommand($"new classlib -n {projectName}", _solutionDirectory);
 
-                // Add ProjectA to solution
-                RunDotNetCommand("sln add ProjectA/ProjectA.csproj", _solutionDirectory);
+                // Add project to solution
+                RunDotNetCommand($"sln add {projectName}/{projectName}.csproj", _solutionDirectory);
                 return this;
             } catch (Exception ex)
             {
@@ -85,7 +108,7 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
             return this;
         }
 
-        public TestSolutionBuilder NoBuildArtifacts()
+        public TestSolutionBuilder RemoveBuildArtifacts()
         {
             try
             {
@@ -109,41 +132,71 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
         
         public TestSolutionBuilder EnableCentralPackageManagementWithDesiredStructure()
         {
+            // This method creates a CPM enabled project with the following structure:
+            // (root)
+            // ├─Directory.Packages.props (13.0.3)
+            // |
+            // ├─Solution1
+            // |  ├─Directory.Packages.props (12.0.3)
+            // |  |
+            // |  └─ProjectA
+            // |      └─ProjectA.csproj
+            // |
+            // └─Solution2
+            //    └─ProjectB
+            //        └─ProjectB.csproj
+            
             // 1. Create Directory.Packages.props at solution root directory
-            // Create Directory.Packages.props manually for .NET 7
-            var propsPath = Path.Combine(_solutionDirectory, "Directory.Packages.props");
+            // Each time we create a new solution, the builder switches context to that solution. So here we will keep
+            // track of our root solution:
+            var rootSolutionDir = _solutionDirectory;
+            var rootSolutionName = _solutionName;
+            CreateBlankDirectoryPackagesPropsFile(_solutionDirectory);
+            AddCentrallyManagedPackageToPropsFile("Newtonsoft.Json", "13.0.3");
+            
+            // 2. Create Solution1
+            CreateNestedSolution(rootSolutionDir, "Solution1");
+            var nestedSolution1Dir = _solutionDirectory;
+            var nestedSolution1Name = _solutionName;
+            // 2a. Inside Solution1, create its own Directory.Packages.props
+            CreateBlankDirectoryPackagesPropsFile(_solutionDirectory);
+            AddCentrallyManagedPackageToPropsFile("Newtonsoft.Json", "12.0.3");
+            // 2b. Inside Solution1, create ProjectA
+            CreateAndAddProject("ProjectA");
+            EnableCentralPackageManagementForProject("ProjectA");
+            AddCentrallyManagedPackageReferenceToProject("ProjectA", "Newtonsoft.Json");
+
+            // 3. Create Solution2
+            CreateNestedSolution(rootSolutionDir, "Solution2");
+            var nestedSolution2Dir = _solutionDirectory;
+            var nestedSolution2Name = _solutionName;
+            // 3a. Inside Solution2, create ProjectB
+            CreateAndAddProject("ProjectB");
+            EnableCentralPackageManagementForProject("ProjectB");
+            AddCentrallyManagedPackageReferenceToProject("ProjectB", "Newtonsoft.Json");
+            
+            // Switch context back to root solution
+            _solutionDirectory = rootSolutionDir;
+            _solutionName = rootSolutionName;
+
+            return this;
+        }
+        
+        public TestSolutionBuilder CreateBlankDirectoryPackagesPropsFile(string directory)
+        {
+            // Create Directory.Packages.props manually
+            var propsPath = Path.Combine(directory, "Directory.Packages.props");
             var propsContent = @"<Project>
   <ItemGroup>
     <!-- Central package versions go here -->
   </ItemGroup>
 </Project>";
             File.WriteAllText(propsPath, propsContent);
-
-            // 2. For each project, add <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-            var projectDirs = Directory.GetDirectories(_solutionDirectory)
-                .Where(d => File.Exists(Path.Combine(d, $"{Path.GetFileName(d)}.csproj")));
-            foreach (var projectDir in projectDirs)
-            {
-                var projectName = Path.GetFileName(projectDir);
-                var csprojPath = Path.Combine(projectDir, $"{projectName}.csproj");
-                var csprojXml = System.Xml.Linq.XDocument.Load(csprojPath);
-                var propertyGroup = csprojXml.Root.Elements("PropertyGroup").FirstOrDefault();
-                if (propertyGroup == null)
-                {
-                    propertyGroup = new System.Xml.Linq.XElement("PropertyGroup");
-                    csprojXml.Root.AddFirst(propertyGroup);
-                }
-                propertyGroup.Add(new System.Xml.Linq.XElement("ManagePackageVersionsCentrally", "true"));
-                csprojXml.Save(csprojPath);
-            }
-
-            // Optionally, update Directory.Packages.props manually here if needed
-
             return this;
         }
 
-        public TestSolutionBuilder AddCentrallyManagedPackage(string packageName, string version)
-        { // TODO handle error where Directory.Packages.props does not exist
+        public TestSolutionBuilder AddCentrallyManagedPackageToPropsFile(string packageName, string version)
+        { 
             var propsPath = Path.Combine(_solutionDirectory, "Directory.Packages.props");
             var propsXml = System.Xml.Linq.XDocument.Load(propsPath);
             var itemGroup = propsXml.Root.Elements("ItemGroup").FirstOrDefault();
@@ -158,8 +211,59 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
             propsXml.Save(propsPath);
             return this;
         }
+        
+        public TestSolutionBuilder AddCentrallyManagedPackageReferenceToProject(string projectName, string packageName)
+        {
+            var projectDir = Path.Combine(_solutionDirectory, projectName);
+            var csprojPath = Path.Combine(projectDir, $"{projectName}.csproj");
+            var csprojContent = File.ReadAllText(csprojPath);
+            var packageReference = $"  <PackageReference Include=\"{packageName}\" />";
+            
+            if (csprojContent.Contains("<ItemGroup>"))
+            {
+                // So we can reuse this method for a test tht adds more than one dependency
+                csprojContent = csprojContent.Replace("</ItemGroup>", $"{packageReference}\n  </ItemGroup>");
+            }
+            else
+            {
+                // Add a new ItemGroup before </Project>
+                csprojContent = csprojContent.Replace("</Project>", $"  <ItemGroup>\n{packageReference}\n  </ItemGroup>\n</Project>");
+            }
 
+            File.WriteAllText(csprojPath, csprojContent);
 
+            return this;
+        }
+        
+        public TestSolutionBuilder EnableCentralPackageManagementForProject(string projectName)
+        {
+            var projectDir = Path.Combine(_solutionDirectory, projectName);
+            var csprojPath = Path.Combine(projectDir, $"{projectName}.csproj");
+            var csprojContent = File.ReadAllText(csprojPath);
+
+            var propertyToAdd = "    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>\n";
+            if (csprojContent.Contains("<PropertyGroup>"))
+            {
+                csprojContent = csprojContent.Replace(
+                    "<PropertyGroup>",
+                    "<PropertyGroup>\n" + propertyToAdd
+                );
+            }
+            else
+            {
+                // If no PropertyGroup exists, add one at the top after <Project ...>
+                var projectTagEnd = csprojContent.IndexOf('>') + 1;
+                csprojContent = csprojContent.Insert(
+                    projectTagEnd,
+                    "\n  <PropertyGroup>\n" + propertyToAdd + "  </PropertyGroup>\n"
+                );
+            }
+            File.WriteAllText(csprojPath, csprojContent);
+
+            return this;
+        }
+
+        
         private void RunDotNetCommand(string arguments, string workingDirectory)
         {
             var command = $"{_environment.DotNetCommand} {arguments}";

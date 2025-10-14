@@ -128,7 +128,7 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
                 .CreateAndAddProject("ProjectA")
                 .AddDependencyToProject("ProjectA", "Newtonsoft.Json", "13.0.3")
                 .AddPackageReferenceToCsprojManually("ProjectA", "Newtonsoft.Json", "12.0.1")
-                .NoBuildArtifacts() // So we can bypass assets file during cascading
+                .RemoveBuildArtifacts() // So we can bypass assets file during cascading
                 .Build();
 
 
@@ -204,10 +204,7 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
             // 2. Create solution and projects with CPM enabled
             var builder = new TestSolutionBuilder(env)
                 .CreateSolution("MyCPMDotnet7Solution")
-                .CreateAndAddProject("ProjectA")
-                .CreateAndAddProject("ProjectB")
                 .EnableCentralPackageManagementWithDesiredStructure()
-                .AddCentrallyManagedPackage("Newtonsoft.Json", "13.0.3")
                 .Build();
 
             // 3. Run inspector
@@ -222,6 +219,9 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
 
             try
             {
+                // run dotnet7 restore 
+                // run dotnet7 list package
+                // pause here ans ask me what to do with the output. 
                 var inspection = InspectorExecutor.ExecuteInspectors(options);
 
                 // 4. Assert results
@@ -241,7 +241,7 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
 
 
         [TestMethod]
-        public void TestSolution_DotNet8()
+        public void TestSolution_DotNet8() // TODO: This test and TestSolution_DotNet6_DuplicatePackageReference_XMLResolver are duplicates, parameterize them
         {
             // 1. Set up environment with .NET 8 (nuget v6.11.1.2)
             var dotnetVersion = "8.0.414";
@@ -254,7 +254,7 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
                 // Add them manually because dotnet8 doesn't allow adding duplicate PackageReference via CLI
                 .AddPackageReferenceToCsprojManually("ProjectA", "Newtonsoft.Json", "13.0.3")
                 .AddPackageReferenceToCsprojManually("ProjectA", "Newtonsoft.Json", "12.0.1")
-                .NoBuildArtifacts() // So we can force using ProjectReferenceResolver instead of assets file
+                .RemoveBuildArtifacts() // So we can force using ProjectReferenceResolver instead of assets file
                 .Build();
 
 
