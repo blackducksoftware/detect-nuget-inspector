@@ -147,6 +147,8 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
             CreateAndAddProject("ProjectA");
             EnableCentralPackageManagementForProject("ProjectA");
             AddCentrallyManagedPackageReferenceToProject("ProjectA", "Newtonsoft.Json");
+            
+            RunDotNetCommand("restore", _solutionDirectory);
 
             return this;
         }
