@@ -85,7 +85,7 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
         }
         
         [TestMethod]  
-        public void TestBasicSolution_DotNet6_DuplicatePackageReference_XMLResolver()
+        public void TestSolution_DotNet6_DuplicatePackageReference_XMLResolver()
         {
             // 1. Set up environment with .NET 6 (nuget v6.3.4.2)
             var dotnetVersion = "6.0.201";
@@ -159,7 +159,7 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
         }
 
         [TestMethod]
-        public void TestCPMSolution_DotNet7() // TODO finish me. 
+        public void TestCPMSolution_DotNet7()
         {
             // 1. Set up environment with .NET 7 (nuget v6.7.1.1)
             var dotnetVersion = "7.0.410";
@@ -199,7 +199,6 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
         }
         
         
-        // 3. Validates until nuget 6.11 (.NET 8.0.414)
         [TestMethod]
         public void TestSolution_DotNet8()
         {

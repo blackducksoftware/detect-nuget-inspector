@@ -33,7 +33,7 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
 
         private void ValidateAndLogVersions(string expectedVersion, string command)
         {
-            Console.WriteLine($"🔍 Validating environment with command: {command}");
+            Console.WriteLine($"Validating environment with command: {command}");
             
             // Check .NET version
             var dotnetVersionResult = RunCommand(command, " --version");
@@ -43,12 +43,12 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
             }
             
             var actualDotNetVersion = dotnetVersionResult.Output.Trim();
-            Console.WriteLine($"📋 .NET Version: {actualDotNetVersion}");
+            Console.WriteLine($".NET Version: {actualDotNetVersion}");
             
             // Throw exception if the requested version doesn't match what's available
             if (!actualDotNetVersion.StartsWith(expectedVersion))
             {
-                Console.WriteLine($"❌ Version mismatch: Expected {expectedVersion}, but got {actualDotNetVersion}");
+                Console.WriteLine($"✗ Version mismatch: Expected {expectedVersion}, but got {actualDotNetVersion}");
                 throw new InvalidOperationException($"Requested .NET version {expectedVersion} is not available. System returned version {actualDotNetVersion}. Please install the required .NET SDK version and create appropriate alias.");
             }
             
@@ -57,16 +57,16 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
             if (nugetVersionResult.ExitCode == 0)
             {
                 NuGetVersion = nugetVersionResult.Output.Trim();
-                Console.WriteLine($"📦 NuGet Version: {NuGetVersion}");
+                Console.WriteLine($"NuGet Version: {NuGetVersion}");
             }
             else
             {
-                Console.WriteLine($"⚠️  Could not determine NuGet version: {nugetVersionResult.Error}");
+                Console.WriteLine($"Could not determine NuGet version: {nugetVersionResult.Error}");
                 NuGetVersion = "Unknown";
             }
             
-            Console.WriteLine($"📁 Working Directory: {WorkingDirectory}");
-            Console.WriteLine("✅ Environment validation complete");
+            Console.WriteLine($"Working Directory: {WorkingDirectory}");
+            Console.WriteLine("✓ Environment validation complete");
         }
 
         private (int ExitCode, string Output, string Error) RunCommand(string command, string arguments) // TODO only need one dotnet command runner
@@ -95,7 +95,7 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
             }
             catch (Exception ex)
             {
-                //Console.Error.WriteLine($"❌ Error running command '{command} {arguments}': {ex.Message}");
+                Console.Error.WriteLine($"✗ Error running command '{command} {arguments}': {ex.Message}");
                 return (-1, string.Empty, ex.Message);
             }
         }
@@ -105,7 +105,7 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
             if (Directory.Exists(WorkingDirectory))
             {
                 Directory.Delete(WorkingDirectory, true);
-                Console.WriteLine($"🧹 Cleaned up working directory: {WorkingDirectory}");
+                Console.WriteLine($"Cleaned up working directory: {WorkingDirectory}");
             }
         
         }
