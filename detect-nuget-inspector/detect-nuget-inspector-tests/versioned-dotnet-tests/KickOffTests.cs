@@ -270,7 +270,7 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
 
 
         [TestMethod]
-        public void TestSolution_DotNet8() 
+        public void TestSolution_DotNet8_XMLResolver() 
         {
             // 1. Set up environment with .NET 8 (nuget v6.11.1.2)
             var dotnetVersion = "8.0.414";
