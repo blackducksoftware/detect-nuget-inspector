@@ -69,7 +69,7 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
             Console.WriteLine("✓ Environment validation complete");
         }
 
-        private (int ExitCode, string Output, string Error) RunCommand(string command, string arguments) // TODO only need one dotnet command runner
+        private (int ExitCode, string Output, string Error) RunCommand(string command, string arguments)
         {
             try
             {

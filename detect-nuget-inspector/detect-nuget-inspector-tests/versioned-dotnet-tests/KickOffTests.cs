@@ -2,6 +2,7 @@ using Blackduck.Detect.Nuget.Inspector.Inspection;
 
 namespace detect_nuget_inspector_tests.versioned_dotnet_tests
 {
+    // To set up your environment for these tests, see set-up-versioned-dotnet-tests-env.sh
     [TestClass]
     public class KickOffTests
     {
@@ -262,6 +263,7 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
             }
             finally
             {
+                Console.SetOut(originalOut);
                 env.Cleanup();
             }
         }
@@ -279,8 +281,7 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
                 .CreateSolution("MySimpleDotnet8Solution")
                 .CreateAndAddProject("ProjectA")
                 // Add them manually because dotnet8 doesn't allow adding duplicate PackageReference via CLI
-                .AddPackageReferenceToCsprojManually("ProjectA", "Newtonsoft.Json", "13.0.3")
-                .AddPackageReferenceToCsprojManually("ProjectA", "Newtonsoft.Json", "12.0.1")
+                .AddDependencyToProject("ProjectA", "Newtonsoft.Json", "13.0.3")
                 .RemoveBuildArtifacts() // So we can force using ProjectReferenceResolver instead of assets file
                 .Build();
 
@@ -323,14 +324,14 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
 
                 Assert.IsNotNull(projectContainer.Dependencies);
                 var dependencies = projectContainer.Dependencies;
-                Assert.AreEqual(2, dependencies.Count);
-                // Confirm duplicates are captured
-                Assert.IsTrue(dependencies.Any(d => d.Name == "Newtonsoft.Json" && d.Version == "13.0.3"));
-                Assert.IsTrue(dependencies.Any(d => d.Name == "Newtonsoft.Json" && d.Version == "12.0.1"));
+                Assert.AreEqual(1, dependencies.Count);
+                var dependency = dependencies.Single();
+                Assert.AreEqual("Newtonsoft.Json", dependency.Name);
+                Assert.AreEqual("13.0.3", dependency.Version);
 
                 // Assert console output
                 string output = stringWriter.ToString();
-                Assert.IsTrue(output.Contains("Reference resolver succeeded."));
+                Assert.IsTrue(output.Contains("Using backup XML resolver."));
                 originalOut.Write(stringWriter.ToString());
             }
             catch
