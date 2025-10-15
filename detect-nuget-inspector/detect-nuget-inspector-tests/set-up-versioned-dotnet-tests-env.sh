@@ -1,10 +1,11 @@
 #!/bin/bash
 
 set -e
-
-DOTNET6_URL="https://download.visualstudio.microsoft.com/download/pr/2e2e2e2e-2e2e-2e2e-2e2e-2e2e2e2e2e2e/abcdef1234567890abcdef1234567890/dotnet-sdk-6.0.420-osx-arm64.tar.gz"
-DOTNET7_URL="https://download.visualstudio.microsoft.com/download/pr/3f3f3f3f-3f3f-3f3f-3f3f-3f3f3f3f3f3f/abcdef1234567890abcdef1234567890/dotnet-sdk-7.0.408-osx-arm64.tar.gz"
-DOTNET8_URL="https://download.visualstudio.microsoft.com/download/pr/4a4a4a4a-4a4a-4a4a-4a4a-4a4a4a4a4a4a/abcdef1234567890abcdef1234567890/dotnet-sdk-8.0.204-osx-arm64.tar.gz"
+# Your version of the following may differ in minor version numbers. The test are written to align with the Jenkins 
+# build machine (ubuntu 20.04 at time of writing. Adjust as needed. 
+DOTNET6_URL="https://builds.dotnet.microsoft.com/dotnet/Sdk/6.0.428/dotnet-sdk-6.0.428-osx-arm64.pkg"
+DOTNET7_URL="https://builds.dotnet.microsoft.com/dotnet/Sdk/7.0.410/dotnet-sdk-7.0.410-osx-arm64.pkg"
+DOTNET8_URL="https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.121/dotnet-sdk-8.0.121-osx-arm64.pkg"
 
 install_dotnet() {
   VERSION=$1
