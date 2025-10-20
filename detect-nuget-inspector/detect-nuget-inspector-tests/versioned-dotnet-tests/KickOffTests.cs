@@ -18,9 +18,10 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
         [TestCleanup]
         public void PrintTestResult()
         {
-            Console.WriteLine(_testFailed
-                ? $"❌ Test {TestContext.TestName} FAILED"
-                : $"✅ Test {TestContext.TestName} PASSED");
+            var outcome = TestContext.CurrentTestOutcome;
+            Console.WriteLine(outcome == UnitTestOutcome.Passed
+                ? $"✅ Test {TestContext.TestName} PASSED"
+                : $"❌ Test {TestContext.TestName} FAILED");
         }
 
 
