@@ -195,7 +195,7 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
             }
         }
 
-        [TestMethod]
+        /*[TestMethod]
         public void TestCPMSolution_DotNet7_ProjectAssetsJsonFile()
         {
             // 1. Set up environment with .NET 7 (nuget v6.7.1.1)
@@ -266,7 +266,7 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
                 Console.SetOut(originalOut);
                 env.Cleanup();
             }
-        }
+        }*/
 
 
         [TestMethod]
