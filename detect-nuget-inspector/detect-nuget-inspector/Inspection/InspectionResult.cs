@@ -7,7 +7,7 @@ using Blackduck.Detect.Nuget.Inspector.Model;
 
 namespace Blackduck.Detect.Nuget.Inspector.Inspection
 {
-    class InspectionResult
+    public class InspectionResult
     {
         public enum ResultStatus
         {

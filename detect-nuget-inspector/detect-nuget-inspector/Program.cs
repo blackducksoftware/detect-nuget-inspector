@@ -10,7 +10,8 @@ class Program
         try
         {
             Console.WriteLine("Registering MSBuild defaults.");
-            MSBuildLocator.RegisterDefaults();
+            VisualStudioInstance registeredInstance = MSBuildLocator.RegisterDefaults();
+            Console.WriteLine("MSBuild registered: " + registeredInstance.MSBuildPath + " (Version: " + registeredInstance.Version + ")");
         }
         catch (Exception e)
         {

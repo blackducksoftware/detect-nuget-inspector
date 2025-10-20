@@ -7,6 +7,11 @@
     <Nullable>enable</Nullable>
 
     <IsPackable>false</IsPackable>
+    <!-- Disable auto-generation of assembly attributes to prevent duplicate attribute errors.
+         Test projects don't need assembly metadata (version, company, etc.) for distribution,
+         and running a build was creating conflicting duplicate attributes. -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
   </PropertyGroup>
 
   <ItemGroup>
