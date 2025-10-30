@@ -188,10 +188,11 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("A dependency resource was unable to load for package: " + identity);
-                    if (e.InnerException != null)
+                    Console.WriteLine("A dependency resource was unable to load for package: " + identity); 
+                    if (e.InnerException.InnerException != null)
                     {
-                        Console.WriteLine(e.InnerException.Message);
+                        Console.WriteLine(e.InnerException.InnerException.Message);
+                        Console.WriteLine("Package metadata fetching failed possibly due to passing null for target framework of " + identity);
                     }
                 }
             }
