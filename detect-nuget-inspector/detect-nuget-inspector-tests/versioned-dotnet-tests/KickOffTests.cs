@@ -223,12 +223,19 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
             Console.WriteLine("Step 1 complete");
 
             // 2. Create solution and projects with CPM enabled
-            Console.WriteLine("Step 2: Creating solution and projects");
-            var builder = new TestSolutionBuilder(env)
-                .CreateSolution("MyCPMDotnet7Solution")
-                .EnableCentralPackageManagementWithDesiredStructure()
-                .Build();
-            Console.WriteLine("Step 2 complete");
+            try
+            {
+                Console.WriteLine("Step 2: Creating solution and projects");
+                var builder = new TestSolutionBuilder(env)
+                    .CreateSolution("MyCPMDotnet7Solution")
+                    .EnableCentralPackageManagementWithDesiredStructure()
+                    .Build();
+                Console.WriteLine("Step 2 complete");
+            } catch (Exception e) {
+                Console.WriteLine("Exception during solution creation: " + e);
+                throw;
+            }}
+
 
 
             // 3. Run inspector
