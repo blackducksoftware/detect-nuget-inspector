@@ -223,10 +223,13 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
             Console.WriteLine("Step 1 complete");
 
             // 2. Create solution and projects with CPM enabled
+            
+            string builder = null;
+
             try
             {
                 Console.WriteLine("Step 2: Creating solution and projects");
-                var builder = new TestSolutionBuilder(env)
+                builder = new TestSolutionBuilder(env)
                     .CreateSolution("MyCPMDotnet7Solution")
                     .EnableCentralPackageManagementWithDesiredStructure()
                     .Build();
@@ -234,7 +237,7 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
             } catch (Exception e) {
                 Console.WriteLine("Exception during solution creation: " + e);
                 throw;
-            }}
+            }
 
 
 
