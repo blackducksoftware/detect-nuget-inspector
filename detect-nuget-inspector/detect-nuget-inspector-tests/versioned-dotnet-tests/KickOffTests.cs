@@ -217,14 +217,19 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
         public void TestCPMSolution_DotNet7_ProjectAssetsJsonFile()
         {
             // 1. Set up environment with .NET 7 (nuget v6.7.1.1)
+            Console.WriteLine("Step 1: Setting up environment");
             var dotnetVersion = "7.0.410";
             var env = new TestEnvironmentManager().SetupEnvironment(dotnetVersion, "dotnet7");
+            Console.WriteLine("Step 1 complete");
 
             // 2. Create solution and projects with CPM enabled
+            Console.WriteLine("Step 2: Creating solution and projects");
             var builder = new TestSolutionBuilder(env)
                 .CreateSolution("MyCPMDotnet7Solution")
                 .EnableCentralPackageManagementWithDesiredStructure()
                 .Build();
+            Console.WriteLine("Step 2 complete");
+
 
             // 3. Run inspector
             // Redirect console output for assertions later
