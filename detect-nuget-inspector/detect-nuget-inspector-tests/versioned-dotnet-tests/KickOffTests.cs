@@ -199,6 +199,20 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
             }
         }
 
+        
+        private void PrintTestProjectDirectory(string directory)
+        {
+            Console.WriteLine("Listing contents of: " + directory);
+            foreach (var dir in Directory.GetDirectories(directory))
+            {
+                Console.WriteLine("[DIR]  " + dir);
+            }
+            foreach (var file in Directory.GetFiles(directory))
+            {
+                Console.WriteLine("[FILE] " + file);
+            }
+        }
+        
         [TestMethod]
         public void TestCPMSolution_DotNet7_ProjectAssetsJsonFile()
         {
@@ -230,6 +244,7 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
             try
             {
                 Console.WriteLine("here");
+                PrintTestProjectDirectory(builder);
 
                 Assert.IsTrue(File.Exists(Path.Combine(builder, "Directory.Packages.props")), "CPM props file missing");
                 Console.WriteLine(Path.Combine(builder, "Directory.Packages.props") + "exists???");
