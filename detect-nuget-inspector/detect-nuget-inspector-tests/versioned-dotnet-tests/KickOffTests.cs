@@ -229,6 +229,8 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
 
             try
             {
+                Console.WriteLine("here");
+
                 Assert.IsTrue(File.Exists(Path.Combine(builder, "Directory.Packages.props")), "CPM props file missing");
                 Console.WriteLine(Path.Combine(builder, "Directory.Packages.props") + "exists???");
                 var inspection = InspectorExecutor.ExecuteInspectors(options);
