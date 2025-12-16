@@ -16,5 +16,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Model
         public HashSet<PackageId> Dependencies { get; set; } = new HashSet<PackageId>();
         public List<Container> Children { get; set; } = new List<Container>();
         public HashSet<PackageId> PackagePropertyPackages { get; set; } = new HashSet<PackageId>();
+        
+        public List<String> InspectedFiles { get; set; } = new List<String>();
     }
 }

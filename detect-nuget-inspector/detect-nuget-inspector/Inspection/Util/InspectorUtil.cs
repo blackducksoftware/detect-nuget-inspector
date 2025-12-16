@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static Blackduck.Detect.Nuget.Inspector.Inspection.Util.AssemblyInfoVersionParser;
+﻿using static Blackduck.Detect.Nuget.Inspector.Inspection.Util.AssemblyInfoVersionParser;
 using System.Xml;
 
 namespace Blackduck.Detect.Nuget.Inspector.Inspection.Util

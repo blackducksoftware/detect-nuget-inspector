@@ -37,6 +37,9 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection
                                 var writer = new InspectionResultJsonWriter(result);
                                 writer.Write();
                                 Console.WriteLine("Info file created at {0}", writer.FilePath());
+                                // ^ /Users/shanty/blackduck/github-folder/detect-nuget-inspector/detect-nuget-inspector/detect-nuget-inspector-tests/manual-tests/MySimpleDotnet6Solution_inspection.json
+                                Console.WriteLine("Saving inspected files info ... ");
+                                writer.WriteInspectedFiles();
                             }
                             else
                             {
