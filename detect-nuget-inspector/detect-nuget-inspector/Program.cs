@@ -1,6 +1,7 @@
 ﻿using Microsoft.Build.Locator;
 using Blackduck.Detect.Nuget.Inspector.Configuration;
 using Blackduck.Detect.Nuget.Inspector.Inspection;
+using System.Reflection;
 
 class Program
 {
@@ -9,6 +10,8 @@ class Program
 
         try
         {
+            var version = Assembly.GetExecutingAssembly().GetName().Version;
+            Console.WriteLine($"Running NuGet Inspector version: {version}");
             Console.WriteLine("Registering MSBuild defaults.");
             VisualStudioInstance registeredInstance = MSBuildLocator.RegisterDefaults();
             Console.WriteLine("MSBuild registered: " + registeredInstance.MSBuildPath + " (Version: " + registeredInstance.Version + ")");
