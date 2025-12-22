@@ -191,6 +191,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                     projectNode.Packages = projectAssetsJsonResult.Packages;
                     projectNode.Dependencies = projectAssetsJsonResult.Dependencies;
                     ProjectAssetsJsonResolved = true;
+                    projectNode.InspectedFiles.Add(Options.TargetPath); // Adding project file as inspected since assets json is derived from it
                 }
                 else if (projectJsonExists)
                 {

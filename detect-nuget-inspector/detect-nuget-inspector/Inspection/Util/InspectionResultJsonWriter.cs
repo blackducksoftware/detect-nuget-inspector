@@ -64,26 +64,29 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Util
 
         public void WriteInspectedFiles()
         {
-            // Get the location of invokedDetectorsAndTheirRelevantFiles.json from outputDirectory, refactor later
+            // Form location of invokedDetectorsAndTheirRelevantFiles.json from nuget scan directory, refactor later
+            // todo: only do this if quack is enabled, make sure it is cleaned up regardless 
             var extractionDir = Result.OutputDirectory;
             var outputDir = Directory.GetParent(extractionDir)?.Parent?.Parent;
-            if (extractionDir == null)
+            if (extractionDir == null || outputDir == null)
             {
                 Console.WriteLine("Could not determine scan directory from extraction directory: " + extractionDir);
                 return;
             }
             
+            var scanQuackDir = Path.Combine(outputDir.FullName, "scan", "quack");
+            Directory.CreateDirectory(scanQuackDir);
+            
             // Build the path to the target file
-            var relevantFilesJsonFilePath = Path.Combine(outputDir.FullName, "scan", "quack", "invokedDetectorsAndTheirRelevantFiles.json");
+            var relevantFilesJsonPath = Path.Combine(scanQuackDir, "invokedDetectorsAndTheirRelevantFiles.json"); 
 
             // Create the map
             var map = new Dictionary<string, List<string>> { { "NI", GetAllInspectedFiles(Result) } };
 
             // Serialize and append as a new line
             var jsonLine = JsonConvert.SerializeObject(map);
-            File.AppendAllText(relevantFilesJsonFilePath, jsonLine + "\n");
-            Console.WriteLine($"Appended inspected files map to {relevantFilesJsonFilePath}");
-        
+            File.AppendAllText(relevantFilesJsonPath, jsonLine + "\n");
+            Console.WriteLine($"Appended inspected files map to {relevantFilesJsonPath}");
         }
         
         public static List<string> GetAllInspectedFiles(InspectionResult result)
