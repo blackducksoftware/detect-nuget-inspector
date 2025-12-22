@@ -10,7 +10,7 @@ buildscript {
 ext.dotNetExec = project.hasProperty('dotNetExec') ? project.getProperty('dotNetExec') : 'dotnet6'
 
 group 'com.blackduck.integration'
-version = '2.4.0-SIGQA2-SNAPSHOT'
+version = '2.6.0-quack'
 
 apply plugin: 'com.blackduck.integration.solution'
 apply plugin: 'distribution'
@@ -47,7 +47,7 @@ The lines below will, for each configured solution
     * Set up dependencies to the build and distribution tasks
     * Add artifact to publishing
 */
-HashMap<String, String> dotNetSolutions = ['mac': 'osx-x64', 'windows': 'win-x64', 'linux': 'linux-x64']
+HashMap<String, String> dotNetSolutions = ['mac': 'osx-arm64', 'windows': 'win-x64', 'linux': 'linux-x64']
 
 dotNetSolutions.each { os, buildCmd ->
     logger.lifecycle("Creating tasks for dotnet solution::" + os)
@@ -57,7 +57,7 @@ dotNetSolutions.each { os, buildCmd ->
     project.tasks.create(name: buildTaskName, type: Exec) {
         group 'dotnet build'
         description "Create executable for ${os} in directory : ${buildOutputDir}"
-        def buildCommand = [dotNetExec, 'publish', 'detect-nuget-inspector/detect-nuget-inspector.sln', '-r', "${buildCmd}", '-o', buildOutputDir, '--force', "/p:Version=${project.version}"]
+        def buildCommand = [dotNetExec, 'publish', 'detect-nuget-inspector/detect-nuget-inspector.sln', '-r', "${buildCmd}", '-o', buildOutputDir, '--force', "/p:Version=${project.version}", '--self-contained=true']
         doFirst {
             logger.lifecycle("Running ${dotNetExec} for OS '${os}':: " + buildCommand.toString())
         }
