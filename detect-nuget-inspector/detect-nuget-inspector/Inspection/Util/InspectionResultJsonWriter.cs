@@ -79,6 +79,9 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Util
             
             // Build the path to the target file
             var relevantFilesJsonPath = Path.Combine(scanQuackDir, "invokedDetectorsAndTheirRelevantFiles.json"); 
+            
+            Console.WriteLine("About to write inspected files to: " + relevantFilesJsonPath);
+            
 
             // Create the map
             var map = new Dictionary<string, List<string>> { { "NI", GetAllInspectedFiles(Result) } };
