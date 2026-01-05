@@ -64,8 +64,9 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Util
 
         public void WriteInspectedFiles()
         {
-            // Form location of invokedDetectorsAndTheirRelevantFiles.json from nuget scan directory, refactor later
-            // todo: only do this if quack is enabled, make sure it is cleaned up regardless 
+            Console.WriteLine("Writing inspected files information...");
+            // Form location of invokedDetectorsAndTheirRelevantFiles.json from nuget scan directory for now, refactor later to get value from Detect and not hardcode here
+            // and only do this if quack is enabled
             var extractionDir = Result.OutputDirectory;
             var outputDir = Directory.GetParent(extractionDir)?.Parent?.Parent;
             if (extractionDir == null || outputDir == null)
@@ -74,7 +75,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Util
                 return;
             }
             
-            var scanQuackDir = Path.Combine(outputDir.FullName, "scan", "quack");
+            var scanQuackDir = Path.Combine(outputDir.FullName, "scan", "quack-patch");
             Directory.CreateDirectory(scanQuackDir);
             
             // Build the path to the target file
@@ -82,14 +83,12 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Util
             
             Console.WriteLine("About to write inspected files to: " + relevantFilesJsonPath);
             
-
-            // Create the map
             var map = new Dictionary<string, List<string>> { { "NI", GetAllInspectedFiles(Result) } };
 
             // Serialize and append as a new line
             var jsonLine = JsonConvert.SerializeObject(map);
             File.AppendAllText(relevantFilesJsonPath, jsonLine + "\n");
-            Console.WriteLine($"Appended inspected files map to {relevantFilesJsonPath}");
+            Console.WriteLine($"Wrote inspected files map to {relevantFilesJsonPath}");
         }
         
         public static List<string> GetAllInspectedFiles(InspectionResult result)
