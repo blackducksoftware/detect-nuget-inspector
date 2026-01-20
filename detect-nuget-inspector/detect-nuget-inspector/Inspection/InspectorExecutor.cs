@@ -37,7 +37,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection
                                 var writer = new InspectionResultJsonWriter(result);
                                 writer.Write();
                                 Console.WriteLine("Info file created at {0}", writer.FilePath());
-                                writer.WriteInspectedFiles();
+                                writer.WriteInspectedFiles(options.InspectedFilesInfoPath);
                             }
                             else
                             {

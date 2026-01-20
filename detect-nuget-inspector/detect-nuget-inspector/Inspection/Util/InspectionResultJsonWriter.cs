@@ -62,27 +62,29 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Util
             }
         }
 
-        public void WriteInspectedFiles()
+        public void WriteInspectedFiles(String inspectedFilesInfoRelativePath)
         {
             Console.WriteLine("Writing inspected files information...");
-            // Form location of invokedDetectorsAndTheirRelevantFiles.json from nuget scan directory for now, refactor later to get value from Detect and not hardcode here
-            // and only do this if quack is enabled
             var extractionDir = Result.OutputDirectory;
             var outputDir = Directory.GetParent(extractionDir)?.Parent?.Parent;
             if (extractionDir == null || outputDir == null)
             {
-                Console.WriteLine("Could not determine scan directory from extraction directory: " + extractionDir);
+                Console.WriteLine("Could not determine parent output directory from extraction directory: " + extractionDir);
+                Console.WriteLine("Inspected files information will not be written.");
                 return;
             }
-            
-            var scanQuackDir = Path.Combine(outputDir.FullName, "scan", "quack-patch");
-            Directory.CreateDirectory(scanQuackDir);
-            
-            // Build the path to the target file
-            var relevantFilesJsonPath = Path.Combine(scanQuackDir, "invokedDetectorsAndTheirRelevantFiles.json"); 
-            
+
+            // Combine outputDir with the provided relative path
+            var relevantFilesJsonPath = Path.Combine(outputDir.FullName, inspectedFilesInfoRelativePath);
+            var parentDir = Path.GetDirectoryName(relevantFilesJsonPath);
+            if (!Directory.Exists(parentDir))
+            {
+                Console.WriteLine($"Creating directory for inspected files: {parentDir}");
+                Directory.CreateDirectory(parentDir);
+            }
+
             Console.WriteLine("About to write inspected files to: " + relevantFilesJsonPath);
-            
+
             var map = new Dictionary<string, List<string>> { { "NI", GetAllInspectedFiles(Result) } };
 
             // Serialize and append as a new line
