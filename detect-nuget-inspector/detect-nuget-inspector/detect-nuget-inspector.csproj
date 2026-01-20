@@ -3,7 +3,6 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
-    <RuntimeIdentifiers>osx-arm64;win-x64;linux-x64</RuntimeIdentifiers>
     <RootNamespace>Blackduck.Detect.Nuget.Inspector</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>

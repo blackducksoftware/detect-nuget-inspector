@@ -1,6 +1,6 @@
 buildscript {
     apply from: 'https://raw.githubusercontent.com/blackducksoftware/integration-resources/master/gradle_common/buildscript-repositories.gradle', to: buildscript
-    apply from: 'https://raw.githubusercontent.com/blackducksoftware/integration-resources/master/gradle_common/buildscript-cgp-version.gradle'
+    project.ext { managedCgpVersion = '2.1.1' }
 
     dependencies {
         classpath "com.blackduck.integration:common-gradle-plugin:${managedCgpVersion}"
@@ -10,7 +10,7 @@ buildscript {
 ext.dotNetExec = project.hasProperty('dotNetExec') ? project.getProperty('dotNetExec') : 'dotnet6'
 
 group 'com.blackduck.integration'
-version = '2.6.0-quack'
+version = '2.5.0'
 
 apply plugin: 'com.blackduck.integration.solution'
 apply plugin: 'distribution'
@@ -47,7 +47,7 @@ The lines below will, for each configured solution
     * Set up dependencies to the build and distribution tasks
     * Add artifact to publishing
 */
-HashMap<String, String> dotNetSolutions = ['mac': 'osx-arm64', 'windows': 'win-x64', 'linux': 'linux-x64']
+HashMap<String, String> dotNetSolutions = ['mac': 'osx-x64', 'windows': 'win-x64', 'linux': 'linux-x64']
 
 dotNetSolutions.each { os, buildCmd ->
     logger.lifecycle("Creating tasks for dotnet solution::" + os)
