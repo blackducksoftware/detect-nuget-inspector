@@ -57,7 +57,7 @@ dotNetSolutions.each { os, buildCmd ->
     project.tasks.create(name: buildTaskName, type: Exec) {
         group 'dotnet build'
         description "Create executable for ${os} in directory : ${buildOutputDir}"
-        def buildCommand = [dotNetExec, 'publish', 'detect-nuget-inspector/detect-nuget-inspector.sln', '-r', "${buildCmd}", '-o', buildOutputDir, '--force', "/p:Version=${project.version}", '--self-contained=true']
+        def buildCommand = [dotNetExec, 'publish', 'detect-nuget-inspector/detect-nuget-inspector.sln', '-r', "${buildCmd}", '-o', buildOutputDir, '--force', "/p:Version=${project.version}"]
         doFirst {
             logger.lifecycle("Running ${dotNetExec} for OS '${os}':: " + buildCommand.toString())
         }
