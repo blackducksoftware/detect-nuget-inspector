@@ -46,6 +46,10 @@ namespace Blackduck.Detect.Nuget.Inspector.Configuration
         [AppConfigArg(AppConfigKeys.ArtifactsPath)]
         [CommandLineArg(CommandLineArgKeys.ArtifactsPath, "The output path to Nuget build artifacts to derive package information from.")]
         public string ArtifactsPath = "";
+        
+        [AppConfigArg(AppConfigKeys.InspectedFilesInfoPath)]
+        [CommandLineArg(CommandLineArgKeys.InspectedFilesInfoPath, "The path to the JSON file to write inspected files information to.")]
+        public string InspectedFilesInfoPath = "";
 
 
         public bool ShowHelp;
@@ -65,6 +69,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Configuration
                 ? this.ExcludedDependencyTypes
                 : overide.ExcludedDependencyTypes;
             ArtifactsPath = String.IsNullOrEmpty(overide.ArtifactsPath) ? this.ArtifactsPath : overide.ArtifactsPath;
+            InspectedFilesInfoPath = String.IsNullOrEmpty(overide.InspectedFilesInfoPath) ? this.InspectedFilesInfoPath : overide.InspectedFilesInfoPath;
         }
     }
 }

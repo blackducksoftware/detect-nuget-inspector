@@ -85,6 +85,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                     packagesProperty = packagePropertyLoader.Process();
                     globalPackageReferences = packagePropertyLoader.GetGlobalPackageReferences();
                     checkVersionOverride = packagePropertyLoader.GetVersionOverrideEnabled();
+                    solution.InspectedFiles.Add(solutionDirectoryPackagesPropertyPath);
                 }
 
                 HashSet<PackageId> buildPropertyPackages = new HashSet<PackageId>();

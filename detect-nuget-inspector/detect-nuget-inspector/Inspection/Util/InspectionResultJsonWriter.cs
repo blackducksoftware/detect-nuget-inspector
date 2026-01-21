@@ -62,5 +62,44 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Util
             }
         }
 
+        public void WriteInspectedFiles(String inspectedFilesInfoRelativePath)
+        {
+            Console.WriteLine("Writing inspected files information...");
+            var extractionDir = Result.OutputDirectory;
+            var outputDir = Directory.GetParent(extractionDir)?.Parent?.Parent;
+            if (extractionDir == null || outputDir == null)
+            {
+                Console.WriteLine("Could not determine parent output directory from extraction directory: " + extractionDir);
+                Console.WriteLine("Inspected files information will not be written.");
+                return;
+            }
+
+            // Combine outputDir with the provided relative path
+            var relevantFilesJsonPath = Path.Combine(outputDir.FullName, inspectedFilesInfoRelativePath);
+            var parentDir = Path.GetDirectoryName(relevantFilesJsonPath);
+            if (!Directory.Exists(parentDir))
+            {
+                Console.WriteLine($"Creating directory for inspected files: {parentDir}");
+                Directory.CreateDirectory(parentDir);
+            }
+
+            Console.WriteLine("About to write inspected files to: " + relevantFilesJsonPath);
+
+            var map = new Dictionary<string, List<string>> { { "NI", GetAllInspectedFiles(Result) } };
+
+            // Serialize and append as a new line
+            var jsonLine = JsonConvert.SerializeObject(map);
+            File.AppendAllText(relevantFilesJsonPath, jsonLine + "\n");
+            Console.WriteLine($"Wrote inspected files map to {relevantFilesJsonPath}");
+        }
+        
+        public static List<string> GetAllInspectedFiles(InspectionResult result)
+        {
+            return result.Containers
+                .SelectMany(container => container.InspectedFiles)
+                .Distinct()
+                .ToList();
+        }
+
     }
 }

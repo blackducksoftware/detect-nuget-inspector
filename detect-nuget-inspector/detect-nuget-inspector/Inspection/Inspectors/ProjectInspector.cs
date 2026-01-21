@@ -164,6 +164,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                         new SolutionDirectoryPackagesPropertyLoader(Options.DirectoryPackagesPropsPath, Options.ExcludedDependencyTypes, CentrallyManagedPackages);
                     projectNode.PackagePropertyPackages = packagesPropertyLoader.Process();
                     projectNode.Dependencies = packagesPropertyLoader.GetGlobalPackageReferences().ToHashSet();
+                    projectNode.InspectedFiles.Add(Options.DirectoryPackagesPropsPath);
                 }
                 else if (packagesConfigExists)
                 {
@@ -172,6 +173,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                     var packagesConfigResult = packagesConfigResolver.Process();
                     projectNode.Packages = packagesConfigResult.Packages;
                     projectNode.Dependencies = packagesConfigResult.Dependencies;
+                    projectNode.InspectedFiles.Add(Options.DirectoryPackagesPropsPath);
                 }
                 else if (projectJsonLockExists)
                 {
@@ -189,6 +191,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                     projectNode.Packages = projectAssetsJsonResult.Packages;
                     projectNode.Dependencies = projectAssetsJsonResult.Dependencies;
                     ProjectAssetsJsonResolved = true;
+                    projectNode.InspectedFiles.Add(Options.TargetPath);
                 }
                 else if (projectJsonExists)
                 {
@@ -216,6 +219,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                         Console.WriteLine("Reference resolver succeeded.");
                         projectNode.Packages = projectReferencesResult.Packages;
                         projectNode.Dependencies = projectReferencesResult.Dependencies;
+                        projectNode.InspectedFiles.Add(Options.TargetPath);
                     }
                     else
                     {
@@ -233,6 +237,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                         projectNode.Version = xmlResult.ProjectVersion;
                         projectNode.Packages = xmlResult.Packages;
                         projectNode.Dependencies = xmlResult.Dependencies;
+                        projectNode.InspectedFiles.Add(Options.TargetPath);
                     }
                 }
 
@@ -421,3 +426,5 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
         }
     }
 }
+
+

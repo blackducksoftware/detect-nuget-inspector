@@ -10,7 +10,7 @@ buildscript {
 ext.dotNetExec = project.hasProperty('dotNetExec') ? project.getProperty('dotNetExec') : 'dotnet6'
 
 group 'com.blackduck.integration'
-version = '2.4.0'
+version = '2.5.0'
 
 apply plugin: 'com.blackduck.integration.solution'
 apply plugin: 'distribution'
@@ -57,7 +57,7 @@ dotNetSolutions.each { os, buildCmd ->
     project.tasks.create(name: buildTaskName, type: Exec) {
         group 'dotnet build'
         description "Create executable for ${os} in directory : ${buildOutputDir}"
-        def buildCommand = [dotNetExec, 'publish', 'detect-nuget-inspector/detect-nuget-inspector.sln', '-r', "${buildCmd}", '-o', buildOutputDir, '--force']
+        def buildCommand = [dotNetExec, 'publish', 'detect-nuget-inspector/detect-nuget-inspector.sln', '-r', "${buildCmd}", '-o', buildOutputDir, '--force', "/p:Version=${project.version}", '--self-contained=true']
         doFirst {
             logger.lifecycle("Running ${dotNetExec} for OS '${os}':: " + buildCommand.toString())
         }
