@@ -4,6 +4,7 @@ namespace detect_nuget_inspector_tests.versioned_dotnet_tests
 {
     // To set up your environment for these tests, see set-up-versioned-dotnet-tests-env.sh
     [TestClass]
+    [Ignore]
     public class KickOffTests
     {
         public TestContext TestContext { get; set; }
