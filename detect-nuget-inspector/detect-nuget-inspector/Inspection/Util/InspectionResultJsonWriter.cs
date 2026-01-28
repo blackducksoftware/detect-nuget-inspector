@@ -64,6 +64,11 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Util
 
         public void WriteInspectedFiles(String inspectedFilesInfoRelativePath)
         {
+            if (string.IsNullOrWhiteSpace(inspectedFilesInfoRelativePath))
+            {
+                Console.WriteLine("No inspected files info path provided; skipping writing inspected files information.");
+                return;
+            }
             Console.WriteLine("Writing inspected files information...");
             var extractionDir = Result.OutputDirectory;
             var outputDir = Directory.GetParent(extractionDir)?.Parent?.Parent;
