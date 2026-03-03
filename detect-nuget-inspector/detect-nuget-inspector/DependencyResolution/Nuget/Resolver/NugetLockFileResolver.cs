@@ -114,29 +114,66 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
                 }
 
             }
-           
+
+            // Track dependencies by name to handle duplicates from multiple sources.
+            // This is necessary because project-based packaging (v3.3.0+) can cause the same
+            // dependency to appear in multiple sources (PackageSpec.Dependencies, ProjectFileDependencyGroups,
+            // and TargetFrameworks) with different version information.
+            // With .nuspec files, all sources agreed. With project-based packaging, they can disagree.
+            // Strategy: Keep the entry with the best version information (prefer non-null versions).
+            var addedDependencies = new Dictionary<string, Model.PackageId>();
+
+            // Source 1: PackageSpec.Dependencies
             foreach (var dep in LockFile.PackageSpec.Dependencies)
             {
                 var version = builder.GetBestVersion(dep.Name, dep.LibraryRange.VersionRange);
-                result.Dependencies.Add(new Model.PackageId(dep.Name, version));
+                var packageId = new Model.PackageId(dep.Name, version);
+                result.Dependencies.Add(packageId);
+                addedDependencies[dep.Name] = packageId;
             }
 
+            // Source 2: ProjectFileDependencyGroups
             foreach (var projectFileDependencyGroup in LockFile.ProjectFileDependencyGroups)
             {
                 foreach (var projectFileDependency in projectFileDependencyGroup.Dependencies)
                 {
                     var projectDependencyParsed = ParseProjectFileDependencyGroup(projectFileDependency);
-                    var libraryVersion = BestLibraryVersion(projectDependencyParsed.GetName(), projectDependencyParsed.GetVersionRange(), LockFile.Libraries);
-                    String version = null;
-                    if (libraryVersion != null)
+                    string depName = projectDependencyParsed.GetName();
+                    var libraryVersion = BestLibraryVersion(depName, projectDependencyParsed.GetVersionRange(), LockFile.Libraries);
+                    
+                    if (addedDependencies.ContainsKey(depName))
                     {
-                        version = libraryVersion.ToNormalizedString();
+                        // Already added from Source 1 - check if this source provides better version info
+                        var existingPackage = addedDependencies[depName];
+
+                        // Replace if the new source has a version and the existing one is null
+                        if (existingPackage.Version == null && libraryVersion != null)
+                        {
+                            string newVersion = libraryVersion.ToNormalizedString();
+                            result.Dependencies.RemoveWhere(p => p.Name == depName);
+                            var betterPackageId = new Model.PackageId(depName, newVersion);
+                            result.Dependencies.Add(betterPackageId);
+                            addedDependencies[depName] = betterPackageId;
+                        }
+                        // Otherwise, skip - existing version is either non-null or both are null
                     }
-                    result.Dependencies.Add(new Model.PackageId(projectDependencyParsed.GetName(), version));
+                    else
+                    {
+                        // Not added yet - add it
+                        String version = null;
+                        if (libraryVersion != null)
+                        {
+                            version = libraryVersion.ToNormalizedString();
+                        }
+                        var packageId = new Model.PackageId(depName, version);
+                        result.Dependencies.Add(packageId);
+                        addedDependencies[depName] = packageId;
+                    }
                 }
             }
-            
-            
+
+
+            // Source 3: TargetFrameworks
             foreach (var framework in LockFile.PackageSpec.TargetFrameworks)
             {
                 foreach (var dep in framework.Dependencies)
@@ -146,13 +183,34 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
 
                     if (!excludeDevDependency)
                     {
-                        var version = builder.GetBestVersion(dep.Name, dep.LibraryRange.VersionRange);
-                        result.Dependencies.Add(new PackageId(dep.Name, version));
+                        var newVersion = builder.GetBestVersion(dep.Name, dep.LibraryRange.VersionRange);
+                        if (addedDependencies.ContainsKey(dep.Name))
+                        {
+                            // Already added from Source 1 or 2 - check if this source provides better version info
+                            var existingPackage = addedDependencies[dep.Name];
+                            // Replace if the new source has a version and the existing one is null
+                            if (existingPackage.Version == null && newVersion != null)
+                            {
+                                result.Dependencies.RemoveWhere(p => p.Name == dep.Name);
+                                var betterPackageId = new PackageId(dep.Name, newVersion);
+                                result.Dependencies.Add(betterPackageId);
+                                addedDependencies[dep.Name] = betterPackageId;
+                            }
+                            // Otherwise, skip - existing version is either non-null or both are null
+                        }
+                        else
+                        {
+                            // Not added yet - add it
+                            var packageId = new PackageId(dep.Name, newVersion);
+                            result.Dependencies.Add(packageId);
+                            addedDependencies[dep.Name] = packageId;
+                        }
                     }
                     else
                     {
                         ExcludedDependencies.Add(dep.Name);
                         result.Dependencies.RemoveWhere(package => package.Name.Equals(dep.Name));
+                        addedDependencies.Remove(dep.Name);
                     }
                 }
             }
