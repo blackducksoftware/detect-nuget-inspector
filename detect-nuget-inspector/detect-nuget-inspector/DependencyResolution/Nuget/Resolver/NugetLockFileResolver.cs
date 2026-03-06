@@ -116,11 +116,11 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
             }
 
             // Track dependencies by name to handle duplicates from multiple sources.
-            // This is necessary because project-based packaging (v3.3.0+) can cause the same
+            // This is necessary because project-based packaging can cause the same
             // dependency to appear in multiple sources (PackageSpec.Dependencies, ProjectFileDependencyGroups,
             // and TargetFrameworks) with different version information.
             // With .nuspec files, all sources agreed. With project-based packaging, they can disagree.
-            // Strategy: Keep the entry with the best version information (prefer non-null versions).
+            // Strategy: Keep the entry with the best version information.
             var addedDependencies = new Dictionary<string, Model.PackageId>();
 
             // Source 1: PackageSpec.Dependencies
