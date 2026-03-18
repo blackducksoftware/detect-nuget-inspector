@@ -58,7 +58,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection
         public List<IInspector> CreateInspectors(InspectionOptions options, NugetSearchService nugetService)
         {
             var inspectors = new List<IInspector>();
-            if (Directory.Exists(options.TargetPath))
+            if (Directory.Exists(options.TargetPath)) // src dir
             {
                 Console.WriteLine("Searching for solution files to process...");
                 string[] solutionPaths = FindSolutionFilesTopLevel(options.TargetPath);
@@ -70,7 +70,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection
                     {
                         Console.WriteLine("Found Solution {0}", solution);
                         var solutionOp = new SolutionInspectionOptions(options);
-                        solutionOp.TargetPath = solution;
+                        solutionOp.TargetPath = solution; // path to solution file
                         inspectors.Add(new SolutionInspector(solutionOp, nugetService));
                     }
 
@@ -97,7 +97,12 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection
             }
             else if (File.Exists(options.TargetPath))
             {
-                if (options.TargetPath.Contains(".sln"))
+                var fileExtension = Path.GetExtension(options.TargetPath);
+                if (string.IsNullOrEmpty(fileExtension))
+                {
+                    Console.WriteLine($"TargetPath '{options.TargetPath}' does not have a file extension. Skipping.");
+                }
+                else if (fileExtension.Equals(".sln", StringComparison.OrdinalIgnoreCase) || fileExtension.Equals(".slnx", StringComparison.OrdinalIgnoreCase))
                 {
                     var solutionOp = new SolutionInspectionOptions(options);
                     solutionOp.TargetPath = options.TargetPath;
