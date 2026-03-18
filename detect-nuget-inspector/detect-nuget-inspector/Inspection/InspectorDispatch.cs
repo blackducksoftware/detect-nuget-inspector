@@ -30,13 +30,39 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection
                 .ToArray();
         }
 
+        // Warns and gives precedence to .sln over .slnx when both exist with the same base name
+        private static string[] FilterOutDuplicateXMLSolutionFiles(string[] solutionPaths)
+        {
+            // Only bother if at least one .slnx file is present
+            if (!solutionPaths.Any(f => f.EndsWith(".slnx", StringComparison.OrdinalIgnoreCase)))
+            {
+                return solutionPaths;
+            }
+            var slnFiles = solutionPaths.Where(f => f.EndsWith(".sln", StringComparison.OrdinalIgnoreCase)).ToList();
+            var slnxFiles = solutionPaths.Where(f => f.EndsWith(".slnx", StringComparison.OrdinalIgnoreCase)).ToList();
+            var slnBaseNames = new HashSet<string>(slnFiles.Select(f => Path.GetFileNameWithoutExtension(f)), StringComparer.OrdinalIgnoreCase);
+            var slnxBaseNames = new HashSet<string>(slnxFiles.Select(f => Path.GetFileNameWithoutExtension(f)), StringComparer.OrdinalIgnoreCase);
+            var duplicateBaseNames = slnBaseNames.Intersect(slnxBaseNames, StringComparer.OrdinalIgnoreCase).ToList();
+            if (duplicateBaseNames.Count > 0)
+            {
+                foreach (var baseName in duplicateBaseNames)
+                {
+                    Console.WriteLine($"Warning: Both {baseName}.sln and {baseName}.slnx found. Only {baseName}.sln will be processed, {baseName}.slnx will be ignored.");
+                }
+                // Remove .slnx files with the same base name as a .sln file
+                solutionPaths = solutionPaths.Where(f => !(f.EndsWith(".slnx", StringComparison.OrdinalIgnoreCase) && duplicateBaseNames.Contains(Path.GetFileNameWithoutExtension(f), StringComparer.OrdinalIgnoreCase))).ToArray();
+            }
+            return solutionPaths;
+        }
+
         public List<IInspector> CreateInspectors(InspectionOptions options, NugetSearchService nugetService)
         {
             var inspectors = new List<IInspector>();
             if (Directory.Exists(options.TargetPath))
             {
                 Console.WriteLine("Searching for solution files to process...");
-                string[] solutionPaths = FindSolutionFilesTopLevel(options.TargetPath); 
+                string[] solutionPaths = FindSolutionFilesTopLevel(options.TargetPath);
+                solutionPaths = FilterOutDuplicateXMLSolutionFiles(solutionPaths);
 
                 if (solutionPaths != null && solutionPaths.Length >= 1)
                 {
