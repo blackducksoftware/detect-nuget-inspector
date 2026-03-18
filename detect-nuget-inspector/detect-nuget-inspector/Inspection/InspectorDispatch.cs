@@ -22,13 +22,21 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection
             return CreateInspectors(options, nugetService)?.Select(insp => insp.Inspect()).ToList();
         }
 
+        private static string[] FindSolutionFiles(string directoryPath)
+        {
+            if (!Directory.Exists(directoryPath)) return Array.Empty<string>();
+            return Directory.EnumerateFiles(directoryPath)
+                .Where(f => f.EndsWith(".sln", StringComparison.OrdinalIgnoreCase) || f.EndsWith(".slnx", StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+        }
+
         public List<IInspector> CreateInspectors(InspectionOptions options, NugetSearchService nugetService)
         {
             var inspectors = new List<IInspector>();
             if (Directory.Exists(options.TargetPath))
             {
                 Console.WriteLine("Searching for solution files to process...");
-                string[] solutionPaths = Directory.GetFiles(options.TargetPath, "*.sln");
+                string[] solutionPaths = FindSolutionFiles(options.TargetPath); 
 
                 if (solutionPaths != null && solutionPaths.Length >= 1)
                 {
