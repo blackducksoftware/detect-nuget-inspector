@@ -66,19 +66,25 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
             Console.WriteLine("Processing Solution: " + Options.TargetPath);
             var stopwatch = Stopwatch.StartNew();
             Container solution = new Container();
-            solution.Name = Options.SolutionName; // without extension here
-            solution.SourcePath = Options.TargetPath; // full path to the solution file w/ extension
+            solution.Name = Options.SolutionName;
+            solution.SourcePath = Options.TargetPath;
             solution.Type = "Solution";
             try
             {
-                HashSet<PackageId> packagesProperty;
-                HashSet<PackageId> globalPackageReferences;
-                bool checkVersionOverride;
+                HashSet<PackageId> packagesProperty = new HashSet<PackageId>();
+                HashSet<PackageId> globalPackageReferences = new HashSet<PackageId>();
                 string parentDirectory = Directory.GetParent(solution.SourcePath).FullName;
-                string excludedDependencyTypesString = string.Join(",", Options.ExcludedDependencyTypes);
-                string solutionDirectoryPackagesPropertyPath = GetSolutionLevelDirectoryPackagesProps(parentDirectory, excludedDependencyTypesString, out packagesProperty, out globalPackageReferences, out checkVersionOverride);
-                if (!string.IsNullOrWhiteSpace(solutionDirectoryPackagesPropertyPath))
+                
+                string solutionDirectoryPackagesPropertyPath = CreateSolutionDirectoryPackagesPropertyPath(parentDirectory);
+                bool solutionDirectoryPackagesPropertyExists = !String.IsNullOrWhiteSpace(solutionDirectoryPackagesPropertyPath) && File.Exists(solutionDirectoryPackagesPropertyPath);
+                bool checkVersionOverride = true;
+                if (solutionDirectoryPackagesPropertyExists)
                 {
+                    Console.WriteLine("Using solution directory packages property file: " + solutionDirectoryPackagesPropertyPath);
+                    var packagePropertyLoader = new SolutionDirectoryPackagesPropertyLoader(solutionDirectoryPackagesPropertyPath, Options.ExcludedDependencyTypes);
+                    packagesProperty = packagePropertyLoader.Process();
+                    globalPackageReferences = packagePropertyLoader.GetGlobalPackageReferences();
+                    checkVersionOverride = packagePropertyLoader.GetVersionOverrideEnabled();
                     solution.InspectedFiles.Add(solutionDirectoryPackagesPropertyPath);
                 }
 
@@ -296,26 +302,6 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
         private string CreateSolutionDirectoryPackagesPropertyPath(string solutionDirectory)
         {
             return PathUtil.Combine(solutionDirectory, "Directory.Packages.props");
-        }
-
-        // Helper method to encapsulate solution-level Directory.Packages.props logic
-        private string GetSolutionLevelDirectoryPackagesProps(string parentDirectory, string excludedDependencyTypes, out HashSet<PackageId> packagesProperty, out HashSet<PackageId> globalPackageReferences, out bool checkVersionOverride)
-        {
-            packagesProperty = new HashSet<PackageId>();
-            globalPackageReferences = new HashSet<PackageId>();
-            checkVersionOverride = true;
-            string solutionDirectoryPackagesPropertyPath = CreateSolutionDirectoryPackagesPropertyPath(parentDirectory);
-            bool solutionDirectoryPackagesPropertyExists = !String.IsNullOrWhiteSpace(solutionDirectoryPackagesPropertyPath) && File.Exists(solutionDirectoryPackagesPropertyPath);
-            if (solutionDirectoryPackagesPropertyExists)
-            {
-                Console.WriteLine("Using solution directory packages property file: " + solutionDirectoryPackagesPropertyPath);
-                var packagePropertyLoader = new SolutionDirectoryPackagesPropertyLoader(solutionDirectoryPackagesPropertyPath, excludedDependencyTypes);
-                packagesProperty = packagePropertyLoader.Process();
-                globalPackageReferences = packagePropertyLoader.GetGlobalPackageReferences();
-                checkVersionOverride = packagePropertyLoader.GetVersionOverrideEnabled();
-                return solutionDirectoryPackagesPropertyPath;
-            }
-            return null;
         }
     }
 }
