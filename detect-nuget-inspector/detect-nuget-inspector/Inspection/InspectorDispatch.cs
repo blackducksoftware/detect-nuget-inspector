@@ -22,7 +22,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection
             return CreateInspectors(options, nugetService)?.Select(insp => insp.Inspect()).ToList();
         }
 
-        private static string[] FindSolutionFiles(string directoryPath)
+        private static string[] FindSolutionFilesTopLevel(string directoryPath)
         {
             if (!Directory.Exists(directoryPath)) return Array.Empty<string>();
             return Directory.EnumerateFiles(directoryPath)
@@ -36,7 +36,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection
             if (Directory.Exists(options.TargetPath))
             {
                 Console.WriteLine("Searching for solution files to process...");
-                string[] solutionPaths = FindSolutionFiles(options.TargetPath); 
+                string[] solutionPaths = FindSolutionFilesTopLevel(options.TargetPath); 
 
                 if (solutionPaths != null && solutionPaths.Length >= 1)
                 {
