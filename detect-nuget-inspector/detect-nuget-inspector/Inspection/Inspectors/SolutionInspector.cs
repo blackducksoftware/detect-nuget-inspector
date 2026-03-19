@@ -58,7 +58,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
 
         public Container GetContainer()
         {
-            Console.WriteLine("Processing Solution: " + Options.TargetPath);
+            Console.WriteLine("Processing Solution: " + Options.TargetPath); // abs path to .sln file
             var stopwatch = Stopwatch.StartNew();
             Container solution = new Container();
             solution.Name = Options.SolutionName;
@@ -82,7 +82,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                     packagesProperty = packagePropertyLoader.Process();
                     globalPackageReferences = packagePropertyLoader.GetGlobalPackageReferences();
                     checkVersionOverride = packagePropertyLoader.GetVersionOverrideEnabled();
-                    solution.InspectedFiles.Add(solutionDirectoryPackagesPropertyPath);
+                    solution.InspectedFiles.Add(solutionDirectoryPackagesPropertyPath); // wait what did i add this for quack
                 }
 
                 // PROCESS SOLUTION LEVEL Directory.Build.props TODO: refactor
@@ -109,11 +109,6 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
 
                     var duplicateNames = projectFiles
                         .GroupBy(project => project.Name)
-                        .Where(group => group.Count() > 1)
-                        .Select(group => group.Key);
-
-                    var duplicatePaths = projectFiles
-                        .GroupBy(project => project.Path)
                         .Where(group => group.Count() > 1)
                         .Select(group => group.Key);
 
@@ -151,7 +146,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                             string projectId = projectName;
                             if (duplicateNames.Contains(projectId))
                             {
-                                Console.WriteLine($"Duplicate project name '{projectId}' found. Using GUID instead."); // not a thing in new XML file ... 
+                                Console.WriteLine($"Duplicate project name '{projectId}' found. Using GUID instead."); // not a thing in new XML file ... The .slnx format is designed to eliminate the "useless duplication" found in legacy .sln files. While the XML structure itself technically allows multiple <Project> elements with the same path, the underlying project model treats the Path as the unique identifier for a project within the solution.
                                 projectId = project.GUID;
                             }
                             Boolean projectFileExists = false;
@@ -267,8 +262,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                 return FindProjectFilesFromSlnxFile(solutionPath);
             }
             // return an empty list instead maybe?
-            throw new Exception($"Unsupported solution file extension: {extension}"); // would never happen because of the way inspectors are dispatched
-            
+            throw new Exception($"Unsupported solution file extension: {extension}"); // would never happen because of the way inspectors are dispatched right?
         }
 
         private List<ProjectFile> FindProjectFilesFromSlnFile(string solutionPath)
@@ -312,26 +306,37 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
         
         private List<ProjectFile> FindProjectFilesFromSlnxFile(string solutionPath)
         {
+            // The line we care about looks like this: <Project Path="my-app/my-app.csproj" />
             var projects = new List<ProjectFile>();
-            if (File.Exists(solutionPath))
+            if (!File.Exists(solutionPath))
             {
-                var doc = XDocument.Load(solutionPath);
-                var projectElements = doc.Descendants("Project");
-                foreach (var element in projectElements)
+                throw new FileNotFoundException("Solution File " + solutionPath + " not found");
+            }
+            XDocument doc = XDocument.Load(solutionPath);
+            
+            var seenPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (XElement node in doc.Descendants("Project"))
+            {
+                string? projectRelativePath = node.Attribute("Path")?.Value;
+                if (string.IsNullOrEmpty(projectRelativePath))
                 {
-                    string name = element.Attribute("Name")?.Value;
-                    string path = element.Attribute("Path")?.Value;
-                    string guid = element.Attribute("Guid")?.Value;
-                    if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(path))
-                    {
-                        projects.Add(new ProjectFile { Name = name, Path = path, GUID = guid });
-                    }
+                    continue;
                 }
+                
+                if (!seenPaths.Add(projectRelativePath))
+                {
+                    Console.WriteLine("Duplicate project path '{0}' found in .slnx file, skipping.", projectRelativePath);
+                    continue;
+                }
+                
+                string name = Path.GetFileNameWithoutExtension(projectRelativePath);
+
+                // slnx files do not have GUIDs, the relative path is the unique ID. 
+                projects.Add(new ProjectFile { Name = name, Path = projectRelativePath, GUID = string.Empty });
             }
-            else
-            {
-                throw new Exception("Solution File " + solutionPath + " not found");
-            }
+
+            Console.WriteLine("Nuget Inspector found {0} project elements in .slnx file", projects.Count);
             return projects;
         }
 
