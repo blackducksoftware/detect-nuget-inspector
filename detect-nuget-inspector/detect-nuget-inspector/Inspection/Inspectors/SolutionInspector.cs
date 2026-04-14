@@ -85,7 +85,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                     solution.InspectedFiles.Add(solutionDirectoryPackagesPropertyPath);
                 }
 
-                // PROCESS SOLUTION LEVEL Directory.Build.props TODO: refactor
+                // PROCESS SOLUTION LEVEL Directory.Build.props
                 HashSet<PackageId> buildPropertyPackages = new HashSet<PackageId>();
                 
                 string solutionDirectoryBuildPropertyPath = CreateSolutionDirectoryBuildPropertyPath(parentDirectory);

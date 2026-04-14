@@ -58,7 +58,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection
         public List<IInspector> CreateInspectors(InspectionOptions options, NugetSearchService nugetService)
         {
             var inspectors = new List<IInspector>();
-            if (Directory.Exists(options.TargetPath)) // src dir
+            if (Directory.Exists(options.TargetPath))
             {
                 Console.WriteLine("Searching for solution files to process...");
                 string[] solutionPaths = FindSolutionFilesTopLevel(options.TargetPath);
