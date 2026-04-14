@@ -58,7 +58,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
 
         public Container GetContainer()
         {
-            Console.WriteLine("Processing Solution: " + Options.TargetPath); // abs path to .sln file
+            Console.WriteLine("Processing Solution: " + Options.TargetPath);
             var stopwatch = Stopwatch.StartNew();
             Container solution = new Container();
             solution.Name = Options.SolutionName;
@@ -71,7 +71,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                 string parentDirectory = Directory.GetParent(solution.SourcePath).FullName;
                 
                 
-                // PROCESS SOLUTION LEVEL Directory.Packages.props TODO: refactor
+                // PROCESS SOLUTION LEVEL Directory.Packages.props
                 string solutionDirectoryPackagesPropertyPath = CreateSolutionDirectoryPackagesPropertyPath(parentDirectory);
                 bool solutionDirectoryPackagesPropertyExists = !String.IsNullOrWhiteSpace(solutionDirectoryPackagesPropertyPath) && File.Exists(solutionDirectoryPackagesPropertyPath);
                 bool checkVersionOverride = true;
@@ -82,7 +82,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                     packagesProperty = packagePropertyLoader.Process();
                     globalPackageReferences = packagePropertyLoader.GetGlobalPackageReferences();
                     checkVersionOverride = packagePropertyLoader.GetVersionOverrideEnabled();
-                    solution.InspectedFiles.Add(solutionDirectoryPackagesPropertyPath); // wait what did i add this for quack
+                    solution.InspectedFiles.Add(solutionDirectoryPackagesPropertyPath);
                 }
 
                 // PROCESS SOLUTION LEVEL Directory.Build.props TODO: refactor
@@ -100,7 +100,6 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                 
                 // GET PROJECTS FROM SLN FILE. 
                 List<ProjectFile> projectFiles = FindProjectFilesFromSolutionFile(Options.TargetPath);
-                // ///////TODO if .slnx, call new get projects from slnx file method. get some example projects to test with. including the weird scenario/bug
                 Console.WriteLine("Parsed Solution File");
                 if (projectFiles.Count > 0)
                 {
@@ -146,7 +145,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                             string projectId = projectName;
                             if (duplicateNames.Contains(projectId))
                             {
-                                Console.WriteLine($"Duplicate project name '{projectId}' found. Using GUID instead."); // not a thing in new XML file ... The .slnx format is designed to eliminate the "useless duplication" found in legacy .sln files. While the XML structure itself technically allows multiple <Project> elements with the same path, the underlying project model treats the Path as the unique identifier for a project within the solution.
+                                Console.WriteLine($"Duplicate project name '{projectId}' found. Using GUID instead.");
                                 projectId = project.GUID;
                             }
                             Boolean projectFileExists = false;
@@ -261,8 +260,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
             {
                 return FindProjectFilesFromSlnxFile(solutionPath);
             }
-            // return an empty list instead maybe?
-            throw new Exception($"Unsupported solution file extension: {extension}"); // would never happen because of the way inspectors are dispatched right?
+            throw new Exception($"Unsupported solution file extension: {extension}");
         }
 
         private List<ProjectFile> FindProjectFilesFromSlnFile(string solutionPath)

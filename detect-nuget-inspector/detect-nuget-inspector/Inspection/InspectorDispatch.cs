@@ -31,7 +31,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection
         }
 
         // Warns and gives precedence to .sln over .slnx when both exist with the same base name
-        private static string[] FilterOutDuplicateXMLSolutionFiles(string[] solutionPaths)
+        private static string[] FilterOutDuplicateXMLSolutionFiles(string[] solutionPaths) // TODO refactor to single pass 
         {
             // Only bother if at least one .slnx file is present
             if (!solutionPaths.Any(f => f.EndsWith(".slnx", StringComparison.OrdinalIgnoreCase)))
@@ -70,7 +70,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection
                     {
                         Console.WriteLine("Found Solution {0}", solution);
                         var solutionOp = new SolutionInspectionOptions(options);
-                        solutionOp.TargetPath = solution; // path to solution file
+                        solutionOp.TargetPath = solution;
                         inspectors.Add(new SolutionInspector(solutionOp, nugetService));
                     }
 
