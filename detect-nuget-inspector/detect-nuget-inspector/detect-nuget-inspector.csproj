@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="detect_nuget_inspector_tests" />
+    <InternalsVisibleTo Include="detect-nuget-inspector-tests" />
     <PackageReference Include="Microsoft.Build" Version="17.1.0" />
     <PackageReference Include="Microsoft.Build.Locator" Version="1.4.1" />
     <PackageReference Include="Mono.Options" Version="6.12.0.148" />
