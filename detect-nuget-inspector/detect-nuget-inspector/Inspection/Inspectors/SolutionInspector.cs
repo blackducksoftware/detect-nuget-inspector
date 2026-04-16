@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Build.Graph;
+﻿using System.Diagnostics;
+using System.Xml.Linq;
 using NuGet.Packaging;
 using Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget;
 using Blackduck.Detect.Nuget.Inspector.Inspection.Util;
@@ -75,6 +70,8 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                 HashSet<PackageId> globalPackageReferences = new HashSet<PackageId>();
                 string parentDirectory = Directory.GetParent(solution.SourcePath).FullName;
                 
+                
+                // PROCESS SOLUTION LEVEL Directory.Packages.props
                 string solutionDirectoryPackagesPropertyPath = CreateSolutionDirectoryPackagesPropertyPath(parentDirectory);
                 bool solutionDirectoryPackagesPropertyExists = !String.IsNullOrWhiteSpace(solutionDirectoryPackagesPropertyPath) && File.Exists(solutionDirectoryPackagesPropertyPath);
                 bool checkVersionOverride = true;
@@ -88,6 +85,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                     solution.InspectedFiles.Add(solutionDirectoryPackagesPropertyPath);
                 }
 
+                // PROCESS SOLUTION LEVEL Directory.Build.props
                 HashSet<PackageId> buildPropertyPackages = new HashSet<PackageId>();
                 
                 string solutionDirectoryBuildPropertyPath = CreateSolutionDirectoryBuildPropertyPath(parentDirectory);
@@ -100,6 +98,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                     checkVersionOverride = propertyLoader.GetVersionOverrideEnabled();
                 }
                 
+                // GET PROJECTS FROM SLN FILE. 
                 List<ProjectFile> projectFiles = FindProjectFilesFromSolutionFile(Options.TargetPath);
                 Console.WriteLine("Parsed Solution File");
                 if (projectFiles.Count > 0)
@@ -109,11 +108,6 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
 
                     var duplicateNames = projectFiles
                         .GroupBy(project => project.Name)
-                        .Where(group => group.Count() > 1)
-                        .Select(group => group.Key);
-
-                    var duplicatePaths = projectFiles
-                        .GroupBy(project => project.Path)
                         .Where(group => group.Count() > 1)
                         .Select(group => group.Key);
 
@@ -130,7 +124,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                                 bool fileNotFound = true;
                                 while (fileNotFound)
                                 {
-                                    string checkFile = Path.Combine(parentPath, projectRelativePath);
+                                    string checkFile = PathUtil.Combine(parentPath, projectRelativePath);
                                     if (parentPath.Equals("") || parentPath.Equals(Path.GetPathRoot(solutionDirectory)))
                                     {
                                         Console.WriteLine("The Path provided in the sln file is wrong, will skip parsing over this file");
@@ -255,7 +249,21 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
             return solution;
         }
 
-        private List<ProjectFile> FindProjectFilesFromSolutionFile(string solutionPath)
+        public static List<ProjectFile> FindProjectFilesFromSolutionFile(string solutionPath)
+        {
+            string extension = Path.GetExtension(solutionPath).ToLowerInvariant();
+            if (extension == ".sln")
+            {
+                return FindProjectFilesFromSlnFile(solutionPath);
+            }
+            if (extension == ".slnx")
+            {
+                return FindProjectFilesFromSlnxFile(solutionPath);
+            }
+            throw new Exception($"Unsupported solution file extension: {extension}");
+        }
+
+        public static List<ProjectFile> FindProjectFilesFromSlnFile(string solutionPath)
         {
             var projects = new List<ProjectFile>();
             // Visual Studio right now is not resolving the Microsoft.Build.Construction.SolutionFile type
@@ -291,6 +299,42 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                 throw new System.Exception("Solution File " + solutionPath + " not found");
             }
 
+            return projects;
+        }
+        
+        public static List<ProjectFile> FindProjectFilesFromSlnxFile(string solutionPath)
+        {
+            // The line we care about looks like this: <Project Path="my-app/my-app.csproj" />
+            var projects = new List<ProjectFile>();
+            if (!File.Exists(solutionPath))
+            {
+                throw new FileNotFoundException("Solution File " + solutionPath + " not found");
+            }
+            XDocument doc = XDocument.Load(solutionPath);
+            
+            var seenPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (XElement node in doc.Descendants("Project"))
+            {
+                string? projectRelativePath = node.Attribute("Path")?.Value;
+                if (string.IsNullOrEmpty(projectRelativePath))
+                {
+                    continue;
+                }
+                
+                if (!seenPaths.Add(projectRelativePath))
+                {
+                    Console.WriteLine("Duplicate project path '{0}' found in .slnx file, skipping.", projectRelativePath);
+                    continue;
+                }
+                
+                string name = Path.GetFileNameWithoutExtension(projectRelativePath);
+
+                // slnx files do not have GUIDs, the relative path is the unique ID. 
+                projects.Add(new ProjectFile { Name = name, Path = projectRelativePath, GUID = string.Empty });
+            }
+
+            Console.WriteLine("Nuget Inspector found {0} project elements in .slnx file", projects.Count);
             return projects;
         }
 

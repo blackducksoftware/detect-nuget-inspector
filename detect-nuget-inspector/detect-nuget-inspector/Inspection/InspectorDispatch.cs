@@ -22,13 +22,47 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection
             return CreateInspectors(options, nugetService)?.Select(insp => insp.Inspect()).ToList();
         }
 
+        private static string[] FindSolutionFilesTopLevel(string directoryPath)
+        {
+            if (!Directory.Exists(directoryPath)) return Array.Empty<string>();
+            return Directory.EnumerateFiles(directoryPath)
+                .Where(f => f.EndsWith(".sln", StringComparison.OrdinalIgnoreCase) || f.EndsWith(".slnx", StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+        }
+
+        // Warns and gives precedence to .sln over .slnx when both exist with the same base name
+        private static string[] FilterOutDuplicateXMLSolutionFiles(string[] solutionPaths) // TODO refactor to single pass 
+        {
+            // Only bother if at least one .slnx file is present
+            if (!solutionPaths.Any(f => f.EndsWith(".slnx", StringComparison.OrdinalIgnoreCase)))
+            {
+                return solutionPaths;
+            }
+            var slnFiles = solutionPaths.Where(f => f.EndsWith(".sln", StringComparison.OrdinalIgnoreCase)).ToList();
+            var slnxFiles = solutionPaths.Where(f => f.EndsWith(".slnx", StringComparison.OrdinalIgnoreCase)).ToList();
+            var slnBaseNames = new HashSet<string>(slnFiles.Select(f => Path.GetFileNameWithoutExtension(f)), StringComparer.OrdinalIgnoreCase);
+            var slnxBaseNames = new HashSet<string>(slnxFiles.Select(f => Path.GetFileNameWithoutExtension(f)), StringComparer.OrdinalIgnoreCase);
+            var duplicateBaseNames = slnBaseNames.Intersect(slnxBaseNames, StringComparer.OrdinalIgnoreCase).ToList();
+            if (duplicateBaseNames.Count > 0)
+            {
+                foreach (var baseName in duplicateBaseNames)
+                {
+                    Console.WriteLine($"Warning: Both {baseName}.sln and {baseName}.slnx found. Only {baseName}.sln will be processed, {baseName}.slnx will be ignored.");
+                }
+                // Remove .slnx files with the same base name as a .sln file
+                solutionPaths = solutionPaths.Where(f => !(f.EndsWith(".slnx", StringComparison.OrdinalIgnoreCase) && duplicateBaseNames.Contains(Path.GetFileNameWithoutExtension(f), StringComparer.OrdinalIgnoreCase))).ToArray();
+            }
+            return solutionPaths;
+        }
+
         public List<IInspector> CreateInspectors(InspectionOptions options, NugetSearchService nugetService)
         {
             var inspectors = new List<IInspector>();
             if (Directory.Exists(options.TargetPath))
             {
                 Console.WriteLine("Searching for solution files to process...");
-                string[] solutionPaths = Directory.GetFiles(options.TargetPath, "*.sln");
+                string[] solutionPaths = FindSolutionFilesTopLevel(options.TargetPath);
+                solutionPaths = FilterOutDuplicateXMLSolutionFiles(solutionPaths);
 
                 if (solutionPaths != null && solutionPaths.Length >= 1)
                 {
@@ -63,7 +97,12 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection
             }
             else if (File.Exists(options.TargetPath))
             {
-                if (options.TargetPath.Contains(".sln"))
+                var fileExtension = Path.GetExtension(options.TargetPath);
+                if (string.IsNullOrEmpty(fileExtension))
+                {
+                    Console.WriteLine($"TargetPath '{options.TargetPath}' does not have a file extension. Skipping.");
+                }
+                else if (fileExtension.Equals(".sln", StringComparison.OrdinalIgnoreCase) || fileExtension.Equals(".slnx", StringComparison.OrdinalIgnoreCase))
                 {
                     var solutionOp = new SolutionInspectionOptions(options);
                     solutionOp.TargetPath = options.TargetPath;

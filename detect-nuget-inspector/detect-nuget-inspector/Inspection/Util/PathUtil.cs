@@ -16,7 +16,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Util
         public static string Combine(params string[] pathSegments)
         {
             String path = Path.Combine(pathSegments);
-            return path.Replace("\\", "/");
+            return Sanitize(path);
         }
 
         public static string Sanitize(String path)

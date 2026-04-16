@@ -7,6 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	<DisableMSBuildAssemblyCopyCheck>true</DisableMSBuildAssemblyCopyCheck>
+    <InternalsVisibleTo Include="detect_nuget_inspector_tests" />
   </PropertyGroup>
 
   <ItemGroup>
