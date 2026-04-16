@@ -124,7 +124,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                                 bool fileNotFound = true;
                                 while (fileNotFound)
                                 {
-                                    string checkFile = Path.Combine(parentPath, projectRelativePath);
+                                    string checkFile = PathUtil.Combine(parentPath, projectRelativePath);
                                     if (parentPath.Equals("") || parentPath.Equals(Path.GetPathRoot(solutionDirectory)))
                                     {
                                         Console.WriteLine("The Path provided in the sln file is wrong, will skip parsing over this file");
@@ -249,7 +249,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
             return solution;
         }
 
-        private List<ProjectFile> FindProjectFilesFromSolutionFile(string solutionPath)
+        public static List<ProjectFile> FindProjectFilesFromSolutionFile(string solutionPath)
         {
             string extension = Path.GetExtension(solutionPath).ToLowerInvariant();
             if (extension == ".sln")
@@ -263,7 +263,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
             throw new Exception($"Unsupported solution file extension: {extension}");
         }
 
-        private List<ProjectFile> FindProjectFilesFromSlnFile(string solutionPath)
+        public static List<ProjectFile> FindProjectFilesFromSlnFile(string solutionPath)
         {
             var projects = new List<ProjectFile>();
             // Visual Studio right now is not resolving the Microsoft.Build.Construction.SolutionFile type
@@ -302,7 +302,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
             return projects;
         }
         
-        private List<ProjectFile> FindProjectFilesFromSlnxFile(string solutionPath)
+        public static List<ProjectFile> FindProjectFilesFromSlnxFile(string solutionPath)
         {
             // The line we care about looks like this: <Project Path="my-app/my-app.csproj" />
             var projects = new List<ProjectFile>();
