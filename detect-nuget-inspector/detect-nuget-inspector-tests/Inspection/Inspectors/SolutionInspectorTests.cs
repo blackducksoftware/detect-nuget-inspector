@@ -33,8 +33,7 @@ namespace detect_nuget_inspector_tests.Inspection.Inspectors
         /// To test additional file pairs, add new [DataRow] entries with the .sln filename, .slnx filename, and solution name.
         /// </summary>
         [DataTestMethod]
-        [DataRow("PowerToys.sln", "PowerToys.slnx", "PowerToys")]
-        //[DataRow("Simple.sln", "Simple.slnx", "Simple")]  // Add your new pair here
+        [DataRow("Simple.sln", "Simple.slnx", "Simple")]  // Add your new pair here
         public void CompareSlnAndSlnxProjectLists(string slnFileName, string slnxFileName, string solutionName)
         {
             // Arrange
