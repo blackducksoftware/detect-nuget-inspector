@@ -184,6 +184,11 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
                     var context = new SourceCacheContext();
                     var infoTask = dependencyInfoResource.ResolvePackage(identity, framework, cacheContext: context, log: new NugetLogger(), token: CancellationToken.None);
                     var result = infoTask.Result;
+                    if (result == null)
+                    {
+                        Console.WriteLine("No dependency information was returned for package: " + identity + ". Skipping transitive dependency resolution for this package.");
+                        continue;
+                    }
                     return result.Dependencies;
                 }
                 catch (Exception e)
