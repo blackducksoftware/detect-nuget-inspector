@@ -167,7 +167,7 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
 
         private NuGetFramework GetTargetFramework(Microsoft.Build.Evaluation.Project proj)
         {
-            return TargetFrameworkParser.ParseOrAny(proj.GetPropertyValue("TargetFramework"));
+            return TargetFrameworkParser.ParseOrNull(proj.GetPropertyValue("TargetFramework"));
         }
     }
 }

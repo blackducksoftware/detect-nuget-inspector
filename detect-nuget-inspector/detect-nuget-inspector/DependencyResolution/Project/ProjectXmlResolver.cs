@@ -162,9 +162,9 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
             XmlNodeList tfmNodes = doc.GetElementsByTagName("TargetFramework");
             if (tfmNodes != null && tfmNodes.Count == 1 && tfmNodes[0].NodeType != XmlNodeType.Comment)
             {
-                return TargetFrameworkParser.ParseOrAny(tfmNodes[0].InnerText.Trim());
+                return TargetFrameworkParser.ParseOrNull(tfmNodes[0].InnerText.Trim());
             }
-            return NuGetFramework.AnyFramework;
+            return null;
         }
     }
 }
