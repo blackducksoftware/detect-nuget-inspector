@@ -6,6 +6,7 @@ using System.Xml;
 using Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget;
 using Blackduck.Detect.Nuget.Inspector.Inspection.Util;
 using Blackduck.Detect.Nuget.Inspector.Model;
+using NuGet.Frameworks;
 
 namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
 {
@@ -43,6 +44,8 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
 
             XmlDocument doc = new XmlDocument();
             doc.Load(ProjectPath);
+
+            NuGetFramework targetFramework = GetTargetFramework(doc);
 
             XmlNodeList versionNodes = doc.GetElementsByTagName("Version");
             if (versionNodes != null && versionNodes.Count > 0)
@@ -110,8 +113,8 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
                                 PackageId pkg = CentrallyManagedPackages.First(pkg => pkg.Name.Equals(include));
                                 
                                 if (!String.IsNullOrWhiteSpace(versionOverrideStr) && CheckVersionOverride)
-                                { 
-                                    addNugetDependency(tree, include, versionOverrideStr);
+                                {
+                                    addNugetDependency(tree, include, versionOverrideStr, targetFramework);
                                 }
                                 else if (!String.IsNullOrWhiteSpace(versionOverrideStr) && !CheckVersionOverride)
                                 {
@@ -119,14 +122,14 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
                                 }
                                 else
                                 {
-                                    addNugetDependency(tree, include, pkg.Version);
+                                    addNugetDependency(tree, include, pkg.Version, targetFramework);
                                 }
                             }
                             else
                             {
                                 if (!String.IsNullOrWhiteSpace(versionStr))
                                 {
-                                    addNugetDependency(tree, include, versionStr);
+                                    addNugetDependency(tree, include, versionStr, targetFramework);
                                 }
                             }
                         }
@@ -148,10 +151,20 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
             return result;
         }
 
-        private void addNugetDependency(NugetTreeResolver tree, string include, string version)
+        private void addNugetDependency(NugetTreeResolver tree, string include, string version, NuGetFramework framework)
         {
-            var dep = new NugetDependency(include, NuGet.Versioning.VersionRange.Parse(version));
+            var dep = new NugetDependency(include, NuGet.Versioning.VersionRange.Parse(version), framework);
             tree.Add(dep);
+        }
+
+        private NuGetFramework GetTargetFramework(XmlDocument doc)
+        {
+            XmlNodeList tfmNodes = doc.GetElementsByTagName("TargetFramework");
+            if (tfmNodes != null && tfmNodes.Count == 1 && tfmNodes[0].NodeType != XmlNodeType.Comment)
+            {
+                return TargetFrameworkParser.ParseOrAny(tfmNodes[0].InnerText.Trim());
+            }
+            return NuGetFramework.AnyFramework;
         }
     }
 }

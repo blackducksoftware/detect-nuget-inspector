@@ -8,6 +8,7 @@ using Microsoft.Build.Exceptions;
 using Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget;
 using Blackduck.Detect.Nuget.Inspector.Inspection.Util;
 using Blackduck.Detect.Nuget.Inspector.Model;
+using NuGet.Frameworks;
 
 namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
 {
@@ -41,6 +42,8 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
 
                 Microsoft.Build.Evaluation.Project proj = new Microsoft.Build.Evaluation.Project(ProjectPath);
 
+                NuGetFramework targetFramework = GetTargetFramework(proj);
+
                 List<NugetDependency> deps = new List<NugetDependency>();
                 foreach (ProjectItem reference in proj.GetItemsIgnoringCondition("PackageReference"))
                 {
@@ -64,7 +67,7 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
                             if (CheckVersionOverride && versionOverrideMetaData != null)
                             {
                                 addNugetDependency(reference.EvaluatedInclude, versionOverrideMetaData.EvaluatedValue,
-                                    deps);
+                                    deps, targetFramework);
                             }
                             else if (!CheckVersionOverride && versionOverrideMetaData != null)
                             {
@@ -73,12 +76,12 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
                             }
                             else
                             {
-                                addNugetDependency(reference.EvaluatedInclude, pkg.Version, deps);
+                                addNugetDependency(reference.EvaluatedInclude, pkg.Version, deps, targetFramework);
                             }
                         }
                         else if (versionMetaData != null)
                         {
-                            addNugetDependency(reference.EvaluatedInclude, versionMetaData.EvaluatedValue, deps);
+                            addNugetDependency(reference.EvaluatedInclude, versionMetaData.EvaluatedValue, deps, targetFramework);
                         }
                         else
                         {
@@ -114,7 +117,7 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
                             version = packageInfoAfterVersionKey;
                         }
 
-                        var dep = new NugetDependency(artifact, NuGet.Versioning.VersionRange.Parse(version));
+                        var dep = new NugetDependency(artifact, NuGet.Versioning.VersionRange.Parse(version), targetFramework);
                         deps.Add(dep);
                     }
                 }
@@ -152,14 +155,19 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
             }
         }
         
-        private void addNugetDependency(string include, string versionMetadata, List<NugetDependency> deps)
+        private void addNugetDependency(string include, string versionMetadata, List<NugetDependency> deps, NuGetFramework framework)
         {
             NuGet.Versioning.VersionRange version;
             if (NuGet.Versioning.VersionRange.TryParse(versionMetadata, out version))
             {
-                var dep = new NugetDependency(include, version);
+                var dep = new NugetDependency(include, version, framework);
                 deps.Add(dep);
             }
+        }
+
+        private NuGetFramework GetTargetFramework(Microsoft.Build.Evaluation.Project proj)
+        {
+            return TargetFrameworkParser.ParseOrAny(proj.GetPropertyValue("TargetFramework"));
         }
     }
 }
