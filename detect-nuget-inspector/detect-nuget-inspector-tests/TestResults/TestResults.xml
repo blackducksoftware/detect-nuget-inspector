@@ -1,0 +1,61 @@
+<testsuites>
+  <testsuite name="detect-nuget-inspector-tests.dll" tests="25" skipped="5" failures="0" errors="0" time="0.026110099999999994" timestamp="2026-10-09T11:06:25" hostname="BD-MB10893" id="0" package="detect-nuget-inspector-tests.dll">
+    <properties />
+    <testcase classname="detect_nuget_inspector_tests.versioned_dotnet_tests.KickOffTests" name="TestBasicSetup_InvalidDotNetVersion" time="0.0000001">
+      <skipped />
+    </testcase>
+    <testcase classname="detect_nuget_inspector_tests.versioned_dotnet_tests.KickOffTests" name="TestBasicSolution_DotNet6_ProjectAssetsJsonFile" time="0.0000001">
+      <skipped />
+    </testcase>
+    <testcase classname="detect_nuget_inspector_tests.versioned_dotnet_tests.KickOffTests" name="TestSolution_DotNet6_DuplicatePackageReference_XMLResolver" time="0.0000001">
+      <skipped />
+    </testcase>
+    <testcase classname="detect_nuget_inspector_tests.versioned_dotnet_tests.KickOffTests" name="TestCPMSolution_DotNet7_ProjectAssetsJsonFile" time="0.0000001">
+      <skipped />
+    </testcase>
+    <testcase classname="detect_nuget_inspector_tests.versioned_dotnet_tests.KickOffTests" name="TestSolution_DotNet8_XMLResolver" time="0.0000001">
+      <skipped />
+    </testcase>
+    <testcase classname="detect_nuget_inspector_tests.Inspection.Util.SolutionDirectoryPackagesPropertyLoaderTests" name="ParseStandardDirectoryPackagesPropsFile" time="0.0045542" />
+    <testcase classname="detect_nuget_inspector_tests.Inspection.Util.SolutionDirectoryPackagesPropertyLoaderTests" name="ParseDirectoryPackagesPropsFileWithCpmDisabled" time="0.0005802" />
+    <testcase classname="detect_nuget_inspector_tests.Inspection.Util.SolutionDirectoryPackagesPropertyLoaderTests" name="ParseDirectoryPackagesPropsFileWithVersionOverrideDisabled" time="0.0006607" />
+    <testcase classname="detect_nuget_inspector_tests.Inspection.Util.SolutionDirectoryPackagesPropertyLoaderTests" name="ParseDirectoryPackagesPropsFileWithGlobalPackageReferences" time="0.0006224" />
+    <testcase classname="detect_nuget_inspector_tests.Inspection.Inspectors.SolutionInspectorTests" name="CompareSlnAndSlnxProjectLists (Simple.sln,Simple.slnx,Simple)" time="0.0022770" />
+    <testcase classname="Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project.Test.ProjectJsonResolverTests" name="ExtractPackageSpecDependenciesTestForOldFormat" time="0.0030034" />
+    <testcase classname="Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project.Test.ProjectJsonResolverTests" name="ExtractPackageSpecDependenciesTestForNewFormat" time="0.0003861" />
+    <testcase classname="Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project.Test.ProjectJsonResolverTests" name="ExtractPackageSpecDependenciesTestWhenDependenciesNotFound" time="0.0006619" />
+    <testcase classname="Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project.Test.ProjectJsonResolverTests" name="CreatePackageSpecFromJsonTest" time="0.0103056" />
+    <testcase classname="Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project.Test.ProjectJsonResolverTests" name="ProcessTestForNewFormat" time="0.0012433" />
+    <testcase classname="Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project.Test.ProjectJsonResolverTests" name="ProcessTestForOldFormat" time="0.0006960" />
+    <testcase classname="Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project.Test.ProjectJsonResolverTests" name="ProcessTestWhenDependenciesNotFound" time="0.0003740" />
+    <testcase classname="Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget.Test.NugetLockFileResolverTest" name="ParseProjectFileDependencyGroupTestWithMinInclusiveOnly" time="0.0004954" />
+    <testcase classname="Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget.Test.NugetLockFileResolverTest" name="ParseProjectFileDependencyGroupTestWithMinExclusiveOnly" time="0.0000681" />
+    <testcase classname="Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget.Test.NugetLockFileResolverTest" name="ParseProjectFileDependencyGroupTestWithSameRange" time="0.0000692" />
+    <testcase classname="Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget.Test.NugetLockFileResolverTest" name="ParseProjectFileDependencyGroupTestWithMinAndMaxExclusiveRange" time="0.0000250" />
+    <testcase classname="Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget.Test.NugetLockFileResolverTest" name="ParseProjectFileDependencyGroupTestWithMinExclusiveAndMaxInclusiveRange" time="0.0000223" />
+    <testcase classname="Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget.Test.NugetLockFileResolverTest" name="ParseProjectFileDependencyGroupTestWithMinExclusiveAndMaxExclusiveRange" time="0.0000219" />
+    <testcase classname="Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget.Test.NugetLockFileResolverTest" name="ParseProjectFileDependencyGroupTestWithMaxInclusiveOnly" time="0.0000228" />
+    <testcase classname="Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget.Test.NugetLockFileResolverTest" name="ParseProjectFileDependencyGroupTestWithMaxExclusiveOnly" time="0.0000206" />
+    <system-out>Nuget Inspector found 1 project elements, processed 1 project elements for data
+Nuget Inspector found 1 project elements in .slnx file
+
+ProjectFileDependency: Newtonsoft.Json &gt;= 13.0.1
+
+ProjectFileDependency: Newtonsoft.Json &gt; 13.0.1
+
+ProjectFileDependency: Newtonsoft.Json &gt;= 13.0.1 &lt;= 13.0.1
+
+ProjectFileDependency: Newtonsoft.Json &gt;= 12.0.1 &lt; 13.0.1
+
+ProjectFileDependency: Newtonsoft.Json &gt; 12.0.1 &lt;= 13.0.1
+
+ProjectFileDependency: Newtonsoft.Json &gt; 12.0.1 &lt; 13.0.1
+
+ProjectFileDependency: Newtonsoft.Json &lt;= 13.0.1
+
+ProjectFileDependency: Newtonsoft.Json &lt; 13.0.1
+
+</system-out>
+    <system-err></system-err>
+  </testsuite>
+</testsuites>
