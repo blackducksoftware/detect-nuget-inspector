@@ -7,7 +7,7 @@ buildscript {
     }
 }
 
-ext.dotNetExec = project.hasProperty('dotNetExec') ? project.getProperty('dotNetExec') : 'dotnet7'
+ext.dotNetExec = project.hasProperty('dotNetExec') ? project.getProperty('dotNetExec') : 'dotnet8'
 
 group 'com.blackduck.integration'
 version = '2.6.1-SIGQA6-SNAPSHOT'
