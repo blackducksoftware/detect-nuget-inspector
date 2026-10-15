@@ -86,6 +86,34 @@ public class ProjectJsonResolverTests
     }
 
     [TestMethod]
+    public void CreatePackageSpecFromJsonPreservesRootAndFrameworkDependencies()
+    {
+        JObject packageSpecJsonObject = JObject.Parse(@"{
+            ""dependencies"": {
+                ""Root.String"": ""1.2.3"",
+                ""Root.Object"": { ""version"": ""[4.0.0,5.0.0)"", ""type"": ""build"" }
+            },
+            ""frameworks"": {
+                ""net8.0"": { ""dependencies"": { ""Scoped.Package"": ""[2.0.0,3.0.0)"" } }
+            }
+        }");
+        var resolver = new ProjectJsonResolver("ProjectName", String.Empty);
+
+        var result = resolver.CreatePackageSpecFromJson("ProjectName", packageSpecJsonObject);
+
+        CollectionAssert.AreEquivalent(
+            new[] { "Root.String:1.2.3", "Root.Object:[4.0.0,5.0.0)" },
+            result.Dependencies.Select(dependency =>
+                dependency.Name + ":" + dependency.LibraryRange.VersionRange?.OriginalString).ToArray());
+        Assert.AreEqual(1, result.TargetFrameworks.Count);
+        Assert.AreEqual("net8.0", result.TargetFrameworks.Single().FrameworkName.GetShortFolderName());
+        CollectionAssert.AreEqual(
+            new[] { "Scoped.Package:[2.0.0,3.0.0)" },
+            result.TargetFrameworks.Single().Dependencies.Select(dependency =>
+                dependency.Name + ":" + dependency.LibraryRange.VersionRange?.OriginalString).ToArray());
+    }
+
+    [TestMethod]
     public void ProcessTestForNewFormat()
     {
         string projectName = "ProjectName";
