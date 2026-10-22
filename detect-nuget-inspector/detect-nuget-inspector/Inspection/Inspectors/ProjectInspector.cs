@@ -377,7 +377,7 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
             return PathUtil.Combine(projectDirectory, "obj", projectName + ".csproj.nuget.g.props");
         }
 
-        private static bool IsMissingMSBuildAssembly(IOException ex)
+        internal static bool IsMissingMSBuildAssembly(IOException ex)
         {
             string? fileName = ex switch
             {
