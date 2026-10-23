@@ -9,6 +9,7 @@ using System.IO;
 using System.Text;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using Blackduck.Detect.Nuget.Inspector.DependencyResolution;
 using Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget;
 using Blackduck.Detect.Nuget.Inspector.Inspection.Util;
 using Blackduck.Detect.Nuget.Inspector.Model;
@@ -213,7 +214,16 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                     {
                         referenceResolver = new ProjectReferenceResolver(Options.TargetPath, NugetService, Options.ExcludedDependencyTypes);
                     }
-                    var projectReferencesResult = referenceResolver.Process();
+                    DependencyResult projectReferencesResult;
+                    try
+                    {
+                        projectReferencesResult = referenceResolver.Process();
+                    }
+                    catch (IOException ex) when (IsMissingMSBuildAssembly(ex))
+                    {
+                        Console.WriteLine("MSBuild unavailable; using backup XML resolver: " + ex.Message);
+                        projectReferencesResult = new DependencyResult { Success = false };
+                    }
                     if (projectReferencesResult.Success)
                     {
                         Console.WriteLine("Reference resolver succeeded.");
@@ -365,6 +375,17 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
         private string CreateProjectNugetgPropertyPath(string projectDirectory, string projectName)
         {
             return PathUtil.Combine(projectDirectory, "obj", projectName + ".csproj.nuget.g.props");
+        }
+
+        internal static bool IsMissingMSBuildAssembly(IOException ex)
+        {
+            string? fileName = ex switch
+            {
+                FileNotFoundException notFound => notFound.FileName,
+                FileLoadException loadFailure => loadFailure.FileName,
+                _ => null
+            };
+            return fileName?.StartsWith("Microsoft.Build", StringComparison.Ordinal) == true;
         }
 
         private string GetProjectAssetsJsonPathFromNugetProperty(string projectDirectory, string projectName)

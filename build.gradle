@@ -7,10 +7,10 @@ buildscript {
     }
 }
 
-ext.dotNetExec = project.hasProperty('dotNetExec') ? project.getProperty('dotNetExec') : 'dotnet6'
+ext.dotNetExec = project.hasProperty('dotNetExec') ? project.getProperty('dotNetExec') : 'dotnet8'
 
 group 'com.blackduck.integration'
-version = '2.6.1-SIGQA3-SNAPSHOT'
+version = '2.6.1-SIGQA9-SNAPSHOT'
 
 apply plugin: 'com.blackduck.integration.solution'
 apply plugin: 'distribution'
@@ -59,6 +59,7 @@ dotNetSolutions.each { os, buildCmd ->
         description "Create executable for ${os} in directory : ${buildOutputDir}"
         def buildCommand = [dotNetExec, 'publish', 'detect-nuget-inspector/detect-nuget-inspector.sln', '-r', "${buildCmd}", '-o', buildOutputDir, '--force', "/p:Version=${project.version}"]
         doFirst {
+            delete buildOutputDir
             logger.lifecycle("Running ${dotNetExec} for OS '${os}':: " + buildCommand.toString())
         }
         doLast {

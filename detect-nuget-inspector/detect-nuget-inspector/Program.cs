@@ -1,12 +1,22 @@
 ﻿using Microsoft.Build.Locator;
 using Blackduck.Detect.Nuget.Inspector.Configuration;
 using Blackduck.Detect.Nuget.Inspector.Inspection;
+using System.Diagnostics;
 using System.Reflection;
 
 class Program
 {
     public static void Main(string[] args)
     {
+        AppDomain.CurrentDomain.AssemblyLoad += (sender, eventArgs) =>
+        {
+            Assembly assembly = eventArgs.LoadedAssembly;
+            if (assembly.GetName().Name == "Microsoft.Build")
+            {
+                string? version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+                Trace.WriteLine($"DEBUG: MSBuild loaded: {assembly.Location} (Version: {version ?? assembly.GetName().Version?.ToString()})");
+            }
+        };
 
         try
         {
