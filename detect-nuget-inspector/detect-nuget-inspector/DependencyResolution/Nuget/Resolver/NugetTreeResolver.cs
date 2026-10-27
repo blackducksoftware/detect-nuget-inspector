@@ -12,10 +12,13 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
 
         private NugetSearchService nuget;
         private Model.PackageSetBuilder builder = new Model.PackageSetBuilder();
+        private ISet<string>? FailedPackageIdentities;
 
-        public NugetTreeResolver(NugetSearchService service)
+        // A null tracker keeps the original DependenciesForPackage path and its logging; PRR/PXR alone pass a tracker, so packages.config stays unaffected.
+        public NugetTreeResolver(NugetSearchService service, ISet<string>? failedPackageIdentities = null)
         {
             nuget = service;
+            FailedPackageIdentities = failedPackageIdentities;
         }
 
         public HashSet<Model.PackageSet> GetPackageList()
@@ -45,7 +48,21 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
             var packageId = new Model.PackageId(packageDependency.Name, package.Identity.Version.ToNormalizedString());
             HashSet<Model.PackageId> dependencies = new HashSet<Model.PackageId>();
 
-            var packages = nuget.DependenciesForPackage(package.Identity, packageDependency.Framework);
+            IEnumerable<PackageDependency> packages;
+            if (FailedPackageIdentities == null)
+            {
+                packages = nuget.DependenciesForPackage(package.Identity, packageDependency.Framework);
+            }
+            else if (!nuget.TryDependenciesForPackage(package.Identity, packageDependency.Framework, out packages))
+            {
+                string packageIdentity = package.Identity.ToString();
+                if (!FailedPackageIdentities.Contains(packageIdentity))
+                {
+                    string framework = packageDependency.Framework?.GetShortFolderName() ?? "null";
+                    Console.WriteLine($"Unable to resolve transitive dependencies for {package.Identity.Id} {package.Identity.Version} (TFM: {framework}).");
+                }
+                FailedPackageIdentities.Add(packageIdentity);
+            }
 
             foreach (PackageDependency dependency in packages)
             {
@@ -69,7 +86,7 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
 
                     if (!builder.DoesPackageExist(id))
                     {
-                        Add(new NugetDependency(dependency.Id, dependency.VersionRange, packageDependency.Framework));
+                        Add(new NugetDependency(dependency.Id, dependency.VersionRange, packageDependency.Framework!));
                     }
                 }
             }

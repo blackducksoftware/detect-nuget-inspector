@@ -203,15 +203,16 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                 }
                 else
                 {
+                    var step6FailedPackageIdentities = new HashSet<string>();
                     Console.WriteLine("Attempting reference resolver: " + Options.TargetPath);
                     ProjectReferenceResolver referenceResolver;
                     if (CentrallyManagedPackages != null && CentrallyManagedPackages.Count > 0)
                     {
-                        referenceResolver = new ProjectReferenceResolver(Options.TargetPath, NugetService, Options.ExcludedDependencyTypes, CentrallyManagedPackages, CheckVersionOverride);
+                        referenceResolver = new ProjectReferenceResolver(Options.TargetPath, NugetService, Options.ExcludedDependencyTypes, CentrallyManagedPackages, CheckVersionOverride, step6FailedPackageIdentities);
                     }
                     else
                     {
-                        referenceResolver = new ProjectReferenceResolver(Options.TargetPath, NugetService, Options.ExcludedDependencyTypes);
+                        referenceResolver = new ProjectReferenceResolver(Options.TargetPath, NugetService, Options.ExcludedDependencyTypes, step6FailedPackageIdentities);
                     }
                     var projectReferencesResult = referenceResolver.Process();
                     if (projectReferencesResult.Success)
@@ -227,17 +228,23 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                         ProjectXmlResolver xmlResolver;
                         if (CentrallyManagedPackages != null && CentrallyManagedPackages.Count > 0)
                         {
-                            xmlResolver = new ProjectXmlResolver(Options.TargetPath, NugetService, Options.ExcludedDependencyTypes, CentrallyManagedPackages, CheckVersionOverride);
+                            xmlResolver = new ProjectXmlResolver(Options.TargetPath, NugetService, Options.ExcludedDependencyTypes, CentrallyManagedPackages, CheckVersionOverride, step6FailedPackageIdentities);
                         }
                         else
                         {
-                            xmlResolver = new ProjectXmlResolver(Options.TargetPath, NugetService, Options.ExcludedDependencyTypes);
+                            xmlResolver = new ProjectXmlResolver(Options.TargetPath, NugetService, Options.ExcludedDependencyTypes, step6FailedPackageIdentities);
                         }
                         var xmlResult = xmlResolver.Process();
                         projectNode.Version = xmlResult.ProjectVersion;
                         projectNode.Packages = xmlResult.Packages;
                         projectNode.Dependencies = xmlResult.Dependencies;
                         projectNode.InspectedFiles.Add(Options.TargetPath);
+                    }
+
+                    if (step6FailedPackageIdentities.Count > 0)
+                    {
+                        // One per-project summary avoids per-package noise in the scan log.
+                        Console.WriteLine($"Transitive dependency information could not be resolved for {step6FailedPackageIdentities.Count} package(s).");
                     }
                 }
 

@@ -6,6 +6,7 @@ using System.Xml;
 using Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget;
 using Blackduck.Detect.Nuget.Inspector.Inspection.Util;
 using Blackduck.Detect.Nuget.Inspector.Model;
+using NuGet.Frameworks;
 
 namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
 {
@@ -17,15 +18,17 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
         private HashSet<PackageId> CentrallyManagedPackages;
         private bool CheckVersionOverride;
         private string ExcludedDependencyTypes;
+        private ISet<string>? FailedPackageIdentities;
 
-        public ProjectXmlResolver(string projectPath, NugetSearchService nugetSearchService, string excludedDependencyTypes)
+        public ProjectXmlResolver(string projectPath, NugetSearchService nugetSearchService, string excludedDependencyTypes, ISet<string>? failedPackageIdentities = null)
         {
             ProjectPath = projectPath;
             NugetSearchService = nugetSearchService;
             ExcludedDependencyTypes = excludedDependencyTypes;
+            FailedPackageIdentities = failedPackageIdentities;
         }
         
-        public ProjectXmlResolver(string projectPath, NugetSearchService nugetSearchService, string excludedDependencyTypes, HashSet<PackageId> centrallyManagedPackages, bool checkVersionOverride): this(projectPath, nugetSearchService, excludedDependencyTypes)
+        public ProjectXmlResolver(string projectPath, NugetSearchService nugetSearchService, string excludedDependencyTypes, HashSet<PackageId> centrallyManagedPackages, bool checkVersionOverride, ISet<string>? failedPackageIdentities = null): this(projectPath, nugetSearchService, excludedDependencyTypes, failedPackageIdentities)
         {
             CentrallyManagedPackages = centrallyManagedPackages;
             CheckVersionOverride = checkVersionOverride;
@@ -35,7 +38,7 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
         public DependencyResult Process()
         {
             var result = new DependencyResult();
-            var tree = new NugetTreeResolver(NugetSearchService);
+            var tree = new NugetTreeResolver(NugetSearchService, FailedPackageIdentities);
             
             // .NET core default version
             result.ProjectVersion = "1.0.0";
@@ -43,6 +46,14 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
 
             XmlDocument doc = new XmlDocument();
             doc.Load(ProjectPath);
+            // PXR reads raw XML, so unexpanded $(...) values are rejected and keep the null-framework fallback.
+            List<NuGetFramework> targetFrameworks = TargetFrameworkHelper.Parse(
+                GetRawFrameworkValues(doc, "TargetFramework"),
+                GetRawFrameworkValues(doc, "TargetFrameworks"));
+            if (targetFrameworks.Count == 0)
+            {
+                Console.WriteLine("Target framework could not be determined; using framework-independent dependency lookup.");
+            }
 
             XmlNodeList versionNodes = doc.GetElementsByTagName("Version");
             if (versionNodes != null && versionNodes.Count > 0)
@@ -111,7 +122,7 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
                                 
                                 if (!String.IsNullOrWhiteSpace(versionOverrideStr) && CheckVersionOverride)
                                 { 
-                                    addNugetDependency(tree, include, versionOverrideStr);
+                                    addNugetDependency(tree, include, versionOverrideStr, targetFrameworks);
                                 }
                                 else if (!String.IsNullOrWhiteSpace(versionOverrideStr) && !CheckVersionOverride)
                                 {
@@ -119,14 +130,14 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
                                 }
                                 else
                                 {
-                                    addNugetDependency(tree, include, pkg.Version);
+                                    addNugetDependency(tree, include, pkg.Version, targetFrameworks);
                                 }
                             }
                             else
                             {
                                 if (!String.IsNullOrWhiteSpace(versionStr))
                                 {
-                                    addNugetDependency(tree, include, versionStr);
+                                    addNugetDependency(tree, include, versionStr, targetFrameworks);
                                 }
                             }
                         }
@@ -148,10 +159,28 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
             return result;
         }
 
-        private void addNugetDependency(NugetTreeResolver tree, string include, string version)
+        private static string GetRawFrameworkValues(XmlDocument doc, string elementName)
         {
-            var dep = new NugetDependency(include, NuGet.Versioning.VersionRange.Parse(version));
-            tree.Add(dep);
+            return string.Join(";", doc.GetElementsByTagName(elementName)
+                .Cast<XmlNode>()
+                .Where(node => node.NodeType != XmlNodeType.Comment)
+                .Select(node => node.InnerText));
+        }
+
+        private void addNugetDependency(NugetTreeResolver tree, string include, string version, List<NuGetFramework> targetFrameworks)
+        {
+            var versionRange = NuGet.Versioning.VersionRange.Parse(version);
+            if (targetFrameworks.Count == 0)
+            {
+                tree.Add(new NugetDependency(include, versionRange));
+                return;
+            }
+
+            // Keep one merged graph across TFMs, matching the lock-file resolver output.
+            foreach (NuGetFramework framework in targetFrameworks)
+            {
+                tree.Add(new NugetDependency(include, versionRange, framework));
+            }
         }
     }
 }

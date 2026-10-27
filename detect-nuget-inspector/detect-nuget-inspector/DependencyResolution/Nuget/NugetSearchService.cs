@@ -209,6 +209,31 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
             return new List<PackageDependency>();
         }
 
+        // This opt-in API distinguishes lookup failures from successful empty dependency groups without changing existing callers.
+        public bool TryDependenciesForPackage(PackageIdentity identity, NuGet.Frameworks.NuGetFramework framework, out IEnumerable<PackageDependency> dependencies)
+        {
+            foreach (DependencyInfoResource dependencyInfoResource in DependencyInfoResourceList)
+            {
+                try
+                {
+                    var context = new SourceCacheContext();
+                    var infoTask = dependencyInfoResource.ResolvePackage(identity, framework, cacheContext: context, log: new NugetLogger(), token: CancellationToken.None);
+                    var result = infoTask.Result;
+                    if (result != null)
+                    {
+                        dependencies = result.Dependencies ?? new List<PackageDependency>();
+                        return true;
+                    }
+                }
+                catch (Exception)
+                {
+                }
+            }
+
+            dependencies = new List<PackageDependency>();
+            return false;
+        }
+
         private bool FrameworksMatch(PackageDependencyGroup framework1, NugetFramework framework2)
         {
             if (framework1.TargetFramework.IsAny)
