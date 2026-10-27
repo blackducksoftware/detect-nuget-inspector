@@ -8,6 +8,7 @@ using Microsoft.Build.Exceptions;
 using Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget;
 using Blackduck.Detect.Nuget.Inspector.Inspection.Util;
 using Blackduck.Detect.Nuget.Inspector.Model;
+using NuGet.Frameworks;
 
 namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
 {
@@ -19,15 +20,17 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
         private HashSet<PackageId> CentrallyManagedPackages;
         private bool CheckVersionOverride;
         private string ExcludedDependencyTypes;
+        private ISet<string>? FailedPackageIdentities;
         
-        public ProjectReferenceResolver(string projectPath, NugetSearchService nugetSearchService, String excludedDependencyTypes)
+        public ProjectReferenceResolver(string projectPath, NugetSearchService nugetSearchService, String excludedDependencyTypes, ISet<string>? failedPackageIdentities = null)
         {
             ProjectPath = projectPath;
             NugetSearchService = nugetSearchService;
             ExcludedDependencyTypes = excludedDependencyTypes;
+            FailedPackageIdentities = failedPackageIdentities;
         }
         
-        public ProjectReferenceResolver(string projectPath, NugetSearchService nugetSearchService, String excludedDependencyTypes, HashSet<PackageId> centrallyManagedPackages, bool checkVersionOverride): this(projectPath, nugetSearchService, excludedDependencyTypes)
+        public ProjectReferenceResolver(string projectPath, NugetSearchService nugetSearchService, String excludedDependencyTypes, HashSet<PackageId> centrallyManagedPackages, bool checkVersionOverride, ISet<string>? failedPackageIdentities = null): this(projectPath, nugetSearchService, excludedDependencyTypes, failedPackageIdentities)
         {
             CentrallyManagedPackages = centrallyManagedPackages;
             CheckVersionOverride = checkVersionOverride;
@@ -37,9 +40,17 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
         {
             try
             {
-                var tree = new NugetTreeResolver(NugetSearchService);
+                var tree = new NugetTreeResolver(NugetSearchService, FailedPackageIdentities);
 
                 Microsoft.Build.Evaluation.Project proj = new Microsoft.Build.Evaluation.Project(ProjectPath);
+                // MSBuild evaluates $(...) properties here, unlike PXR's raw XML read.
+                List<NuGetFramework> targetFrameworks = TargetFrameworkHelper.Parse(
+                    proj.GetPropertyValue("TargetFramework"),
+                    proj.GetPropertyValue("TargetFrameworks"));
+                if (targetFrameworks.Count == 0)
+                {
+                    Console.WriteLine("Target framework could not be determined; using framework-independent dependency lookup.");
+                }
 
                 List<NugetDependency> deps = new List<NugetDependency>();
                 foreach (ProjectItem reference in proj.GetItemsIgnoringCondition("PackageReference"))
@@ -64,7 +75,7 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
                             if (CheckVersionOverride && versionOverrideMetaData != null)
                             {
                                 addNugetDependency(reference.EvaluatedInclude, versionOverrideMetaData.EvaluatedValue,
-                                    deps);
+                                    deps, targetFrameworks);
                             }
                             else if (!CheckVersionOverride && versionOverrideMetaData != null)
                             {
@@ -73,12 +84,12 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
                             }
                             else
                             {
-                                addNugetDependency(reference.EvaluatedInclude, pkg.Version, deps);
+                                addNugetDependency(reference.EvaluatedInclude, pkg.Version, deps, targetFrameworks);
                             }
                         }
                         else if (versionMetaData != null)
                         {
-                            addNugetDependency(reference.EvaluatedInclude, versionMetaData.EvaluatedValue, deps);
+                            addNugetDependency(reference.EvaluatedInclude, versionMetaData.EvaluatedValue, deps, targetFrameworks);
                         }
                         else
                         {
@@ -114,8 +125,7 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
                             version = packageInfoAfterVersionKey;
                         }
 
-                        var dep = new NugetDependency(artifact, NuGet.Versioning.VersionRange.Parse(version));
-                        deps.Add(dep);
+                        addNugetDependency(artifact, NuGet.Versioning.VersionRange.Parse(version), deps, targetFrameworks);
                     }
                 }
                 ProjectCollection.GlobalProjectCollection.UnloadProject(proj);
@@ -152,13 +162,27 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
             }
         }
         
-        private void addNugetDependency(string include, string versionMetadata, List<NugetDependency> deps)
+        private void addNugetDependency(string include, string versionMetadata, List<NugetDependency> deps, List<NuGetFramework> targetFrameworks)
         {
             NuGet.Versioning.VersionRange version;
             if (NuGet.Versioning.VersionRange.TryParse(versionMetadata, out version))
             {
-                var dep = new NugetDependency(include, version);
-                deps.Add(dep);
+                addNugetDependency(include, version, deps, targetFrameworks);
+            }
+        }
+
+        private static void addNugetDependency(string include, NuGet.Versioning.VersionRange version, List<NugetDependency> deps, List<NuGetFramework> targetFrameworks)
+        {
+            if (targetFrameworks.Count == 0)
+            {
+                deps.Add(new NugetDependency(include, version));
+                return;
+            }
+
+            // Keep one merged graph across TFMs, matching the lock-file resolver output.
+            foreach (NuGetFramework framework in targetFrameworks)
+            {
+                deps.Add(new NugetDependency(include, version, framework));
             }
         }
     }
