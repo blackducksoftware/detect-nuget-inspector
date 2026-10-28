@@ -150,7 +150,12 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
 
         private void addNugetDependency(NugetTreeResolver tree, string include, string version)
         {
-            var dep = new NugetDependency(include, NuGet.Versioning.VersionRange.Parse(version));
+            if (!NuGet.Versioning.VersionRange.TryParse(version, out var versionRange))
+            {
+                Console.WriteLine($"WARNING: Skipping package {include}: unresolved version '{version}' (MSBuild properties can't be evaluated without a .NET SDK).");
+                return;
+            }
+            var dep = new NugetDependency(include, versionRange);
             tree.Add(dep);
         }
     }
