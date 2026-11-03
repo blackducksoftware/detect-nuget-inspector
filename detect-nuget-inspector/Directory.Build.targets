@@ -1,0 +1,20 @@
+<Project>
+  <Target Name="EnsureMSBuildAssembliesNotCopied" AfterTargets="ResolvePackageAssets">
+    <ItemGroup>
+      <_InspectorMSBuildPackages Include="@(RuntimeCopyLocalItems)"
+        Condition="'%(RuntimeCopyLocalItems.NuGetPackageId)' == 'Microsoft.Build' or
+                   '%(RuntimeCopyLocalItems.NuGetPackageId)' == 'Microsoft.Build.Framework' or
+                   '%(RuntimeCopyLocalItems.NuGetPackageId)' == 'Microsoft.Build.Utilities.Core' or
+                   '%(RuntimeCopyLocalItems.NuGetPackageId)' == 'Microsoft.Build.Tasks.Core' or
+                   '%(RuntimeCopyLocalItems.NuGetPackageId)' == 'Microsoft.Build.Engine' or
+                   '%(RuntimeCopyLocalItems.NuGetPackageId)' == 'Microsoft.Build.Conversion.Core' or
+                   '%(RuntimeCopyLocalItems.NuGetPackageId)' == 'Microsoft.Build.Runtime' or
+                   '%(RuntimeCopyLocalItems.NuGetPackageId)' == 'Microsoft.Build.Localization' or
+                   '%(RuntimeCopyLocalItems.NuGetPackageId)' == 'Microsoft.NET.StringTools'" />
+      <_InspectorMSBuildRuntimeAssets Include="@(_InspectorMSBuildPackages->WithMetadataValue('CopyLocal', 'true')->WithMetadataValue('AssetType', 'runtime'))" />
+    </ItemGroup>
+    <Error Condition="'@(_InspectorMSBuildRuntimeAssets)' != ''"
+      Code="MSBL001"
+      Text="MSBuild runtime asset '%(_InspectorMSBuildRuntimeAssets.Identity)' must come from the registered SDK. Reference its package with ExcludeAssets=&quot;runtime&quot; and PrivateAssets=&quot;all&quot;." />
+  </Target>
+</Project>

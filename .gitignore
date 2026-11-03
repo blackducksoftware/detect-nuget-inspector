@@ -8,6 +8,7 @@ detect-nuget-inspector/detect-nuget-inspector-tests/obj/
 
 
 .idea
+.claude
 *.iml
 
 # Ignore Gradle project-specific cache directory
