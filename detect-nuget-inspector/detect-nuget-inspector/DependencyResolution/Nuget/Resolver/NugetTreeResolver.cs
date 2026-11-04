@@ -12,10 +12,13 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
 
         private NugetSearchService nuget;
         private Model.PackageSetBuilder builder = new Model.PackageSetBuilder();
+        private ISet<string>? FailedPackageIdentities;
 
-        public NugetTreeResolver(NugetSearchService service)
+        // Failure tracking is opt-in so packages.config retains its separate lookup and logging behavior.
+        public NugetTreeResolver(NugetSearchService service, ISet<string>? failedPackageIdentities = null)
         {
             nuget = service;
+            FailedPackageIdentities = failedPackageIdentities;
         }
 
         public HashSet<Model.PackageSet> GetPackageList()
@@ -37,7 +40,11 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
             if (package == null)
             {
                 var version = packageDependency.VersionRange.MinVersion.ToNormalizedString();
-                Console.WriteLine($"Nuget was unable to find the package '{packageDependency.Name}' with version range '{packageDependency.VersionRange}', assuming it is using version '{version}'");
+                // Deduplicate only tracked scans so packages.config still logs each failed lookup.
+                if (FailedPackageIdentities == null || FailedPackageIdentities.Add(packageDependency.Name + "|" + packageDependency.VersionRange))
+                {
+                    Console.WriteLine($"Nuget was unable to find the package '{packageDependency.Name}' with version range '{packageDependency.VersionRange}', assuming it is using version '{version}'");
+                }
                 builder.AddOrUpdatePackage(new Model.PackageId(packageDependency.Name, version));
                 return;
             }
@@ -45,7 +52,21 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
             var packageId = new Model.PackageId(packageDependency.Name, package.Identity.Version.ToNormalizedString());
             HashSet<Model.PackageId> dependencies = new HashSet<Model.PackageId>();
 
-            var packages = nuget.DependenciesForPackage(package.Identity, packageDependency.Framework);
+            IEnumerable<PackageDependency> packages;
+            if (FailedPackageIdentities == null)
+            {
+                packages = nuget.DependenciesForPackage(package.Identity, packageDependency.Framework);
+            }
+            else if (!nuget.TryDependenciesForPackage(package.Identity, packageDependency.Framework, out packages))
+            {
+                string packageIdentity = package.Identity.ToString();
+                if (!FailedPackageIdentities.Contains(packageIdentity))
+                {
+                    string framework = packageDependency.Framework?.GetShortFolderName() ?? "null";
+                    Console.WriteLine($"Unable to resolve transitive dependencies for {package.Identity.Id} {package.Identity.Version} (TFM: {framework}).");
+                }
+                FailedPackageIdentities.Add(packageIdentity);
+            }
 
             foreach (PackageDependency dependency in packages)
             {
@@ -60,7 +81,10 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
                     var depPackage = nuget.FindBestPackage(dependency.Id, dependency.VersionRange);
                     if (depPackage == null)
                     {
-                        Console.WriteLine($"Unable to find package for '{dependency.Id}' version '{dependency.VersionRange}'");
+                        if (FailedPackageIdentities == null || FailedPackageIdentities.Add(dependency.Id + "|" + dependency.VersionRange))
+                        {
+                            Console.WriteLine($"Unable to find package for '{dependency.Id}' version '{dependency.VersionRange}'");
+                        }
                         continue;
                     }
 
@@ -69,7 +93,7 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
 
                     if (!builder.DoesPackageExist(id))
                     {
-                        Add(new NugetDependency(dependency.Id, dependency.VersionRange, packageDependency.Framework));
+                        Add(new NugetDependency(dependency.Id, dependency.VersionRange, packageDependency.Framework!));
                     }
                 }
             }
