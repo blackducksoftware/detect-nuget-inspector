@@ -280,6 +280,81 @@ public class ProjectTargetFrameworkBehaviorTests
         }
     }
 
+    [DataTestMethod]
+    [DataRow(false, DisplayName = "PRR")]
+    [DataRow(true, DisplayName = "PXR")]
+    public void ProjectFileResolversExpandSharedPackageForEachFramework(bool useXmlResolver)
+    {
+        if (!MSBuildLocator.IsRegistered)
+        {
+            MSBuildLocator.RegisterDefaults();
+        }
+
+        string temporaryRoot = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        string feedDirectory = Path.Combine(temporaryRoot, "feed");
+        Directory.CreateDirectory(feedDirectory);
+        try
+        {
+            CreatePackage(feedDirectory, "SharedRoot", "1.0.0", ("net48", "SharedPackage"), ("net8.0", "SharedPackage"));
+            CreatePackage(feedDirectory, "SharedPackage", "1.0.0", ("net48", "Net48Only"), ("net8.0", "Net8Only"));
+            CreatePackage(feedDirectory, "Net48Only", "1.0.0");
+            CreatePackage(feedDirectory, "Net8Only", "1.0.0");
+            var service = new NugetSearchService(feedDirectory, null!);
+
+            string resolverName = useXmlResolver ? "PXR" : "PRR";
+            string projectPath = WriteProjectWithReferences(temporaryRoot, "<TargetFrameworks>net48;net8.0</TargetFrameworks>", "SharedRoot");
+            var failedPackages = new HashSet<string>();
+            DependencyResult result = useXmlResolver
+                ? new ProjectXmlResolver(projectPath, service, "NONE", failedPackages).Process()
+                : new ProjectReferenceResolver(projectPath, service, "NONE", failedPackages).Process();
+
+            var shared = result.Packages.Single(package => package.PackageId.Name == "SharedPackage");
+            string[] children = shared.Dependencies.Select(dependency => dependency.Name).ToArray();
+            TestContext.WriteLine($"{resolverName} SharedPackage children: {string.Join(", ", children)}");
+            CollectionAssert.AreEquivalent(new[] { "Net48Only", "Net8Only" }, children, resolverName + " SharedPackage children");
+            Assert.AreEqual(0, failedPackages.Count, resolverName + " failed lookups");
+        }
+        finally
+        {
+            Directory.Delete(temporaryRoot, recursive: true);
+        }
+    }
+
+    [DataTestMethod]
+    [DataRow(false, DisplayName = "PRR")]
+    [DataRow(true, DisplayName = "PXR")]
+    public void ProjectFileResolversKeepDirectReferencesInCrossFrameworkCycle(bool useXmlResolver)
+    {
+        if (!MSBuildLocator.IsRegistered)
+        {
+            MSBuildLocator.RegisterDefaults();
+        }
+
+        string temporaryRoot = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        string feedDirectory = Path.Combine(temporaryRoot, "feed");
+        Directory.CreateDirectory(feedDirectory);
+        try
+        {
+            CreatePackage(feedDirectory, "CycleA", "1.0.0", ("net8.0", "CycleB"));
+            CreatePackage(feedDirectory, "CycleB", "1.0.0", ("net48", "CycleA"));
+            var service = new NugetSearchService(feedDirectory, null!);
+
+            string resolverName = useXmlResolver ? "PXR" : "PRR";
+            string projectPath = WriteProjectWithReferences(temporaryRoot, "<TargetFrameworks>net48;net8.0</TargetFrameworks>", "CycleA", "CycleB");
+            DependencyResult result = useXmlResolver
+                ? new ProjectXmlResolver(projectPath, service, "NONE", new HashSet<string>()).Process()
+                : new ProjectReferenceResolver(projectPath, service, "NONE", new HashSet<string>()).Process();
+
+            string[] direct = result.Dependencies.Select(dependency => dependency.Name).ToArray();
+            TestContext.WriteLine($"{resolverName} direct dependencies: [{string.Join(", ", direct)}]");
+            CollectionAssert.AreEquivalent(new[] { "CycleA", "CycleB" }, direct, resolverName + " direct dependencies");
+        }
+        finally
+        {
+            Directory.Delete(temporaryRoot, recursive: true);
+        }
+    }
+
     [TestMethod]
     public void ProjectInspectorLogsOneSummaryForStep6Failures()
     {
@@ -411,6 +486,16 @@ public class ProjectTargetFrameworkBehaviorTests
         File.WriteAllText(projectPath,
             $"<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup>{projectProperties}</PropertyGroup>" +
             "<ItemGroup><PackageReference Include=\"FrameworkProbe\" Version=\"1.0.0\" /></ItemGroup></Project>");
+        return projectPath;
+    }
+
+    private static string WriteProjectWithReferences(string projectDirectory, string projectProperties, params string[] packageIds)
+    {
+        string projectPath = Path.Combine(projectDirectory, "fixture.csproj");
+        string references = string.Concat(packageIds.Select(id => $"<PackageReference Include=\"{id}\" Version=\"1.0.0\" />"));
+        File.WriteAllText(projectPath,
+            $"<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup>{projectProperties}</PropertyGroup>" +
+            $"<ItemGroup>{references}</ItemGroup></Project>");
         return projectPath;
     }
 

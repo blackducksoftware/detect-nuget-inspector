@@ -38,7 +38,7 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
         public DependencyResult Process()
         {
             var result = new DependencyResult();
-            var tree = new NugetTreeResolver(NugetSearchService, FailedPackageIdentities);
+            var deps = new List<NugetDependency>();
             
             // .NET core default version
             result.ProjectVersion = "1.0.0";
@@ -122,7 +122,7 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
                                 
                                 if (!String.IsNullOrWhiteSpace(versionOverrideStr) && CheckVersionOverride)
                                 { 
-                                    addNugetDependency(tree, include, versionOverrideStr, targetFrameworks);
+                                    addNugetDependency(deps, include, versionOverrideStr);
                                 }
                                 else if (!String.IsNullOrWhiteSpace(versionOverrideStr) && !CheckVersionOverride)
                                 {
@@ -130,14 +130,14 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
                                 }
                                 else
                                 {
-                                    addNugetDependency(tree, include, pkg.Version, targetFrameworks);
+                                    addNugetDependency(deps, include, pkg.Version);
                                 }
                             }
                             else
                             {
                                 if (!String.IsNullOrWhiteSpace(versionStr))
                                 {
-                                    addNugetDependency(tree, include, versionStr, targetFrameworks);
+                                    addNugetDependency(deps, include, versionStr);
                                 }
                             }
                         }
@@ -145,7 +145,22 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
                 }
             }
 
-            result.Packages = tree.GetPackageList();
+            PackageSetBuilder? mergedBuilder = null;
+            // No valid TFM: keep the original single framework-independent tree.
+            if (targetFrameworks.Count == 0)
+            {
+                var tree = new NugetTreeResolver(NugetSearchService, FailedPackageIdentities);
+                foreach (var dep in deps)
+                {
+                    tree.Add(dep);
+                }
+                result.Packages = tree.GetPackageList();
+            }
+            else
+            {
+                mergedBuilder = FrameworkGraphMerger.Merge(NugetSearchService, FailedPackageIdentities, deps, targetFrameworks);
+                result.Packages = mergedBuilder.GetPackageList();
+            }
             result.Dependencies = new HashSet<PackageId>();
             foreach (var package in result.Packages)
             {
@@ -154,6 +169,12 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
                 {
                     result.Dependencies.Add(package.PackageId);
                 }
+            }
+
+            // Only merged TFM graphs can form the cycles that hide direct references from the root check above.
+            if (mergedBuilder != null)
+            {
+                FrameworkGraphMerger.AddUnreachableDirectReferences(result, mergedBuilder, deps);
             }
 
             return result;
@@ -167,25 +188,14 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
                 .Select(node => node.InnerText));
         }
 
-        private void addNugetDependency(NugetTreeResolver tree, string include, string version, List<NuGetFramework> targetFrameworks)
+        private void addNugetDependency(List<NugetDependency> deps, string include, string version)
         {
             if (!NuGet.Versioning.VersionRange.TryParse(version, out var versionRange))
             {
                 Console.WriteLine($"WARNING: Skipping package {include}: unresolved version '{version}' (MSBuild properties can't be evaluated without a .NET SDK).");
                 return;
             }
-
-            if (targetFrameworks.Count == 0)
-            {
-                tree.Add(new NugetDependency(include, versionRange));
-                return;
-            }
-
-            // Keep one merged graph across TFMs, matching the lock-file resolver output.
-            foreach (NuGetFramework framework in targetFrameworks)
-            {
-                tree.Add(new NugetDependency(include, versionRange, framework));
-            }
+            deps.Add(new NugetDependency(include, versionRange));
         }
     }
 }

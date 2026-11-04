@@ -40,8 +40,6 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
         {
             try
             {
-                var tree = new NugetTreeResolver(NugetSearchService, FailedPackageIdentities);
-
                 Microsoft.Build.Evaluation.Project proj = new Microsoft.Build.Evaluation.Project(ProjectPath);
                 // MSBuild evaluates $(...) properties here, unlike PXR's raw XML read.
                 List<NuGetFramework> targetFrameworks = TargetFrameworkHelper.Parse(
@@ -75,7 +73,7 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
                             if (CheckVersionOverride && versionOverrideMetaData != null)
                             {
                                 addNugetDependency(reference.EvaluatedInclude, versionOverrideMetaData.EvaluatedValue,
-                                    deps, targetFrameworks);
+                                    deps);
                             }
                             else if (!CheckVersionOverride && versionOverrideMetaData != null)
                             {
@@ -84,12 +82,12 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
                             }
                             else
                             {
-                                addNugetDependency(reference.EvaluatedInclude, pkg.Version, deps, targetFrameworks);
+                                addNugetDependency(reference.EvaluatedInclude, pkg.Version, deps);
                             }
                         }
                         else if (versionMetaData != null)
                         {
-                            addNugetDependency(reference.EvaluatedInclude, versionMetaData.EvaluatedValue, deps, targetFrameworks);
+                            addNugetDependency(reference.EvaluatedInclude, versionMetaData.EvaluatedValue, deps);
                         }
                         else
                         {
@@ -125,20 +123,34 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
                             version = packageInfoAfterVersionKey;
                         }
 
-                        addNugetDependency(artifact, NuGet.Versioning.VersionRange.Parse(version), deps, targetFrameworks);
+                        var dep = new NugetDependency(artifact, NuGet.Versioning.VersionRange.Parse(version));
+                        deps.Add(dep);
                     }
                 }
                 ProjectCollection.GlobalProjectCollection.UnloadProject(proj);
 
-                foreach (var dep in deps)
+                PackageSetBuilder? mergedBuilder = null;
+                HashSet<PackageSet> packages;
+                // No valid TFM: keep the original single framework-independent tree.
+                if (targetFrameworks.Count == 0)
                 {
-                    tree.Add(dep);
+                    var tree = new NugetTreeResolver(NugetSearchService, FailedPackageIdentities);
+                    foreach (var dep in deps)
+                    {
+                        tree.Add(dep);
+                    }
+                    packages = tree.GetPackageList();
+                }
+                else
+                {
+                    mergedBuilder = FrameworkGraphMerger.Merge(NugetSearchService, FailedPackageIdentities, deps, targetFrameworks);
+                    packages = mergedBuilder.GetPackageList();
                 }
 
                 var result = new DependencyResult()
                 {
                     Success = true,
-                    Packages = tree.GetPackageList(),
+                    Packages = packages,
                     Dependencies = new HashSet<PackageId>()
                 };
 
@@ -149,6 +161,12 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
                     {
                         result.Dependencies.Add(package.PackageId);
                     }
+                }
+
+                // Only merged TFM graphs can form the cycles that hide direct references from the root check above.
+                if (mergedBuilder != null)
+                {
+                    FrameworkGraphMerger.AddUnreachableDirectReferences(result, mergedBuilder, deps);
                 }
 
                 return result;
@@ -162,27 +180,13 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
             }
         }
         
-        private void addNugetDependency(string include, string versionMetadata, List<NugetDependency> deps, List<NuGetFramework> targetFrameworks)
+        private void addNugetDependency(string include, string versionMetadata, List<NugetDependency> deps)
         {
             NuGet.Versioning.VersionRange version;
             if (NuGet.Versioning.VersionRange.TryParse(versionMetadata, out version))
             {
-                addNugetDependency(include, version, deps, targetFrameworks);
-            }
-        }
-
-        private static void addNugetDependency(string include, NuGet.Versioning.VersionRange version, List<NugetDependency> deps, List<NuGetFramework> targetFrameworks)
-        {
-            if (targetFrameworks.Count == 0)
-            {
-                deps.Add(new NugetDependency(include, version));
-                return;
-            }
-
-            // Keep one merged graph across TFMs, matching the lock-file resolver output.
-            foreach (NuGetFramework framework in targetFrameworks)
-            {
-                deps.Add(new NugetDependency(include, version, framework));
+                var dep = new NugetDependency(include, version);
+                deps.Add(dep);
             }
         }
     }
