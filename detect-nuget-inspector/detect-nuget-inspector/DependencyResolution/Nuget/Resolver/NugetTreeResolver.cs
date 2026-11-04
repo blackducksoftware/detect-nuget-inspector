@@ -14,7 +14,7 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
         private Model.PackageSetBuilder builder = new Model.PackageSetBuilder();
         private ISet<string>? FailedPackageIdentities;
 
-        // A null tracker keeps the original DependenciesForPackage path and its logging; PRR/PXR alone pass a tracker, so packages.config stays unaffected.
+        // Failure tracking is opt-in so packages.config retains its separate lookup and logging behavior.
         public NugetTreeResolver(NugetSearchService service, ISet<string>? failedPackageIdentities = null)
         {
             nuget = service;
@@ -40,7 +40,11 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
             if (package == null)
             {
                 var version = packageDependency.VersionRange.MinVersion.ToNormalizedString();
-                Console.WriteLine($"Nuget was unable to find the package '{packageDependency.Name}' with version range '{packageDependency.VersionRange}', assuming it is using version '{version}'");
+                // Deduplicate only tracked scans so packages.config still logs each failed lookup.
+                if (FailedPackageIdentities == null || FailedPackageIdentities.Add(packageDependency.Name + "|" + packageDependency.VersionRange))
+                {
+                    Console.WriteLine($"Nuget was unable to find the package '{packageDependency.Name}' with version range '{packageDependency.VersionRange}', assuming it is using version '{version}'");
+                }
                 builder.AddOrUpdatePackage(new Model.PackageId(packageDependency.Name, version));
                 return;
             }
@@ -77,7 +81,10 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Nuget
                     var depPackage = nuget.FindBestPackage(dependency.Id, dependency.VersionRange);
                     if (depPackage == null)
                     {
-                        Console.WriteLine($"Unable to find package for '{dependency.Id}' version '{dependency.VersionRange}'");
+                        if (FailedPackageIdentities == null || FailedPackageIdentities.Add(dependency.Id + "|" + dependency.VersionRange))
+                        {
+                            Console.WriteLine($"Unable to find package for '{dependency.Id}' version '{dependency.VersionRange}'");
+                        }
                         continue;
                     }
 

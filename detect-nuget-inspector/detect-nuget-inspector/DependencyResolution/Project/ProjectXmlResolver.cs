@@ -145,8 +145,22 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
                 }
             }
 
-            PackageSetBuilder? mergedBuilder = null;
-            // No valid TFM: keep the original single framework-independent tree.
+            if (doc.GetElementsByTagName("PackageReference").Cast<XmlNode>().Any(node =>
+                node.Attributes?["Condition"] != null ||
+                (node.ParentNode?.Name == "ItemGroup" && node.ParentNode.Attributes?["Condition"] != null)))
+            {
+                // MSBuild could not load the project; XML cannot evaluate conditions, and over-reporting is safer than omissions.
+                Console.WriteLine("Conditions on PackageReference items are not evaluated in the XML fallback; conditional references are resolved for all target frameworks.");
+            }
+            if (targetFrameworks.Count > 0)
+            {
+                var groups = targetFrameworks.ToDictionary(framework => framework, framework => deps);
+                var merged = FrameworkGraphMerger.Merge(NugetSearchService, FailedPackageIdentities, groups);
+                result.Packages = merged.Packages;
+                result.Dependencies = merged.Dependencies;
+                return result;
+            }
+            // Without a valid TFM, dependency lookup cannot select framework-specific groups.
             if (targetFrameworks.Count == 0)
             {
                 var tree = new NugetTreeResolver(NugetSearchService, FailedPackageIdentities);
@@ -156,11 +170,6 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
                 }
                 result.Packages = tree.GetPackageList();
             }
-            else
-            {
-                mergedBuilder = FrameworkGraphMerger.Merge(NugetSearchService, FailedPackageIdentities, deps, targetFrameworks);
-                result.Packages = mergedBuilder.GetPackageList();
-            }
             result.Dependencies = new HashSet<PackageId>();
             foreach (var package in result.Packages)
             {
@@ -169,12 +178,6 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
                 {
                     result.Dependencies.Add(package.PackageId);
                 }
-            }
-
-            // Only merged TFM graphs can form the cycles that hide direct references from the root check above.
-            if (mergedBuilder != null)
-            {
-                FrameworkGraphMerger.AddUnreachableDirectReferences(result, mergedBuilder, deps);
             }
 
             return result;

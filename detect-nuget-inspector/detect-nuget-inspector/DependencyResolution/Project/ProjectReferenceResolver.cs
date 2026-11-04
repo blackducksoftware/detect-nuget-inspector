@@ -51,6 +51,7 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
                 }
 
                 List<NugetDependency> deps = new List<NugetDependency>();
+                // Keep condition-ignoring references so OS conditions never drop reported dependencies; omissions are worse than extras.
                 foreach (ProjectItem reference in proj.GetItemsIgnoringCondition("PackageReference"))
                 {
                     bool containsPkg = CentrallyManagedPackages != null && CentrallyManagedPackages.Any(pkg => pkg.Name.Equals(reference.EvaluatedInclude));
@@ -97,6 +98,7 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
                     }
                 }
 
+                var packageReferences = deps.ToList();
                 foreach (ProjectItem reference in proj.GetItemsIgnoringCondition("Reference"))
                 {
                     if (reference.Xml != null && !String.IsNullOrWhiteSpace(reference.Xml.Include) && reference.Xml.Include.Contains("Version="))
@@ -127,30 +129,26 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
                         deps.Add(dep);
                     }
                 }
+                var globalProperties = new Dictionary<string, string>(proj.GlobalProperties);
                 ProjectCollection.GlobalProjectCollection.UnloadProject(proj);
 
-                PackageSetBuilder? mergedBuilder = null;
-                HashSet<PackageSet> packages;
-                // No valid TFM: keep the original single framework-independent tree.
-                if (targetFrameworks.Count == 0)
+                if (targetFrameworks.Count > 0)
                 {
-                    var tree = new NugetTreeResolver(NugetSearchService, FailedPackageIdentities);
-                    foreach (var dep in deps)
-                    {
-                        tree.Add(dep);
-                    }
-                    packages = tree.GetPackageList();
+                    var groups = GroupReferencesByFramework(deps, packageReferences, targetFrameworks, globalProperties);
+                    return FrameworkGraphMerger.Merge(NugetSearchService, FailedPackageIdentities, groups);
                 }
-                else
+
+                // Without a valid TFM, dependency lookup cannot select framework-specific groups.
+                var tree = new NugetTreeResolver(NugetSearchService, FailedPackageIdentities);
+                foreach (var dep in deps)
                 {
-                    mergedBuilder = FrameworkGraphMerger.Merge(NugetSearchService, FailedPackageIdentities, deps, targetFrameworks);
-                    packages = mergedBuilder.GetPackageList();
+                    tree.Add(dep);
                 }
 
                 var result = new DependencyResult()
                 {
                     Success = true,
-                    Packages = packages,
+                    Packages = tree.GetPackageList(),
                     Dependencies = new HashSet<PackageId>()
                 };
 
@@ -161,12 +159,6 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
                     {
                         result.Dependencies.Add(package.PackageId);
                     }
-                }
-
-                // Only merged TFM graphs can form the cycles that hide direct references from the root check above.
-                if (mergedBuilder != null)
-                {
-                    FrameworkGraphMerger.AddUnreachableDirectReferences(result, mergedBuilder, deps);
                 }
 
                 return result;
@@ -180,6 +172,111 @@ namespace Blackduck.Detect.Nuget.Inspector.DependencyResolution.Project
             }
         }
         
+        private Dictionary<NuGetFramework, List<NugetDependency>> GroupReferencesByFramework(
+            List<NugetDependency> references, List<NugetDependency> packageReferences,
+            List<NuGetFramework> frameworks, Dictionary<string, string> globalProperties)
+        {
+            var groups = new Dictionary<NuGetFramework, List<NugetDependency>>();
+            var matched = new HashSet<NugetDependency>();
+            var ambiguous = new HashSet<NugetDependency>();
+            foreach (NuGetFramework framework in frameworks)
+            {
+                using var collection = new ProjectCollection();
+                List<NugetDependency> evaluated;
+                try
+                {
+                    // Conditions and version properties depend on the target framework's MSBuild evaluation.
+                    var properties = new Dictionary<string, string>(globalProperties)
+                    {
+                        ["TargetFramework"] = framework.GetShortFolderName()
+                    };
+                    var project = new Microsoft.Build.Evaluation.Project(ProjectPath, properties, null, collection);
+                    evaluated = ReadEvaluatedPackageReferences(project);
+                }
+                catch (Exception exception) when (exception is InvalidProjectFileException || exception is IOException)
+                {
+                    Console.WriteLine($"Unable to evaluate target framework '{framework.GetShortFolderName()}'; resolving all reported references for this framework: {exception.Message}");
+                    groups.Add(framework, references.ToList());
+                    matched.UnionWith(packageReferences);
+                    continue;
+                }
+                finally
+                {
+                    collection.UnloadAllProjects();
+                }
+
+                foreach (NugetDependency item in evaluated.Where(item => !packageReferences.Any(reference => MatchesReference(reference, item))))
+                {
+                    ambiguous.UnionWith(packageReferences.Where(reference => string.Equals(reference.Name, item.Name, StringComparison.OrdinalIgnoreCase)));
+                }
+                var applicable = references.Where(reference => !packageReferences.Contains(reference) ||
+                    evaluated.Any(item => MatchesReference(reference, item))).ToList();
+                matched.UnionWith(applicable.Where(packageReferences.Contains));
+                groups.Add(framework, applicable);
+            }
+
+            foreach (NugetDependency reference in ambiguous)
+            {
+                // Preserve the reported version when per-framework properties prevent reliable matching.
+                Console.WriteLine($"PackageReference '{reference.Name}' version '{reference.VersionRange.OriginalString}' could not be matched unambiguously to target framework evaluations; resolving the reported reference for all target frameworks.");
+                foreach (var group in groups.Values)
+                {
+                    if (!group.Contains(reference))
+                    {
+                        group.Add(reference);
+                    }
+                }
+                matched.Add(reference);
+            }
+
+            foreach (NugetDependency reference in packageReferences.Where(reference => !matched.Contains(reference)))
+            {
+                // Retain references excluded everywhere rather than silently losing dependencies under non-framework conditions.
+                Console.WriteLine($"PackageReference '{reference.Name}' was excluded by its condition in every target framework evaluation; resolving it for all target frameworks.");
+                foreach (var group in groups.Values)
+                {
+                    if (!group.Contains(reference))
+                    {
+                        group.Add(reference);
+                    }
+                }
+            }
+            return groups;
+        }
+
+        private static bool MatchesReference(NugetDependency reference, NugetDependency evaluated)
+        {
+            return string.Equals(reference.Name, evaluated.Name, StringComparison.OrdinalIgnoreCase) &&
+                reference.VersionRange.OriginalString == evaluated.VersionRange.OriginalString;
+        }
+
+        private List<NugetDependency> ReadEvaluatedPackageReferences(Microsoft.Build.Evaluation.Project project)
+        {
+            var dependencies = new List<NugetDependency>();
+            foreach (ProjectItem item in project.GetItems("PackageReference"))
+            {
+                if (ExcludedDependencyTypeUtil.isDependencyTypeExcluded(ExcludedDependencyTypes, "DEV") &&
+                    item.Metadata.Any(metadata => metadata.Name == "PrivateAssets"))
+                {
+                    continue;
+                }
+                var central = CentrallyManagedPackages?.FirstOrDefault(package => package.Name.Equals(item.EvaluatedInclude));
+                var versionOverride = item.Metadata.FirstOrDefault(metadata => metadata.Name == "VersionOverride");
+                if (central != null && versionOverride != null && !CheckVersionOverride)
+                {
+                    continue;
+                }
+                string? version = central != null
+                    ? (CheckVersionOverride && versionOverride != null ? versionOverride.EvaluatedValue : central.Version)
+                    : item.Metadata.FirstOrDefault(metadata => metadata.Name == "Version")?.EvaluatedValue;
+                if (version != null)
+                {
+                    addNugetDependency(item.EvaluatedInclude, version, dependencies);
+                }
+            }
+            return dependencies;
+        }
+
         private void addNugetDependency(string include, string versionMetadata, List<NugetDependency> deps)
         {
             NuGet.Versioning.VersionRange version;
