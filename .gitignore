@@ -5,9 +5,11 @@ detect-nuget-inspector/detect-nuget-inspector/obj/
 detect-nuget-inspector/detect-nuget-inspector-tests/bin/
 detect-nuget-inspector/detect-nuget-inspector-tests/linux-build/
 detect-nuget-inspector/detect-nuget-inspector-tests/obj/
+detect-nuget-inspector/detect-nuget-inspector-tests/TestResults/
 
 
 .idea
+.claude
 *.iml
 
 # Ignore Gradle project-specific cache directory
