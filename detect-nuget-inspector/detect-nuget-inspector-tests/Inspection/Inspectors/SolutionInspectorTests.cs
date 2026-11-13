@@ -6,6 +6,32 @@ using Blackduck.Detect.Nuget.Inspector.Model;
 namespace detect_nuget_inspector_tests.Inspection.Inspectors
 {
     [TestClass]
+    public class ProjectInspectorAssemblyFilterTests
+    {
+        [DataTestMethod]
+        [DataRow("Microsoft.Build, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a", true)]
+        [DataRow("Some.Other.Assembly, Version=1.0.0.0", false)]
+        [DataRow(null, false)]
+        public void BadImageFormatAssemblyFilter(string? fileName, bool expected)
+        {
+            var exception = new BadImageFormatException("load failed", fileName);
+            Assert.AreEqual(expected, ProjectInspector.IsMSBuildAssembly(exception.FileName));
+        }
+
+        [DataTestMethod]
+        [DataRow("Microsoft.Build.Framework", true)]
+        [DataRow("Some.Other.Assembly", false)]
+        [DataRow("microsoft.build", false)]
+        [DataRow(null, false)]
+        public void MissingAssemblyFilterPreservesIOExceptionBehavior(string? fileName, bool expected)
+        {
+            Assert.AreEqual(expected, ProjectInspector.IsMissingMSBuildAssembly(new FileNotFoundException("load failed", fileName)));
+            Assert.AreEqual(expected, ProjectInspector.IsMissingMSBuildAssembly(new FileLoadException("load failed", fileName)));
+            Assert.IsFalse(ProjectInspector.IsMissingMSBuildAssembly(new IOException("load failed")));
+        }
+    }
+
+    [TestClass]
     public class SolutionInspectorTests
     {
         private string GetFilePath(string fileName)
