@@ -224,6 +224,12 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                         Console.WriteLine("MSBuild unavailable; using backup XML resolver: " + ex.Message);
                         projectReferencesResult = new DependencyResult { Success = false };
                     }
+                    // SDK MSBuild cannot load across CPU architectures, so fall back to XML.
+                    catch (BadImageFormatException ex) when (IsMSBuildAssembly(ex.FileName))
+                    {
+                        Console.WriteLine("MSBuild could not be loaded because the CPU architecture of NuGet Inspector does not match the installed .NET SDK; using backup XML resolver: " + ex.Message);
+                        projectReferencesResult = new DependencyResult { Success = false };
+                    }
                     if (projectReferencesResult.Success)
                     {
                         Console.WriteLine("Reference resolver succeeded.");
@@ -385,6 +391,11 @@ namespace Blackduck.Detect.Nuget.Inspector.Inspection.Inspectors
                 FileLoadException loadFailure => loadFailure.FileName,
                 _ => null
             };
+            return IsMSBuildAssembly(fileName);
+        }
+
+        internal static bool IsMSBuildAssembly(string? fileName)
+        {
             return fileName?.StartsWith("Microsoft.Build", StringComparison.Ordinal) == true;
         }
 
